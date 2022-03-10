@@ -10,6 +10,7 @@ build_network <- function(N) {
   ig <- make_full_graph(N, directed = FALSE)
   V(ig)$state <- "S"
   V(ig)[1]$state <- "I"
+  E(ig)$active <- FALSE
   return(ig)
 }
 
@@ -24,7 +25,7 @@ state_update <- function(network, p) {
   susceptible_individuals <- V(delta)[state == "S"]
   # all infectious individuals will recover
   V(delta)[infectious_individuals]$change <- "R"
-  E(delta)$active <- FALSE #' by default, no transmission
+  E(delta)$active <- FALSE #' whatever happened previously now over
   
   if (length(susceptible_individuals)) {
     #' all the potential transmission routes
@@ -43,6 +44,7 @@ state_update <- function(network, p) {
 
 apply_changes <- function(network, delta) {
   V(network)[V(delta)[!is.na(change)]]$state <- V(delta)[!is.na(change)]$change
+  E(network)[E(delta)[active == TRUE]]$active <- TRUE
   return(network)
 }
 
@@ -59,13 +61,12 @@ still_infectious <- function(network) any(V(network)$state == "I")
 run_reed_frost <- function(N, p) {
   network <- build_network(N)
   network_record <- list(network)
-  delta_record <- list()
   while(still_infectious(network)) {
-    delta_record <- c(list(state_update(network, p)), delta_record)
-    network_record <- c(list(apply_changes(network, delta_record[[1]])), network_record)
-    network <- network_record[[1]]
+    delta <- state_update(network, p)
+    network <- apply_changes(network, delta)
+    network_record <- c(list(network), network_record)
   }
-  return(list(states = rev(network_record), deltas = rev(delta_record)))
+  return(rev(network_record))
 }
 
 state_record <- function(network, statelevels = c("S", "I", "R")) {
@@ -79,7 +80,7 @@ convert_to_state_record <- function(network_record) {
 }
 
 sim_example <- run_reed_frost(30, 0.05)
-state_example <- convert_to_state_record(sim_example$states)
+state_example <- convert_to_state_record(sim_example)
 
 #' produce animation of network record along side a state record time series
 plot_network_record <- function(sim_output) {
@@ -92,8 +93,9 @@ plot_network_record <- function(sim_output) {
 
 sample_reed_frost <- function(N, p, n) rbindlist(
   lapply(1:n, function(i) {
-    set.seed(i); return(convert_to_state_record(run_reed_frost(N, p)$states)) }
-  ), idcol = "sample"
+    set.seed(i);
+    return(convert_to_state_record(run_reed_frost(N, p)))
+  }), idcol = "sample"
 )
 
 

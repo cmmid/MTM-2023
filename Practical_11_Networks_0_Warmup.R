@@ -1,3 +1,69 @@
+
+#' must have features:
+
+#' making some different core graphs
+#' plot these different canned graphs
+make_full_graph(N, directed = FALSE)
+...
+
+#' Q: how would you describe the graphs these functions create?
+
+#' modifying graphs
+delete_edges etc
+
+#' Q: perform modication X, check your work by plotting the result
+
+#' assign vertex and edge properties
+V(ig)$state <- "whatever"
+E(ig)$state <- "whatever"
+
+#' Q: assign some property X, confirm that you've done so with the following command
+
+#' use vertex and edge properties
+#' in particular, we should give them code that will visualize SIR & transmission pathways
+... visualize with properties
+... lookup / reassign by property
+
+#' Q: for a network with the property state SIR, how could check if that network has any infectious
+#' individuals?
+
+#' vertex and edge selection based on indices / typical true/false selection
+#' also with `sample`?
+
+#' Q: how could you randomly sample vertices that are ...? 
+
+#' vertex and edge selection based on network properties
+...self-selection
+%--%
+.inc, etc
+
+#' Q: how could you select all edges next to an infectious individual
+#' Q: how could you select all vertices at the end of an edge where the other end
+#' is infectious?
+
+#' TODO from practical 3 demo - what network property calculations
+#' do we use? have them use some of the igraph network metric calculations
+
+#' advanced stuff:
+#' edge lists, adjaceny lists,
+#' reading in / writing out
+#' generators e.g. erdos-renyi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ###############################################################################
 #                     Introduction to iGraph: Practical 0                     #
 ###############################################################################
