@@ -1,126 +1,118 @@
-# For this practical, you have basically the same task
-# You should copy over your code from the first practical where relevant
-source("../reference.R")
 
-# but you're going to re-write this function to remove some edges
-build_network <- function(
-  #### <YOUR CODE HERE> #### # the necessary arguments to inform creating network
-) {
-  ig <- #### <YOUR CODE HERE> #### # create the basic graph
-  V(ig)$state <- #### <YOUR CODE HERE> #### # set the initial state
-  remove_edges <- E(ig)[
-    #### <YOUR CODE HERE> #### # randomly select edges to remove;
-  ] # alt: can use sample(E(ig), ...) with the "right" number of edges to remove
-  return(
-    #### <YOUR CODE HERE> #### # return the graph with the randomly drawn edges removed
-  )
+build_network <- function(N, p) {
+  
+  ig <- make_full_graph(N)
+  V(ig)$state <- "S" ## need to update
+
+  n_edges <- ecount(ig)
+  remove_edges <- E(ig)[ (runif(n = n_edges) > p) ]
+  ig <- delete_edges(ig, remove_edges)
+  
+  return(ig)
+  
 }
 
-# a) Create plots of your network for N=6 and N=30, transmission p = 0.1
-# Answer:
-plot(build_network(
-  #### <YOUR CODE HERE> ####
-))
-plot(build_network(
-  #### <YOUR CODE HERE> ####
-))
+#' Q: what are the Reed Frost variables & parameters represent in `build_network`?
+#' A: variables: S and I (R = N - S - I)
+#'    parameters: N and p
 
-# The rest of this code is pasted in from Solution_11_Network_1_BasicSIR.R; there are
-# a few points to modify, annotated by the usual #### <YOUR CODE HERE> ####
+state_update <- function(network) {
+  
+  # Identify current S and I individuals (nodes)
+  susceptible_individuals <- V(network)[state == "S"]
+  infected_individuals <- V(network)[state == "I"]
+  
+  # Identify S-I edges
+  transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
+  
+  # Newly infected nodes
+  new_infections <- susceptible_individuals[.inc(transmitting_paths)]
+  
+  # Update states
+  ## infected -> recovered
+  V(network)[infected_individuals]$state <- "R"
+  ## susceptible -> infected
+  V(network)[new_infections]$state <- "I"
+  
+  return(network)
+  
+}
 
-# We need to regularly extract the simulation state from an igraph as results
-# With the right filter in ..., you can use length(V(ig)[...]) to get the pertinent info
-network_state_totals <- function(ig) {
-  return(c(
-    S = length(V(ig)[state=="S"]), # n.b., if you wanted something a bit more flexible (for example, add an E state), you could do:
-    I = length(V(ig)[state=="I"]), # return(sapply(c("S","I","R"), function(st) length(V(ig)[state == st])))
-    R = length(V(ig)[state=="R"])  # or if your states were defined as factors instead:
-  ))                               # table(V(ig)$state)
-}                                  # though factors can be a bit messy
+#' Q: What Reed Frost variables & parameters are needed for state update?
+#' Added R to variables and now need p for parameters (but no longer explicitly thinking in terms of N)
 
-# Like other stochastic simulations, your Reed-Frost SIR simulation will run until
-# there would be no state changes.  What should you check for here?
-still_infectious <- function(ig) { # n.b. for flexibility, could also re-use network_state_totals here and do something like
-  return(length(V(ig)[             # return(sum(network_state_totals(ig)[c("I")]))  
-    state == "I"                   # which would allow you to e.g. easily add an "E" compartment
-  ])) 
-}                                     
+still_infectious <- function(network) {
+  
+  number_infections <- sum(V(network)$state == "I")
+  
+  return(number_infections > 0)
+  
+}
 
-# Now you need to fill in this simulation function skeleton. You may 
-# Make sure your function n, p, and i arguments, corresponding to
-#  n - number of individuals
-#  p - transmission probability
-#  i - random number seed
-# and returns a matrix with three columns and at least two rows
-igraph_sim <- function(n, p, i) {
-  set.seed(i)
-  # create the network using your function + the appropriate arguments from n, p, i
-  ig <- build_network(
-    #### <YOUR CODE HERE> ####
-  )
+#' Q: In Reed Frost, we have the step where all infectious individuals interact with susceptibles.
+#' Thinking in terms of a loop, what kind should we use? Or put another way, what is the stopping
+#' condition for running a Reed-Frost model?
+#' A: are there any infectious individuals left?
+
+run_reed_frost <- function(N, p) {
   
-  # initially, all the vertices but one should be susceptible,
-  # with that one infectious
-  # Aside: does it matter which one is infectious? Answer: Same???? Different????
-  V(ig)[
-    #### <YOUR CODE HERE> ####
-  ]$state <- "I"
+  network <- build_network(N, p)
+  V(network)[1]$state <- "I"
   
-  # this sets aside a data structure to record simulation steps
-  # inspect result & rf_prealloc from the Rstudio console prompt to understand
-  # that structure better
-  # see reference.R for a bit more explanation
-  result <- rf_prealloc(n)
-  tm <- 1
-  
-  # We're going to be working the infectious and susceptible individuals
-  # recall from the warmup how to list vertices for an igraph (or ?igraph::V)
-  # and how to get only the ones that have a particular attribute (in our case "state")
-  # run the Reed-Frost simulation
-  
-  while(still_infectious(ig)) { # while there are still infectives...
-    result[
-      tm,
-    ] <- network_state_totals(ig) # update results
+  network_record <- list(network)
+  while(still_infectious(network)) {
     
-    infective_individuals <- V(ig)[
-      state == "I"
-    ] # get a vertix list of all the Is
-    susceptible_individuals <- V(ig)[
-      state == "S"
-    ] # and similar for getting all the Ss
-    
-    # In this approach, the we have pre-removed the edges that won't transmit;
-    # So how should we identify transmission paths now?
-    transmitting_paths <- #### <YOUR CODE HERE> ####
-    
-    new_infections <- susceptible_individuals[.inc(transmitting_paths)] # from the transmission paths, identify which individuals will become infectious
-    
-    # now update the simulation state
-    V(ig)[
-      infective_individuals
-    ]$state <- "R"
-    V(ig)[
-      new_infections
-    ]$state <- "I"
-    tm <- tm + 1
+    changes <- state_update(network)
+    network_record <- c(changes, network_record)
+    network <- network_record[[1]]
     
   }
-  result[
-    tm,
-  ] <- network_state_totals(ig) # record final step
   
-  # return the results, after trimming them with a function from reference.R
-  return(rf_trim(result))
+  return(network_record)
 }
 
-# and then you should be able to source this script and see the results
-# The `plotter` function is defined in reference
-resultplot <- plotter(
-  simulator_A = igraph_sim, # your simulator...
-  simulator_B = chainbinom_sim, # the reference simulation
-  samples = 100, # how many times to run the two sims
-  n = 50, p = .05 # the Reed-Frost model parameters: population size, and transmission probability
-)
+state_record <- function(network) {
+  
+  number_S <- sum(V(network)$state == "S")
+  number_I <- sum(V(network)$state == "I")
+  number_R <- sum(V(network)$state == "R")
+  
+  state <- c(number_S, number_I, number_R)
+  
+  return(state)
+  
+}
 
-print(resultplot)
+convert_to_state_record <- function(network_record) lapply(network_record, state_record)
+
+plot_network_record <- ...produce animation of network record along side a state record time series
+
+#' first do a single network to get a feel what's conceptual framework
+
+#' step 2, do a bunch of samples, look at duration + final size plot
+
+#' Q: what do you notice about these distributions?
+#' want to elicit that there is extinction (close to zero final size lump) + there are outbreaks (bigger, non-zero lump)
+#' and those vary in size + relationship to duration of epidemic (generally larger => longer?)
+
+#' ask them to do different things with parameters
+
+#' Q: vary p, while holding N constant - what does that do to distribution?
+#' p lower => more in the extinction lump, p higher more in the epidemic lump, and epidemic lump pushed higher (though limited by N)
+#' TBD re time
+
+...repeat code from earlier question, but indicate they should change things and run it multiple times to look at pictures
+
+#' Q: vary N, holding p constant - what does that do to distribution?
+#' Obviously, larger N => larger final sizes. Less obviously: more epidemics.
+#' To do with holding *individual* probability constant & increasing N => increasing probability of tranmission
+#' since everyone is connected
+
+...repeat code from earlier question, but indicate they should change things and run it multiple times to look at pictures
+
+#' bonus-y question:
+#' Q: what constraint on N and p would you have to impose to retain the same shape of the final size
+#' distribution with varying N? Hint: how might you have an R0-like concept in this model?
+
+...provide skeleton not code here
+
