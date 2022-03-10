@@ -1,7 +1,15 @@
 
+#' core library
+require(igraph)
+#' for some fast data combination
+require(data.table)
+#' for plotting
+require(ggplot2)
+
 build_network <- function(N) {
-  ig <- make_full_graph(n)
-  V(ig)$state <- factor("S", levels = c("S", "I", "R"))
+  ig <- make_full_graph(N, directed = FALSE)
+  V(ig)$state <- "S"
+  V(ig)[1]$state <- "I"
   return(ig)
 }
 
@@ -10,15 +18,38 @@ build_network <- function(N) {
 #' parameters == N - not yet p
 
 state_update <- function(network, p) {
-  ...
+  delta <- network
+  #' all infectious & susceptible
+  infectious_individuals <- V(delta)[state == "I"]
+  susceptible_individuals <- V(delta)[state == "S"]
+  # all infectious individuals will recover
+  V(delta)[infectious_individuals]$change <- "R"
+  E(delta)$active <- FALSE #' by default, no transmission
+  
+  if (length(susceptible_individuals)) {
+    #' all the potential transmission routes
+    infection_paths <- E(delta)[infectious_individuals %--% susceptible_individuals]
+    #' all the realized transmission routes - random draw against p
+    transmitting_paths <- infection_paths[runif(length(infection_paths)) < p]
+    if (length(transmitting_paths)) {
+      new_infections <- susceptible_individuals[.inc(transmitting_paths)]
+      E(delta)[infection_paths]$active <- TRUE
+      V(delta)[new_infections]$change <- "I"
+    }
+  }
+  
+  return(delta)
+}
+
+apply_changes <- function(network, delta) {
+  V(network)[V(delta)[!is.na(change)]]$state <- V(delta)[!is.na(change)]$change
+  return(network)
 }
 
 #' Q: What Reed Frost variables & parameters are needed for state update?
 #' Added R to variables and now need p for parameters (but no longer explicitly thinking in terms of N)
 
-still_infectious <- function() {
-  
-}
+still_infectious <- function(network) any(V(network)$state == "I")
 
 #' Q: In Reed Frost, we have the step where all infectious individuals interact with susceptibles.
 #' Thinking in terms of a loop, what kind should we use? Or put another way, what is the stopping
@@ -28,25 +59,43 @@ still_infectious <- function() {
 run_reed_frost <- function(N, p) {
   network <- build_network(N)
   network_record <- list(network)
+  delta_record <- list()
   while(still_infectious(network)) {
-    changes <- state_update(network)
-    network_record <- c(apply_changes(network, changes), network_record)
+    delta_record <- c(list(state_update(network, p)), delta_record)
+    network_record <- c(list(apply_changes(network, delta_record[[1]])), network_record)
     network <- network_record[[1]]
   }
-  return(network_record)
+  return(list(states = rev(network_record), deltas = rev(delta_record)))
 }
 
-state_record <- function(network) {
-  ...extract state variables
+state_record <- function(network, statelevels = c("S", "I", "R")) {
+  setNames(sapply(statelevels, function(s) length(V(network)[state == s])), statelevels)
 }
 
-convert_to_state_record <- function(network_record) lapply(network_record, state_record)
+convert_to_state_record <- function(network_record) {
+  s <- sapply(network_record, state_record)
+  s <- rbind(t = 1:dim(s)[2], s)
+  as.data.table(t(s))
+}
 
-plot_network_record <- ...produce animation of network record along side a state record time series
+sim_example <- run_reed_frost(30, 0.05)
+state_example <- convert_to_state_record(sim_example$states)
+
+#' produce animation of network record along side a state record time series
+plot_network_record <- function(sim_output) {
+  
+}
 
 #' first do a single network to get a feel what's conceptual framework
 
 #' step 2, do a bunch of samples, look at duration + final size plot
+
+sample_reed_frost <- function(N, p, n) rbindlist(
+  lapply(1:n, function(i) {
+    set.seed(i); return(convert_to_state_record(run_reed_frost(N, p)$states)) }
+  ), idcol = "sample"
+)
+
 
 #' Q: what do you notice about these distributions?
 #' want to elicit that there is extinction (close to zero final size lump) + there are outbreaks (bigger, non-zero lump)
