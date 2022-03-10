@@ -1,46 +1,78 @@
-# INSTRUCTIONS
-#
-# We're going to work towards a having a function that will:
-# - Receive a few relevant arguments (number of individuals, probability of infection, ...)
-# - generate a network corresponding to the Reed-Frost SIR assumptions
-# - simulate an SIR epidemic on that network, starting with a single initially infectious individual
-#   and ending when there are no more infectious individuals
-#
-# Then you can use that function with some provided code (from `reference.R`) to
-# generate a plot comparing a non-network based implementation to your implementation.
-# 
-# You should work from top-to-bottom, replacing the `#### <YOUR CODE HERE> ####` with relevant code. Each step
-# will have comments providing hints about where to look for more information, and
-# you can always ask the instructors, but: the first thing they'll ask you is what you
-# learned from the hints, and then if you've asked one of your fellow participants!
-# There are suggestions about how to test small parts of your code as you go along, and
-# when you're done, you should be able to source this file and see a comparison between
-# your simulation and the reference one
 
-
-# This adds several functions into the workspace that we will use for the summary
-# evaluation of your simulator, as well as loading all the necessary packages.
-# Aside: feel free to read this file, particularly the `chainbinom_sim`, which
-# implements the Reed-Frost model use a chain-binomial formalism.
-source("../reference.R")
-
-# For the Reed-Frost network model, we're going to have 
-# vertices represent people, and the edges represent contacts between them
-# First, you'll want a function that builds the network
-# we also want to provide a default state (one of S, I, or R) for the all the individuals
-# recall from the previous practical that there are several options:
-#  - use one of the convenience constructors; hint recall the make_... functions from the warmup
-#  - create an edgelist and build the graph from that; see ?graph.edgelist for hints
-#  - create an adjacency matrix and build the graph from that; see ??graph.adjacency for hints
-# for the Reed-Frost network, remember everyone connects with everyone - there is a make_... function
-# for precisely this case.
-build_network <- function(
-  #### <YOUR CODE HERE> #### # the necessary arguments to inform creating network
-) {
-  ig <- #### <YOUR CODE HERE> #### # create the basic graph
-  V(ig)$state <- #### <YOUR CODE HERE> #### # set the initial state
+build_network <- function(N) {
+  ig <- make_full_graph(n)
+  V(ig)$state <- factor("S", levels = c("S", "I", "R"))
   return(ig)
 }
+
+#' Q: what are the Reed Frost variables & parameters represent in `build_network`?
+#' variables == S & I (and sort of R?)
+#' parameters == N - not yet p
+
+state_update <- function(network, p) {
+  ...
+}
+
+#' Q: What Reed Frost variables & parameters are needed for state update?
+#' Added R to variables and now need p for parameters (but no longer explicitly thinking in terms of N)
+
+still_infectious <- function() {
+  
+}
+
+#' Q: In Reed Frost, we have the step where all infectious individuals interact with susceptibles.
+#' Thinking in terms of a loop, what kind should we use? Or put another way, what is the stopping
+#' condition for running a Reed-Frost model?
+#' A: are there any infectious individuals left?
+
+run_reed_frost <- function(N, p) {
+  network <- build_network(N)
+  network_record <- list(network)
+  while(still_infectious(network)) {
+    changes <- state_update(network)
+    network_record <- c(apply_changes(network, changes), network_record)
+    network <- network_record[[1]]
+  }
+  return(network_record)
+}
+
+state_record <- function(network) {
+  ...extract state variables
+}
+
+convert_to_state_record <- function(network_record) lapply(network_record, state_record)
+
+plot_network_record <- ...produce animation of network record along side a state record time series
+
+#' first do a single network to get a feel what's conceptual framework
+
+#' step 2, do a bunch of samples, look at duration + final size plot
+
+#' Q: what do you notice about these distributions?
+#' want to elicit that there is extinction (close to zero final size lump) + there are outbreaks (bigger, non-zero lump)
+#' and those vary in size + relationship to duration of epidemic (generally larger => longer?)
+
+#' ask them to do different things with parameters
+
+#' Q: vary p, while holding N constant - what does that do to distribution?
+#' p lower => more in the extinction lump, p higher more in the epidemic lump, and epidemic lump pushed higher (though limited by N)
+#' TBD re time
+
+...repeat code from earlier question, but indicate they should change things and run it multiple times to look at pictures
+
+#' Q: vary N, holding p constant - what does that do to distribution?
+#' Obviously, larger N => larger final sizes. Less obviously: more epidemics.
+#' To do with holding *individual* probability constant & increasing N => increasing probability of tranmission
+#' since everyone is connected
+
+...repeat code from earlier question, but indicate they should change things and run it multiple times to look at pictures
+
+#' bonus-y question:
+#' Q: what constraint on N and p would you have to impose to retain the same shape of the final size
+#' distribution with varying N? Hint: how might you have an R0-like concept in this model?
+
+...provide skeleton not code here
+
 
 # a) Create plots of your network for N=6 and N=30.
 # (hint: this should tell you what arguments build_network(...) needs)
