@@ -1,119 +1,117 @@
-source("../reference.R")
 
-# `refgraphs` is a list of pre-generated graphs
+#' we're going to need to know the number of edges
+#' in a full graph. could get it from the igraph objects
+#' but it's also a succinct formula
+full_graph_ecount <- function(n) (n^2-n)/2
+#' ASIDE: nice maths refresher puzzle as to why this
+#' is true. Can approach from nothing by using some
+#' summation insights, or as confirmation exercise
+#' using induction.
 
-# modify your build network function to instead load
-# the relevant pre-generated graph
-build_network <- function(
-  i
-) {
-  igfile <- refgraphs[
-    i
-  ]
-  ig <- read_graph(igfile, directed = FALSE)
-  V(ig)$state <- "S"
-  return(ig)
+#' going to reuse the same approach as in practical 2
+percolate_graph <- function(ig, p) {
+  remove_edges <- E(ig)[ runif(ecount(ig)) < (1-p) ]
+  return(delete_edges(ig, remove_edges))
 }
 
-# plot some example reduced graphs to get a feel for what's going on
-# with simulation...
-plot(build_network(i=1))
-plot(build_network(i=2))
-
-# The rest of this code is pasted in from ..._altSIR.R; there is
-# actually only one point to modify, annotated by the usual #### <YOUR CODE HERE> ####
-
-# We need to regularly extract the simulation state from an igraph as results
-# With the right filter in ..., you can use length(V(ig)[...]) to get the pertinent info
-network_state_totals <- function(ig) {
-  return(c(
-    S = length(V(ig)[state=="S"]), # n.b., if you wanted something a bit more flexible (for example, add an E state), you could do:
-    I = length(V(ig)[state=="I"]), # return(sapply(c("S","I","R"), function(st) length(V(ig)[state == st])))
-    R = length(V(ig)[state=="R"])  # or if your states were defined as factors instead:
-  ))                               # table(V(ig)$state)
-}                                  # though factors can be a bit messy
-
-# Like other stochastic simulations, your Reed-Frost SIR simulation will run until
-# there would be no state changes.  What should you check for here?
-still_infectious <- function(ig) { # n.b. for flexibility, could also re-use network_state_totals here and do something like
-  return(length(V(ig)[             # return(sum(network_state_totals(ig)[c("I")]))  
-    state == "I"                   # which would allow you to e.g. easily add an "E" compartment
-  ])) 
-}                                     
-
-# Now you need to fill in this simulation function skeleton. You may 
-# Make sure your function n, p, and i arguments, corresponding to
-#  n - number of individuals
-#  p - transmission probability
-#  i - random number seed
-# and returns a matrix with three columns and at least two rows
-igraph_sim <- function(n, p, i) {
-  set.seed(i)
-  # create the network using your function + the appropriate arguments from n, p, i
-  ig <- build_network(
-    i
-  )
+build_network <- function(N, p) {
+  #' building two network partitions & then combining them
+  n1 <- as.integer(N/2)
+  n2 <- N-n1
   
-  # initially, all the vertices but one should be susceptible,
-  # with that one infectious
-  # Aside: does it matter which one is infectious? Answer: Still doesn't matter - random is random
-  V(ig)[
-    1
-  ]$state <- "I"
+  #' these are going to be connected by a single edge,
+  #' and accounting for all these non-connections, we still
+  #' want the overall connection probability to be `p` on average
+  e1 <- full_graph_ecount(n1)
+  e2 <- full_graph_ecount(n2)
+  etot <- full_graph_ecount(N)
+  psub <- min((etot*p-1)/(e1 + e2), 1)
+
+  ig1 <- percolate_graph(make_full_graph(n1), psub)
+  ig2 <- percolate_graph(make_full_graph(n2), psub)
   
-  # this sets aside a data structure to record simulation steps
-  # inspect result & rf_prealloc from the Rstudio console prompt to understand
-  # that structure better
-  # see reference.R for a bit more explanation
-  result <- rf_prealloc(n)
-  tm <- 1
+  igcombo <- add_edges(ig1 + ig2, c(sample(n1, 1), sample(n2, 1)+n1))
   
-  # We're going to be working the infectious and susceptible individuals
-  # recall from the warmup how to list vertices for an igraph (or ?igraph::V)
-  # and how to get only the ones that have a particular attribute (in our case "state")
-  # run the Reed-Frost simulation
+  V(igcombo)$state <- "S"
+  V(igcombo)[1]$state <- "I"
+  E(igcombo)$active <- FALSE
   
-  while(still_infectious(ig)) { # while there are still infectives...
-    result[
-      tm,
-    ] <- network_state_totals(ig) # update results
+  return(igcombo)
+}
+
+#' identical to version from practical 2
+state_update <- function(network, ...) {
+  delta <- network
+  # Identify current S and I individuals (nodes)
+  infectious_individuals <- V(delta)[state == "I"]
+  susceptible_individuals <- V(delta)[state == "S"]
+  # all infectious individuals will recover
+  V(delta)[infectious_individuals]$change <- "R"
+  E(delta)$active <- FALSE #' whatever happened previously now over
+  
+  if (length(susceptible_individuals)) {
+    # Identify S-I edges
+    transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
     
-    infective_individuals <- V(ig)[
-      state == "I"
-    ] # get a vertix list of all the Is
-    susceptible_individuals <- V(ig)[
-      state == "S"
-    ] # and similar for getting all the Ss
-    
-    # In this approach, the we have pre-removed the edges that won't transmit;
-    # So how should we identify transmission paths now?
-    transmitting_paths <- E(ig)[infective_individuals %--% susceptible_individuals]
-    
-    new_infections <- susceptible_individuals[.inc(transmitting_paths)] # from the transmission paths, identify which individuals will become infectious
-    
-    # now update the simulation state
-    V(ig)[
-      infective_individuals
-      ]$state <- "R"
-    V(ig)[
-      new_infections
-      ]$state <- "I"
-    tm <- tm + 1
-    
+    if (length(transmitting_paths)) {
+      # Newly infected nodes
+      new_infections <- susceptible_individuals[.inc(transmitting_paths)]
+      E(delta)[infection_paths]$active <- TRUE
+      V(delta)[new_infections]$change <- "I"
+    }    
   }
-  result[
-    tm,
-  ] <- network_state_totals(ig) # record final step
   
-  # return the results, after trimming them with a function from reference.R
-  return(rf_trim(result))
+  return(delta)
 }
 
-resultplot <- plotter(
-  simulator_A = igraph_sim, # your simulator...
-  simulator_B = chainbinom_sim, # the reference simulation
-  samples = 100, # how many times to run the two sims
-  n = 50, p = .05 # the Reed-Frost model parameters: population size, and transmission probability
-) # note: parameters not adjustable this time, since the background graphs are fixed
+apply_changes <- function(network, delta) {
+  changedv <- V(delta)[!is.na(change)]
+  V(network)[changedv]$state <- changedv$change
+  E(network)$active <- E(delta)$active
+  return(network)
+}
 
-print(resultplot)
+still_infectious <- function(network) any(V(network)$state == "I")
+
+run_reed_frost <- function(N, p) {
+  network <- build_network(N)
+  network_record <- list(network)
+  while(still_infectious(network)) {
+    delta <- state_update(network, p)
+    network <- apply_changes(network, delta)
+    network_record <- c(list(network), network_record)
+  }
+  return(rev(network_record))
+}
+
+state_record <- function(network, statelevels = c("S", "I", "R")) {
+  setNames(sapply(statelevels, function(s) length(V(network)[state == s])), statelevels)
+}
+
+convert_to_state_record <- function(network_record) {
+  s <- sapply(network_record, state_record)
+  s <- rbind(t = 1:dim(s)[2], s)
+  as.data.table(t(s))
+}
+
+sample_reed_frost <- function(N, p, n) rbindlist(
+  lapply(1:n, function(i) {
+    set.seed(i);
+    return(convert_to_state_record(run_reed_frost(N, p)))
+  }), idcol = "sample"
+)
+
+plot_network_record <- ...produce animation of network record along side a state record time series
+
+#' DEMO: start with comparison of several graph snapshots
+#' Q: what do you notice about these networks?
+#' How do you expect these difference(s) to be reflected
+#' in the final size / duration distributions?
+
+#' DEMO: do a bunch of samples, look at duration + final size plot
+#' Q: What do you notice about these distributions? Does that comport
+#' with the differences you expected?
+
+#' want to elicit that there is extinction (close to zero final size lump) + there are outbreaks (bigger, non-zero lump)
+#' and those vary in size + relationship to duration of epidemic (generally larger => longer?)
+
