@@ -1,23 +1,133 @@
 
-#' must have features:
+#' For the code below, the general guidance is to run the code,
+#' check the results in the console or plots tab, and then
+#' answer the questions yourself or amongst a small group.
+#' 
+#' Answering some of the questions will entail changing function
+#' arguments or filling in missing arguments. These are marked
+#' with `???` placeholders.
+#' 
+#' For some of those, we suggest relevant functions with
+#' "hint: ?FUNCTION", as in `?FUNCTION` will prompt you with the
+#' documentation of a function that may be useful
+#' 
+#' There are some items marked with ASIDE; you may wish to save
+#' these until after the course to explore.
+#' 
+#' Lastly, this material is written using the `igraph` library.
+#' There are other libraries that provide the same basic
+#' functionality, but via different approaches, e.g. `networkx`
 
-#' making some different core graphs
-#' plot these different canned graphs
-make_full_graph(N, directed = FALSE)
-...
+require(igraph)
 
-#' Q: how would you describe the graphs these functions create?
+##################### PART A ################################
 
-#' modifying graphs
-delete_edges etc
+#' the igraph library has several functions to create common
+#' network structures, including both deterministic ones
+#' (e.g. fully connected graphs) and probabilistic generators
+#' (e.g. Erdos-Renyi random graph)
+#' 
+#' In igraph, the general convention is that the deterministic
+#' functions start `make_...`, and the probabilistic generators
+#' start `sample_...`
+ig10 <- make_full_graph(n = 10)
+ig30 <- make_full_graph(n = 30)
+ig10layout <- layout_with_graphopt(ig10)
+ig30layout <- layout_with_graphopt(ig30)
+plot(ig10, layout = ig10layout); print(ig10)
+plot(ig30, layout = ig30layout); print(ig30)
 
-#' Q: perform modication X, check your work by plotting the result
+ig10gnp <- sample_gnp(10, 0.2)
+ig30gnp <- sample_gnp(30, 0.2)
+plot(ig10gnp, layout = ig10layout); print(ig10gnp)
+plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 
-#' assign vertex and edge properties
-V(ig)$state <- "whatever"
-E(ig)$state <- "whatever"
+#' Q: How would you describe the graphs these functions create?
+#' TODO more make_... function examples
 
-#' Q: assign some property X, confirm that you've done so with the following command
+#' ASIDE: note that by default, plotting an igraph object
+#' gives a different layout each time
+plot(ig10); plot(ig10) # compare these two
+#' To get the same plot, you can generate a layout for a
+#' graph (as we do above)
+plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two 
+#' this can be useful for comparing across graphs as well
+plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
+
+
+##################### PART B ################################
+
+#' The generation functions are useful building blocks, but
+#' are not typically sufficient to get networks that exactly
+#' match our models. For that, there are tools to add/delete
+#' edges and vertices, to merge graphs, and so on.
+#' 
+#' We will show some highlights here.
+
+#' delete every other edge
+ig10mod <- delete_edges(ig10, 1:(ecount(ig10)/2)*2)
+plot(ig10, layout = ig10layout); plot(ig10mod, layout = ig10layout)
+
+#' add edges to a star graph
+ig10star <- make_star(10, mode = "undirected")
+ig10starmod <- add_edges(ig10star, c(c(2,4), c(3,5), c(6,8), c(7,9)))
+plot(ig10star, layout = ig10layout)
+plot(ig10starmod, layout = ig10layout)
+
+#' add vertices
+ig30starp <- add_vertices(ig10star, 20)
+plot(ig30starp, layout = ig30layout)
+#' note: adding vertices doesn't also add edges
+
+#' Q: Add edges to `ig30starp` to make it a star graph.
+#' Check your work by plotting the result compared to
+#' making a 30 star automatically:
+ig30star <- add_edges(ig30starp, `???`)
+
+plot(ig30star, layout = ig30layout)
+plot(make_star(30, mode = "undirected"), layout = ig30layout)
+
+#' ASIDE: It's also commonly useful to build up graphs
+#' by merging building blocks
+#' TODO some aside code
+
+
+##################### PART C ################################
+
+#' We frequently use network models to capture detailed structural
+#' relationships between elements. However, we still need to model
+#' the infectious disease phenomena. In `igraph`, we can assign
+#' both vertices and edges essentially as many attributes as we
+#' can imagine.
+#' 
+#' There are also the `V(g)[...]` and `E(g)[...]` functions for
+#' accessing the `V`ertices and `E`dges that match the properties
+#' in the `[...]` block (much like using `which(...)` from base R)
+
+#' assign vertex properties; in this example, give the population
+#' the Susceptible status, then change one individual to the
+#' Infectious status
+V(ig10)$state <- "S"
+V(ig10)[1]$state <- "I"
+
+#' there are some special attributes that get used in plotting, e.g.
+#' `color`. We can use our model attributes to decide how to set 
+#' those special attributes if we want to visualize what we've done
+V(ig10)$color <- "dodgerblue"
+V(ig10)[state == "I"]$color <- "firebrick"
+plot(ig10, layout = ig10layout)
+
+#' Q: Using the `ig30` network, set about 10% of the population to
+#' "I" and check your results by plotting them as above. Try this a
+#' few times.
+
+V(ig30)$state <- "S"
+V(ig30)[`???`]$state <- "I" # hint: ?runif, ?vcount
+V(ig30)$color <- "dodgerblue"
+V(ig30)[state == "I"]$color <- "firebrick"
+plot(ig30, layout = ig30layout)
+
+#' 
 
 #' use vertex and edge properties
 #' in particular, we should give them code that will visualize SIR & transmission pathways
