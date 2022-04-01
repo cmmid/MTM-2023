@@ -6,7 +6,7 @@ require(data.table)
 #' for plotting
 require(ggplot2)
 
-build_network <- function(N) {
+build_network <- function(N, ...) {
   ig <- make_full_graph(N, directed = FALSE)
   V(ig)$state <- "S"
   V(ig)[1]$state <- "I"
@@ -43,8 +43,9 @@ state_update <- function(network, p) {
 }
 
 apply_changes <- function(network, delta) {
-  V(network)[V(delta)[!is.na(change)]]$state <- V(delta)[!is.na(change)]$change
-  E(network)[E(delta)[active == TRUE]]$active <- TRUE
+  changedv <- V(delta)[!is.na(change)]
+  V(network)[changedv]$state <- changedv$change
+  E(network)$active <- E(delta)$active
   return(network)
 }
 

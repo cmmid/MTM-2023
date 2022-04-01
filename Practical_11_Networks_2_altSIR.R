@@ -1,53 +1,60 @@
 
-build_network <- function(N, p) {
-  
-  ig <- make_full_graph(N)
-  V(ig)$state <- "S" ## need to update
-
-  n_edges <- ecount(ig)
-  remove_edges <- E(ig)[ (runif(n = n_edges) > p) ]
-  ig <- delete_edges(ig, remove_edges)
-  
-  return(ig)
-  
+#' the probability here is the probability of infection -
+#' i.e. the probability of contact being effectively infectious.
+#' 
+#' so we're going to *remove* edges, with 1-p of infection
+percolate_graph <- function(ig, p) {
+  remove_edges <- E(ig)[ runif(ecount(ig)) < (1-p) ]
+  return(delete_edges(ig, remove_edges))
 }
 
 #' Q: what are the Reed Frost variables & parameters represent in `build_network`?
 #' A: variables: S and I (R = N - S - I)
 #'    parameters: N and p
 
-state_update <- function(network) {
-  
-  # Identify current S and I individuals (nodes)
-  susceptible_individuals <- V(network)[state == "S"]
-  infected_individuals <- V(network)[state == "I"]
-  
-  # Identify S-I edges
-  transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
-  
-  # Newly infected nodes
-  new_infections <- susceptible_individuals[.inc(transmitting_paths)]
-  
-  # Update states
-  ## infected -> recovered
-  V(network)[infected_individuals]$state <- "R"
-  ## susceptible -> infected
-  V(network)[new_infections]$state <- "I"
-  
-  return(network)
-  
+build_network <- function(N, p) {
+  ig <- percolate_graph(make_full_graph(N), p)
+  V(ig)$state <- "S"
+  V(ig)[1]$state <- "I"
+  E(ig)$active <- FALSE
+  return(ig)
 }
 
 #' Q: What Reed Frost variables & parameters are needed for state update?
-#' Added R to variables and now need p for parameters (but no longer explicitly thinking in terms of N)
+#' Added R to variables, but not longer explicitly need N or p
 
-still_infectious <- function(network) {
+state_update <- function(network, ...) {
+  delta <- network
+  # Identify current S and I individuals (nodes)
+  infectious_individuals <- V(delta)[state == "I"]
+  susceptible_individuals <- V(delta)[state == "S"]
+  # all infectious individuals will recover
+  V(delta)[infectious_individuals]$change <- "R"
+  E(delta)$active <- FALSE #' whatever happened previously now over
   
-  number_infections <- sum(V(network)$state == "I")
-  
-  return(number_infections > 0)
-  
+  if (length(susceptible_individuals)) {
+    # Identify S-I edges
+    transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
+    
+    if (length(transmitting_paths)) {
+      # Newly infected nodes
+      new_infections <- susceptible_individuals[.inc(transmitting_paths)]
+      E(delta)[infection_paths]$active <- TRUE
+      V(delta)[new_infections]$change <- "I"
+    }    
+  }
+
+  return(delta)
 }
+
+apply_changes <- function(network, delta) {
+  changedv <- V(delta)[!is.na(change)]
+  V(network)[changedv]$state <- changedv$change
+  E(network)$active <- E(delta)$active
+  return(network)
+}
+
+still_infectious <- function(network) any(V(network)$state == "I")
 
 #' Q: In Reed Frost, we have the step where all infectious individuals interact with susceptibles.
 #' Thinking in terms of a loop, what kind should we use? Or put another way, what is the stopping
@@ -55,35 +62,32 @@ still_infectious <- function(network) {
 #' A: are there any infectious individuals left?
 
 run_reed_frost <- function(N, p) {
-  
   network <- build_network(N, p)
-  V(network)[1]$state <- "I"
-  
   network_record <- list(network)
   while(still_infectious(network)) {
-    
-    changes <- state_update(network)
-    network_record <- c(changes, network_record)
-    network <- network_record[[1]]
-    
+    delta <- state_update(network, p)
+    network <- apply_changes(network, delta)
+    network_record <- c(list(network), network_record)
   }
-  
-  return(network_record)
+  return(rev(network_record))
 }
 
-state_record <- function(network) {
-  
-  number_S <- sum(V(network)$state == "S")
-  number_I <- sum(V(network)$state == "I")
-  number_R <- sum(V(network)$state == "R")
-  
-  state <- c(number_S, number_I, number_R)
-  
-  return(state)
-  
+state_record <- function(network, statelevels = c("S", "I", "R")) {
+  setNames(sapply(statelevels, function(s) length(V(network)[state == s])), statelevels)
 }
 
-convert_to_state_record <- function(network_record) lapply(network_record, state_record)
+convert_to_state_record <- function(network_record) {
+  s <- sapply(network_record, state_record)
+  s <- rbind(t = 1:dim(s)[2], s)
+  as.data.table(t(s))
+}
+
+sample_reed_frost <- function(N, p, n) rbindlist(
+  lapply(1:n, function(i) {
+    set.seed(i);
+    return(convert_to_state_record(run_reed_frost(N, p)))
+  }), idcol = "sample"
+)
 
 plot_network_record <- ...produce animation of network record along side a state record time series
 
