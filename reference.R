@@ -77,7 +77,7 @@ sampler <- function(num_samples, simfunc, observef, ...) {
   }))))
 }
 
-rf_observer <- function(res) c(duration = dim(res)[2]-1, final_size = tail(res,1)[3])
+rf_observer <- function(res) c(duration = dim(res)[1]-1, final_size = tail(res,1)[3])
 
 
 #' plotter
@@ -103,3 +103,81 @@ plotter <- function(simulator_A, simulator_B = chainbinom_sim, samples=100, labe
 }
 
 refgraphs <- list.files(path="../graphs", pattern = "*.csv", full.names = T)
+
+#' Plot duration vs. final size
+#' 
+#' @param sampler_output Output from sampler function: data.frame with three columns (sample, duration and final_size)
+#' 
+#' @return ggplot plot of duration vs. final size, with univariate distributions
+#' 
+plot_dur_size <- function(sampler_output) {
+  
+  # Used for testing only, please delete
+  # sampler_output <- sampler(num_samples = 1000, simfunc = igraph_sim, observef = rf_observer, n = 50, p = 0.06)
+  
+  n_total <- nrow(sampler_output)
+  tb_plot <- sampler_output %>%
+    group_by(duration, final_size) %>%
+    summarise(n = n(),
+              .groups = "drop") %>%
+    mutate(p = n/n_total) %>%
+    group_by(duration) %>%
+    mutate(p_duration = sum(n)/n_total) %>%
+    ungroup() %>%
+    group_by(final_size) %>%
+    mutate(p_final_size = sum(n)/n_total) %>%
+    ungroup()
+  max_density <- max(max(tb_plot$p_duration), max(tb_plot$p_final_size))
+
+  g_main <- tb_plot %>%
+    ggplot(aes(x = duration, y = final_size)) +
+    geom_tile(aes(fill = n)) +
+    scale_x_continuous(limits = c(0, NA),
+                       breaks = seq(0, max(sampler_output$duration), 4),
+                       expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, NA),
+                       breaks = seq(0, max(sampler_output$final_size), 10),
+                       expand = c(0, 0)) +
+    scale_fill_distiller(palette = "Reds", direction = 1) +
+    labs(x = "Duration",
+         y = "Final size") +
+    theme_bw() +
+    theme(legend.position = "none",
+          axis.line = element_line(size = 0.5),
+          panel.border = element_blank())
+  
+  g_hist_duration <- sampler_output %>%
+    ggplot(aes(x = duration, y = ..density..)) +
+    geom_histogram(binwidth = 1, fill = "grey60") +
+    scale_x_continuous(limits = c(0, NA),
+                       breaks = seq(0, max(sampler_output$duration), 4),
+                       expand = c(0, 0)) +
+    scale_y_continuous(limits = c(0, max_density), breaks = seq(0, 1, 0.1)) +
+    labs(x = "",
+         y = "Density") +
+    theme_classic() +
+    theme(axis.text.x = element_blank(),
+          axis.line = element_line(size = 0.5))
+  
+  g_hist_size <- sampler_output %>%
+    ggplot(aes(y = final_size, x = ..density..)) +
+    geom_histogram(binwidth = 1, fill = "grey60") +
+    scale_x_continuous(limits = c(0, max_density), breaks = seq(0, 1, 0.1)) +
+    scale_y_continuous(limits = c(0, NA),
+                       breaks = seq(0, max(sampler_output$final_size), 10),
+                       expand = c(0, 0)) +
+    labs(x = "Density",
+         y = "") +
+    theme_classic() +
+    theme(axis.text.y = element_blank(),
+          axis.line = element_line(size = 0.5))
+  
+  g_hist_duration + patchwork::plot_spacer() + g_main + g_hist_size +
+    patchwork::plot_layout(ncol = 2,
+                           nrow = 2,
+                           widths = c(4, 1),
+                           heights = c(1, 4))
+  
+  return(out)
+  
+}
