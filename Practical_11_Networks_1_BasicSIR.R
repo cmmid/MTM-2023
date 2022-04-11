@@ -1,24 +1,58 @@
 
-#' core library
-require(igraph)
-#' for some fast data combination
-require(data.table)
-#' for plotting
-require(ggplot2)
+#' REMINDER: Your TODOs are marked with Q: ...
+#' There are some items marked with SIDEQ: ...
+#' Do NOT consider those until you've gotten to the end of the practical
+#' and A'd all the Q's.
 
-build_network <- function(N, ...) {
+source("reference.R")
+
+#' MTM Networks Practical 1 population builder
+#' 
+#' @param N, the population size of the network
+#' @param ..., other arguments to be ignored
+#'   (defined this way, so it can be used interchangeably with other practicals)
+#' @return an [igraph] graph
+#' 
+#' @examples
+#' pop <- build_network_1(30, 0.1)
+#' plot(pop, vertex.label = NA, vertex.color = SIRcolors[V(pop)$state], edge.width = 0.5) 
+build_network_1 <- function(N, ...) {
+  #' make a network where everyone is connected
   ig <- make_full_graph(N, directed = FALSE)
+  #' start out everyone as susceptible
   V(ig)$state <- "S"
+  #' then introduce infection to one individual. SIDEQ: does it matter which?
   V(ig)[1]$state <- "I"
+  #' randomly draw a transmission value for each edge. SIDEQ: how many times does
+  #' a particular edge between individuals need to be considered for transmission?
+  E(ig)$draw <- runif(ecount(ig))
+  #' define edge attribute for showing transmission
   E(ig)$active <- FALSE
   return(ig)
 }
 
-#' Q: what are the Reed Frost variables & parameters represent in `build_network`?
-#' variables == S & I (and sort of R?)
-#' parameters == N - not yet p
+#' ALT if we go with library version
+#' Examine the `build_network_1` function
+#' ?build_network_1
+build_network_1
 
-state_update <- function(network, p) {
+#' Q: Recalling the definitions from the introductory and Networks MTM sessions,
+#' what Reed Frost model *variables* & *parameters* appear in `build_network_1`?
+#' Which aspects of the Reed-Frost model are represented here?
+#' 
+#' A:
+#' variables: S & I (no R yet)
+#' parameters: N (no p)
+
+#' given an SIR network population, what is the next state under Reed-Frost model?
+#' 
+#' @param network, the population; an [igraph] graph with vertex "state" attribute
+#'   in set {S, I, R}
+#' @param p, the probability of transmission from an infectious individual
+#' @return an update to the input network
+#' 
+#' @examples 
+next_state_1 <- function(network, p) {
   delta <- network
   #' all infectious & susceptible
   infectious_individuals <- V(delta)[state == "I"]
@@ -30,11 +64,11 @@ state_update <- function(network, p) {
   if (length(susceptible_individuals)) {
     #' all the potential transmission routes
     infection_paths <- E(delta)[infectious_individuals %--% susceptible_individuals]
-    #' all the realized transmission routes - random draw against p
-    transmitting_paths <- infection_paths[runif(length(infection_paths)) < p]
+    #' all the realized transmission routes - compare draw to p
+    transmitting_paths <- infection_paths[draw < p]
     if (length(transmitting_paths)) {
       new_infections <- susceptible_individuals[.inc(transmitting_paths)]
-      E(delta)[infection_paths]$active <- TRUE
+      E(delta)[transmitting_paths]$active <- TRUE
       V(delta)[new_infections]$change <- "I"
     }
   }
@@ -42,49 +76,92 @@ state_update <- function(network, p) {
   return(delta)
 }
 
-apply_changes <- function(network, delta) {
-  changedv <- V(delta)[!is.na(change)]
-  V(network)[changedv]$state <- changedv$change
-  E(network)$active <- E(delta)$active
-  return(network)
-}
-
 #' Q: What Reed Frost variables & parameters are needed for state update?
-#' Added R to variables and now need p for parameters (but no longer explicitly thinking in terms of N)
+#' A: Now need all the variables (S, I, & R), as well as p from parameters.
+#' Unlike some versions of SIR, we do NOT consider the population size N,
+#' during the update, but it is implicitly present, via what links exist
 
-still_infectious <- function(network) any(V(network)$state == "I")
 
-#' Q: In Reed Frost, we have the step where all infectious individuals interact with susceptibles.
-#' Thinking in terms of a loop, what kind should we use? Or put another way, what is the stopping
-#' condition for running a Reed-Frost model?
-#' A: are there any infectious individuals left?
+#' Q: Think back to the idea of a "model iteration loop" concept motivating
+#' earlier sessions, how does Reed-Frost work? Which of the loop constructs,
+#' `for` vs `while` is appropriate? Why?
+#' 
+#' Check your intuition against `?run_network_reed_frost` and the function used
+#' in it's loop condition.
+#' 
+#' A: Use a `while` loop, and compute as long as there are any infectious individuals
 
-run_reed_frost <- function(N, p) {
-  network <- build_network(N)
-  network_record <- list(network)
-  while(still_infectious(network)) {
-    delta <- state_update(network, p)
-    network <- apply_changes(network, delta)
-    network_record <- c(list(network), network_record)
-  }
-  return(rev(network_record))
-}
+#' Now let's consider an example run of the Reed-Frost model implemented on a
+#' network:
+sim_example <- run_network_reed_frost(
+  #' the Reed-Frost transmission probability
+  p = 0.1,
+  # setup a population
+  current_network = build_network_1(N=30),
+  # function to calculate the next state in the model iteration loop
+  deltafun = next_state_1
+)
 
-state_record <- function(network, statelevels = c("S", "I", "R")) {
-  setNames(sapply(statelevels, function(s) length(V(network)[state == s])), statelevels)
-}
+#' we can look at the resulting epidemic in summary
+#' :
+state_example <- flatten_network_storage(sim_example)
+state_example
 
-convert_to_state_record <- function(network_record) {
-  s <- sapply(network_record, state_record)
-  s <- rbind(t = 1:dim(s)[2], s)
-  as.data.table(t(s))
-}
 
-sim_example <- run_reed_frost(30, 0.05)
-state_example <- convert_to_state_record(sim_example)
+
+
+
+
+
+
+
+
+
+
 
 #' produce animation of network record along side a state record time series
-plot_network_record <- function(sim_output) {
+plot_network_series <- function(sim_output) {
+  init <- sim_output[[1]]
+  pl <- layout_(init, with_fr(coords = layout_as_star(init)), normalize())
+  colnames(pl) <- c("vx", "vy")
+  epairs <- as_edgelist(init)
+  starts <- pl[epairs[,1],]
+  colnames(starts) <- paste0(colnames(starts), ".start")
+  ends <- pl[epairs[,2],]
+  colnames(ends) <- paste0(colnames(ends), ".end")
+  e.ref <- as.data.table(cbind(starts, ends))
+  v.ref <- as.data.table(pl)
+  e.active <- rbindlist(lapply(
+    sim_output, function(net) e.ref[E(net)[active == TRUE], ]
+  ), idcol = "time")[, time := time - 1L ]
+  v.states <- rbindlist(lapply(
+    sim_output, function(net) v.ref[, .(vx, vy, state = V(net)$state) ]
+  ), idcol = "time")
+  
+  geom_net <- function(tm) list(
+    geom_segment(
+      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
+      e.ref,
+      size = 0.25, alpha = 0.5
+    ),
+    geom_segment(
+      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = time),
+      e.active[time %in% tm],
+      size = 0.75, alpha = 1
+    ),
+    geom_point(
+      aes(vx, vy, color = state, size = state, group = time),
+      v.states[time %in% tm]
+    ),
+    scale_color_manual(guide = "none", values = c(SIRcolors, c(active="red", inactive="grey"))),
+    scale_size_manual(guide = "none", values = c(S=1, I=3, R=1))
+  )
+  
+  return(ggplot() + geom_net(1) + coord_equal() + theme_minimal() + theme(
+    axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+    axis.title = element_blank(), panel.grid = element_blank(),
+    legend.position = "none"
+  ))
   
 }
 
@@ -92,12 +169,9 @@ plot_network_record <- function(sim_output) {
 
 #' step 2, do a bunch of samples, look at duration + final size plot
 
-sample_reed_frost <- function(N, p, n) rbindlist(
-  lapply(1:n, function(i) {
-    set.seed(i);
-    return(convert_to_state_record(run_reed_frost(N, p)))
-  }), idcol = "sample"
-)
+samples.dt <- sample_reed_frost(n=1000, N=30, p=0.1, setupfun = build_network_1, deltafun = next_state_1)
+
+plot_dur_size(samples.dt)
 
 
 #' Q: what do you notice about these distributions?
@@ -125,126 +199,3 @@ sample_reed_frost <- function(N, p, n) rbindlist(
 
 ...provide skeleton not code here
 
-
-# a) Create plots of your network for N=6 and N=30.
-# (hint: this should tell you what arguments build_network(...) needs)
-# Answer:
-plot(build_network(
-  #### <YOUR CODE HERE> ####
-))
-plot(build_network(
-  #### <YOUR CODE HERE> ####
-))
-
-# With `build_network`, we can make the simulation population, but we also need to
-# regularly check it's *state* during the simulation - i.e., how many people are S vs I vs R
-# We can do that by counting the vertices that are S vs I vs R
-# With the right filter in ..., you can use length(V(ig)[...]) to get the pertinent info
-network_state_totals <- function(ig) {
-  return(c(
-    S= #### <YOUR CODE HERE> ####
-    ,I= #### <YOUR CODE HERE> ####
-    ,R= #### <YOUR CODE HERE> ####
-  ))
-}
-
-# b) test that your function returns sensible things
-# Answer:
-network_state_totals(build_network(
-  #### <YOUR CODE HERE> ####
-)) == #### <YOUR CODE HERE> ####
-
-# Like other stochastic simulations, your Reed-Frost SIR simulation will run until
-# there would be no state changes.  What should you check for here?
-still_infectious <- function(ig) {
-  return(length(V(ig)[
-    #### <YOUR CODE HERE> ####
-  ]))
-}
-
-# c) test that your function returns sensible things
-# Answer:
-still_infectious(build_network(
-  #### <YOUR CODE HERE> ####
-)) == #### <YOUR CODE HERE> ####
-
-
-# Now you need to fill in this simulation function skeleton. You may 
-# Make sure your function n, p, and i arguments, corresponding to
-#  n - number of individuals
-#  p - transmission probability
-#  i - random number seed
-# and returns a matrix with three columns and at least two rows
-igraph_sim <- function(n, p, i) {
-  set.seed(i)
-  # create the network using your function + the appropriate arguments from n, p, i
-  ig <- build_network(
-    #### <YOUR CODE HERE> ####
-  )
-  
-  # initially, all the vertices but one should be susceptible,
-  # with that one infectious
-  # Aside: does it matter which one is infectious?
-  V(ig)[
-    #### <YOUR CODE HERE> ####
-  ]$state <- #### <YOUR CODE HERE> ####
-  
-  # this sets aside a data structure to record simulation steps
-  # inspect result & rf_prealloc from the Rstudio console prompt to understand
-  # that structure better
-  # see reference.R for a bit more explanation
-  result <- rf_prealloc(n)
-  tm <- 1
-  
-  # We're going to be working with the infectious and susceptible individuals
-  # recall from the warmup how to list vertices for an igraph (or ?V)
-  # and how to get only the ones that have a particular attribute (in our case "state")
-  # run the Reed-Frost simulation
-  
-  while(still_infectious(ig)) { # while there are still infectives...
-    result[tm,] <- network_state_totals(ig) # store the current state of the population
-    
-    infective_individuals <- V(ig)[
-      #### <YOUR CODE HERE> ####
-    ] # get a vertex list of all the Is
-    susceptible_individuals <- V(ig)[
-      #### <YOUR CODE HERE> ####
-    ] # and similar for getting all the Ss
-    
-    # If you know a set of "source" vertices (infectious individuals) and possible
-    # "target" vertices (susceptible individuals), you can use indexing functions
-    # (see ?E then follow the link on indexing for more info) to get
-    # all the edges between them, which represent the possible transmission paths
-    infection_paths <- E(ig)[
-      #### <YOUR CODE HERE> ####
-    ]
-
-    transmitting_paths <- #### <YOUR CODE HERE> #### # randomly sample infection_paths to see which edges transmitted infections
-    new_infections <- #### <YOUR CODE HERE> #### # from the transmission paths, identify which individuals will become infectious
-    
-    # now update the simulation state
-    V(ig)[
-      #### <YOUR CODE HERE> ####
-    ]$state <- "R"
-    V(ig)[
-      #### <YOUR CODE HERE> ####
-    ]$state <- "I"
-    tm <- #### <YOUR CODE HERE> ####
-    
-  }
-  result[
-    #### <YOUR CODE HERE> ####
-  ] <- network_state_totals(ig) # record final step
-  
-  # return the results, after trimming them with a function from reference.R
-  return(rf_trim(result))
-}
-
-# The `plotter` function is defined in reference
-resultplot <- plotter(
-  simulator_A = igraph_sim, # your simulator
-  samples = 100, # how many times to run the two sims
-  n = 50, p = .05 # the Reed-Frost model parameters: population size, and transmission probability
-)
-
-print(resultplot)
