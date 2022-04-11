@@ -107,63 +107,9 @@ sim_example <- run_network_reed_frost(
 state_example <- flatten_network_storage(sim_example)
 state_example
 
-
-
-
-
-
-
-
-
-
-
-
+plot_network_series(sim_example)
 
 #' produce animation of network record along side a state record time series
-plot_network_series <- function(sim_output) {
-  init <- sim_output[[1]]
-  pl <- layout_(init, with_fr(coords = layout_as_star(init)), normalize())
-  colnames(pl) <- c("vx", "vy")
-  epairs <- as_edgelist(init)
-  starts <- pl[epairs[,1],]
-  colnames(starts) <- paste0(colnames(starts), ".start")
-  ends <- pl[epairs[,2],]
-  colnames(ends) <- paste0(colnames(ends), ".end")
-  e.ref <- as.data.table(cbind(starts, ends))
-  v.ref <- as.data.table(pl)
-  e.active <- rbindlist(lapply(
-    sim_output, function(net) e.ref[E(net)[active == TRUE], ]
-  ), idcol = "time")[, time := time - 1L ]
-  v.states <- rbindlist(lapply(
-    sim_output, function(net) v.ref[, .(vx, vy, state = V(net)$state) ]
-  ), idcol = "time")
-  
-  geom_net <- function(tm) list(
-    geom_segment(
-      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
-      e.ref,
-      size = 0.25, alpha = 0.5
-    ),
-    geom_segment(
-      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = time),
-      e.active[time %in% tm],
-      size = 0.75, alpha = 1
-    ),
-    geom_point(
-      aes(vx, vy, color = state, size = state, group = time),
-      v.states[time %in% tm]
-    ),
-    scale_color_manual(guide = "none", values = c(SIRcolors, c(active="red", inactive="grey"))),
-    scale_size_manual(guide = "none", values = c(S=1, I=3, R=1))
-  )
-  
-  return(ggplot() + geom_net(1) + coord_equal() + theme_minimal() + theme(
-    axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-    axis.title = element_blank(), panel.grid = element_blank(),
-    legend.position = "none"
-  ))
-  
-}
 
 #' first do a single network to get a feel what's conceptual framework
 
@@ -172,7 +118,6 @@ plot_network_series <- function(sim_output) {
 samples.dt <- sample_reed_frost(n=1000, N=30, p=0.1, setupfun = build_network_1, deltafun = next_state_1)
 
 plot_dur_size(samples.dt)
-
 
 #' Q: what do you notice about these distributions?
 #' want to elicit that there is extinction (close to zero final size lump) + there are outbreaks (bigger, non-zero lump)
