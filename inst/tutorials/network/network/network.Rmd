@@ -1,0 +1,126 @@
+---
+title: "MTM: Networks Session"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(MTM)
+library(igraph)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Warmup
+
+For this, you should generally run the code, examine the results, and then answer the questions individually or amongst a small group.
+
+Some questions entail changing or filling in missing function arguments. These are marked with `\`???\`("Explanatory message.")` placeholders.
+
+For some of those, we suggest relevant functions with "hint: ?FUNCTION", as in `?FUNCTION` will prompt you with the documentation of a function that may be useful
+
+There are some items marked with ASIDE; do *not* bother with these until you have finished all the material in the exercise. They are intended as extensions.
+
+Finally, this material is written using the `igraph` library. There are other libraries that provide the same basic functionality, but via different approaches, e.g. `networkx`
+
+### Exercise A
+
+The igraph library has several functions to create common network structures, including both deterministic ones (**e.g.** fully connected graphs) and probabilistic generators (**e.g.** Erdos-Renyi random graphs)
+
+In `igraph`, the general convention is that the deterministic functions start with `make_...`, and the probabilistic generators start with `sample_...`. You can see a list of the options by `??igraph::make_` and `??igraph::sample_`.
+
+
+```{r intro_networks, exercise=TRUE}
+ig10 <- make_full_graph(n = 10)
+ig30 <- make_full_graph(n = 30)
+ig10layout <- layout_with_graphopt(ig10)
+ig30layout <- layout_with_graphopt(ig30)
+plot(ig10, layout = ig10layout); print(ig10)
+plot(ig30, layout = ig30layout); print(ig30)
+
+ig10gnp <- sample_gnp(10, 0.2)
+ig30gnp <- sample_gnp(30, 0.2)
+plot(ig10gnp, layout = ig10layout); print(ig10gnp)
+plot(ig30gnp, layout = ig30layout); print(ig30gnp)
+```
+
+```{r intro_networks_A_quiz}
+quiz(
+  question("Describe the graphs these functions create.", answer("", correct = TRUE), type = "learnr_text")
+)
+```
+
+### ASIDE
+
+Note that by default, plotting an igraph object gives a different layout each time
+
+```{r intro_networks_aside, exercise=TRUE}
+plot(ig10); plot(ig10) # compare these two
+#' To get the same plot, you can generate a layout for a graph (as above)
+plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two 
+#' this can be useful for comparing across graphs as well
+plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
+
+```
+
+### Exercise 
+
+*Here's a simple exercise with an empty code chunk provided for entering the answer.*
+
+Write the R code required to add two plus two:
+
+```{r two-plus-two, exercise=TRUE}
+
+```
+
+### Exercise with Code
+
+*Here's an exercise with some prepopulated code as well as `exercise.lines = 5` to provide a bit more initial room to work.*
+
+Now write a function that adds any two numbers and then call it:
+
+```{r add-function, exercise=TRUE, exercise.lines = 5}
+add <- function() {
+  
+}
+```
+
+## Topic 2
+
+### Exercise with Hint
+
+*Here's an exercise where the chunk is pre-evaulated via the `exercise.eval` option (so the user can see the default output we'd like them to customize). We also add a "hint" to the correct solution via the chunk immediate below labeled `print-limit-hint`.*
+
+Modify the following code to limit the number of rows printed to 5:
+
+```{r print-limit, exercise=TRUE, exercise.eval=TRUE}
+mtcars
+```
+
+```{r print-limit-hint}
+head(mtcars)
+```
+
+### Quiz
+
+*You can include any number of single or multiple choice questions as a quiz. Use the `question` function to define a question and the `quiz` function for grouping multiple questions together.*
+
+Some questions to verify that you understand the purposes of various base and recommended R packages:
+
+```{r quiz}
+quiz(
+  question("Which package contains functions for installing other R packages?",
+    answer("base"),
+    answer("tools"),
+    answer("utils", correct = TRUE),
+    answer("codetools")
+  ),
+  question("Which of the R packages listed below are used to create plots?",
+    answer("lattice", correct = TRUE),
+    answer("tools"),
+    answer("stats"),
+    answer("grid", correct = TRUE)
+  )
+)
+```
+
