@@ -1,14 +1,4 @@
-#' @importMethodsFrom igraph, data.table, ggplot2, gganimate, patchwork
-
-#' TODO
-#' need to determine a naming convention that will work across sessions
-#' require: useful function names (concise, indicative of use, etc), that ALSO
-#'   enable quick lookup by session
-#' desire: stable against future revisions to course schedule (e.g. reordering
-#'   sessions); ideally prefix based to enable `?MTM::SESSION_` to suggest
-#'
-#' Preliminary solution: short, "nickname" prefix by session
-#' Using `network_` for network session functions
+#' @import igraph data.table ggplot2 gganimate patchwork
 
 #' @export
 SIRcolors <- c(S = "dodgerblue", I = "firebrick", R = "forestgreen")
@@ -52,11 +42,11 @@ network_check_changes <- function(ig) stopifnot(
 network_update <- function(
   network, changes
 ) {
-  #' get the subset of vertices with changed state
+  # get the subset of vertices with changed state
   changedv <- V(changes)[!is.na(change)]
-  #' if there are any updates ...
+  # if there are any updates ...
   if (length(changedv)) {
-    #' apply them to original network
+    # apply them to original network
     V(network)[changedv]$state <- changedv$change
     E(network)$active <- E(changes)$active
   }
@@ -96,31 +86,31 @@ network_next_state <- function(
   network, p
 ) {
   delta <- network
-  #' the individuals that are infectious or susceptible,
-  #' as igraph vertex sets
+  # the individuals that are infectious or susceptible,
+  # as igraph vertex sets
   infectious <- V(delta)[state == "I"]
   susceptible <- V(delta)[state == "S"]
   # all infectious individuals will recover
   V(delta)[infectious]$change <- "R"
-  #' whatever happened previously now over
+  # whatever happened previously now over
   E(delta)$active <- FALSE
 
   # if there are infectious & susceptible individuals
   if (length(susceptible) & length(infectious)) {
-    #' find all the transmission routes
-    #' first find potential paths; `%->%` selects all edges from
-    #' a left-hand-side vertex set (i.e. infectious)
-    #' to a right-hand-side vertex set (i.e. susceptible)
-    #' then, within the possible transmission routes, a subset will occur randomly
+    # find all the transmission routes
+    # first find potential paths; `%->%` selects all edges from
+    # a left-hand-side vertex set (i.e. infectious)
+    # to a right-hand-side vertex set (i.e. susceptible)
+    # then, within the possible transmission routes, a subset will occur randomly
     transmitting_paths <- E(delta)[
       infectious %->% susceptible
     ][
       draw < p
     ]
 
-    #' there are any transmitting paths
+    # there are any transmitting paths
     if (length(transmitting_paths)) {
-      #' infect all the individuals at the ends of those paths
+      # infect all the individuals at the ends of those paths
       new_infections <- susceptible_individuals[.inc(transmitting_paths)]
       E(delta)[transmitting_paths]$active <- TRUE
       V(delta)[new_infections]$change <- "I"
@@ -173,7 +163,7 @@ network_run_reed_frost <- function(
   initial_network,
   updatefun = network_next_state
 ) {
-  #' initialize storage
+  # initialize storage
   current_network <- initial_network
   network_storage  <- list(current_network)
   while(network_is_infectious(current_network)) {
@@ -207,8 +197,8 @@ sample_reed_frost <- function(n, N, p, setupfun, deltafun) rbindlist(
 )
 
 plot_dur_size <- function(s.dt) {
-  #' assert: s.dt is ordered by t, and last entry by sample corresponds to end o
-  #' assert: samples is 1:N
+  # assert: s.dt is ordered by t, and last entry by sample corresponds to end o
+  # assert: samples is 1:N
   ref.dt <- s.dt[,.(duration=t[.N]-1, final_size = R[.N]), keyby=sample]
   samples <- ref.dt[, sample[.N]]
 
