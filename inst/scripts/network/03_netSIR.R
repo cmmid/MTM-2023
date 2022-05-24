@@ -1,4 +1,36 @@
 
+require(MTM)
+
+split_network_build <- function(N, p) {
+  n1 <- as.integer(N/2)
+  n2 <- N-n1
+  e1 <- (n1^2-n1)/2
+  e2 <- (n2^2-n2)/2
+  etot <- (N^2-N)/2
+  # (e1 + e2)*psub + 1 == etot*p =>
+  psub <- max(min((etot*p-1)/(e1 + e2), 1), 0)
+
+  net1 <- network_percolate(network_build(n1, psub))
+  net2 <- network_percolate(network_build(n2, psub))
+
+
+}
+
+partition_network <- function(N, p) {
+  n1 <- as.integer(N/2)
+  n2 <- N-n1
+
+  ig1 <- percolate_graph(make_full_graph(n1), psub)
+  ig2 <- percolate_graph(make_full_graph(n2), psub)
+
+  igcombo <- add_edges(ig1 + ig2, c(sample(n1, 1), sample(n2, 1)+n1))
+
+  V(igcombo)$state <- "S"
+  V(igcombo)[1]$state <- "I"
+  E(igcombo)$active <- FALSE
+
+}
+
 #' we're going to need to know the number of edges
 #' in a full graph. could get it from the igraph objects
 #' but it's also a succinct formula
@@ -18,7 +50,7 @@ build_network <- function(N, p) {
   #' building two network partitions & then combining them
   n1 <- as.integer(N/2)
   n2 <- N-n1
-  
+
   #' these are going to be connected by a single edge,
   #' and accounting for all these non-connections, we still
   #' want the overall connection probability to be `p` on average
@@ -29,13 +61,13 @@ build_network <- function(N, p) {
 
   ig1 <- percolate_graph(make_full_graph(n1), psub)
   ig2 <- percolate_graph(make_full_graph(n2), psub)
-  
+
   igcombo <- add_edges(ig1 + ig2, c(sample(n1, 1), sample(n2, 1)+n1))
-  
+
   V(igcombo)$state <- "S"
   V(igcombo)[1]$state <- "I"
   E(igcombo)$active <- FALSE
-  
+
   return(igcombo)
 }
 
@@ -48,19 +80,19 @@ state_update <- function(network, ...) {
   # all infectious individuals will recover
   V(delta)[infectious_individuals]$change <- "R"
   E(delta)$active <- FALSE #' whatever happened previously now over
-  
+
   if (length(susceptible_individuals)) {
     # Identify S-I edges
     transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
-    
+
     if (length(transmitting_paths)) {
       # Newly infected nodes
       new_infections <- susceptible_individuals[.inc(transmitting_paths)]
       E(delta)[infection_paths]$active <- TRUE
       V(delta)[new_infections]$change <- "I"
-    }    
+    }
   }
-  
+
   return(delta)
 }
 

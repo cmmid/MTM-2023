@@ -1,7 +1,21 @@
 
+
+#' In the previous exercise, we used a network, but there wasn't
+#' actually much structure - each individual in the population was
+#' connected to everyone else. That effectively results in the same
+#' outcome as the Reed-Frost model *without* any network structure.
+#'
+#' In this exercise,
+
+alt_network_build <- function(N, p) {
+  return(network_percolate(network_build(N, p)))
+}
+
+
+
 #' the probability here is the probability of infection -
 #' i.e. the probability of contact being effectively infectious.
-#' 
+#'
 #' so we're going to *remove* edges, with 1-p of infection
 percolate_graph <- function(ig, p) {
   remove_edges <- E(ig)[ runif(ecount(ig)) < (1-p) ]
@@ -31,17 +45,17 @@ state_update <- function(network, ...) {
   # all infectious individuals will recover
   V(delta)[infectious_individuals]$change <- "R"
   E(delta)$active <- FALSE #' whatever happened previously now over
-  
+
   if (length(susceptible_individuals)) {
     # Identify S-I edges
     transmitting_paths <- E(network)[susceptible_individuals %--% infected_individuals]
-    
+
     if (length(transmitting_paths)) {
       # Newly infected nodes
       new_infections <- susceptible_individuals[.inc(transmitting_paths)]
       E(delta)[infection_paths]$active <- TRUE
       V(delta)[new_infections]$change <- "I"
-    }    
+    }
   }
 
   return(delta)

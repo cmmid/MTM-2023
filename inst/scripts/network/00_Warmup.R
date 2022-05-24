@@ -1,24 +1,28 @@
+#' require the MTM library to get generic course support functions / definitions
+#' also require igraph for network items
+require(MTM)
+require(igraph)
+
+#' TODO remove this guidance? shift it to some utility function?
 
 #' For the code below, the general guidance is to run the code,
 #' check the results in the console or plots tab, and then
 #' answer the questions yourself or amongst a small group.
-#' 
+#'
 #' Answering some of the questions will entail changing function
 #' arguments or filling in missing arguments. These are marked
 #' with `???` placeholders.
-#' 
+#'
 #' For some of those, we suggest relevant functions with
 #' "hint: ?FUNCTION", as in `?FUNCTION` will prompt you with the
 #' documentation of a function that may be useful
-#' 
+#'
 #' There are some items marked with ASIDE; you may wish to save
 #' these until after the course to explore.
-#' 
+#'
 #' Lastly, this material is written using the `igraph` library.
 #' There are other libraries that provide the same basic
 #' functionality, but via different approaches, e.g. `networkx`
-
-require(igraph)
 
 ##################### PART A ################################
 
@@ -26,7 +30,7 @@ require(igraph)
 #' network structures, including both deterministic ones
 #' (e.g. fully connected graphs) and probabilistic generators
 #' (e.g. Erdos-Renyi random graph)
-#' 
+#'
 #' In igraph, the general convention is that the deterministic
 #' functions start `make_...`, and the probabilistic generators
 #' start `sample_...`
@@ -50,7 +54,7 @@ plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 plot(ig10); plot(ig10) # compare these two
 #' To get the same plot, you can generate a layout for a
 #' graph (as we do above)
-plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two 
+plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two
 #' this can be useful for comparing across graphs as well
 plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
 
@@ -61,7 +65,7 @@ plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
 #' are not typically sufficient to get networks that exactly
 #' match our models. For that, there are tools to add/delete
 #' edges and vertices, to merge graphs, and so on.
-#' 
+#'
 #' We will show some highlights here.
 
 #' delete every other edge
@@ -99,7 +103,7 @@ plot(make_star(30, mode = "undirected"), layout = ig30layout)
 #' the infectious disease phenomena. In `igraph`, we can assign
 #' both vertices and edges essentially as many attributes as we
 #' can imagine.
-#' 
+#'
 #' There are also the `V(g)[...]` and `E(g)[...]` functions for
 #' accessing the `V`ertices and `E`dges that match the properties
 #' in the `[...]` block (much like using `which(...)` from base R)
@@ -111,7 +115,7 @@ V(ig10)$state <- "S"
 V(ig10)[1]$state <- "I"
 
 #' there are some special attributes that get used in plotting, e.g.
-#' `color`. We can use our model attributes to decide how to set 
+#' `color`. We can use our model attributes to decide how to set
 #' those special attributes if we want to visualize what we've done
 V(ig10)$color <- "dodgerblue"
 V(ig10)[state == "I"]$color <- "firebrick"
@@ -127,7 +131,7 @@ V(ig30)$color <- "dodgerblue"
 V(ig30)[state == "I"]$color <- "firebrick"
 plot(ig30, layout = ig30layout)
 
-#' 
+#'
 
 #' use vertex and edge properties
 #' in particular, we should give them code that will visualize SIR & transmission pathways
@@ -140,7 +144,7 @@ plot(ig30, layout = ig30layout)
 #' vertex and edge selection based on indices / typical true/false selection
 #' also with `sample`?
 
-#' Q: how could you randomly sample vertices that are ...? 
+#' Q: how could you randomly sample vertices that are ...?
 
 #' vertex and edge selection based on network properties
 ...self-selection

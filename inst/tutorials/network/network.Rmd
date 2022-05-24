@@ -20,11 +20,11 @@ knitr::opts_chunk$set(echo = FALSE)
 
 For this, you should generally run the code, examine the results, and then answer the questions individually or amongst a small group.
 
-Some questions entail changing or filling in missing function arguments. These are marked with `\`???\`("Explanatory message.")` placeholders.
+Some questions entail changing or filling in missing function arguments. These are indicated with `TODO("Explanatory message.")` placeholders.
 
-For some of those, we suggest relevant functions with "hint: ?FUNCTION", as in `?FUNCTION` will prompt you with the documentation of a function that may be useful
+In some places, we suggest relevant functions by "hint: ?FUNCTION". At the console, you can invoke `?FUNCTION` -- to see the documentation -- or `FUNCTION` (no parentheses) -- to see the function body. Only the latter will work in `learnr` exercise blocks.
 
-There are some items marked with ASIDE; do *not* bother with these until you have finished all the material in the exercise. They are intended as extensions.
+There are some sections marked with *ASIDE*; do _not_ bother with these until you have finished all other material in the exercise. They are intended as extensions if you finish the core exercise in the alloted time or wish to revisit the material later.
 
 Finally, this material is written using the `igraph` library. There are other libraries that provide the same basic functionality, but via different approaches, e.g. `networkx`
 
@@ -90,7 +90,42 @@ add <- function() {
 }
 ```
 
-## Topic 2
+## SIR on a Network, Part 1
+
+Now that we have some familiarity with how `igraph` works for representing networks, we can turn our attention to using those representations to model infectious disease dynamics.
+
+Recalling the earlier course materials defining _variables_ and _parameters_, as well as the Network session materials describing the Reed-Frost *SIR* model:
+
+What are the _variables_ and _parameters_ in the Reed-Frost model? What is the `network_build` function (from `MTM` package) doing to capture those?
+
+```{r parti_var_and_par_quiz}
+quiz(
+  question_freeresponse(
+    "Which *parameters* are present?",
+    "_N_, the size of the population & _p_, the probability of transmission from infectious individuals during a time step."
+  ),
+  question_freeresponse(
+    "Which *variables* are present?",
+    "_S_, the susceptibles & _I_, the infectious; _R_ is also present in a definition sense, though no individuals in the population are in _R_ initially."
+  )
+)
+```
+
+HINT: Use this block to examine that function, by printing the function body or by examining the function arguments.
+
+```{r p1_network_build, exercise = TRUE}
+network_build
+```
+
+
+#' A:
+#' variables: S & I (no R yet)
+#' parameters: N (no p)
+
+
+## SIR on a Network, Version 2
+
+## SIR on a Network, Version 3
 
 ### Exercise with Hint
 
