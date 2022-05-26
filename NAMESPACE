@@ -3,6 +3,7 @@
 export(SIRcolors)
 export(TODO)
 export(launch)
+export(network_animate_series)
 export(network_build)
 export(network_flatten)
 export(network_flatten_run)

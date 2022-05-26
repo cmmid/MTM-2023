@@ -1,4 +1,5 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
+NULL
 
 network_check_Np <- function(N, p) stopifnot(
   "'N' must be an integer." = is.integer(N) || (N == as.integer(N)),
@@ -8,6 +9,28 @@ network_check_Np <- function(N, p) stopifnot(
   "'p' must be a probability." = between(p, 0, 1),
   "'p' must be a scalar." = length(p) == 1
 )
+
+network_check_attributes <- function(network) stopifnot(
+  "'network' is an igraph." = is.igraph(network),
+  "'network' has a graph attribute 'p'." = "p" %in% graph_attr_names(network),
+  "'network' graph attribute 'p' is a probability." = between(network$p, 0, 1),
+  "'network' edges all have attribute 'draw', a probability" = all(between(E(network)$draw, 0, 1))
+)
+
+# network_check_changes <- function(ig) stopifnot(
+#   is.igraph(ig),
+#   "change" %in% names(vertex_attr(ig)),
+#   all(vertex_attr(ig, "change", V(ig)[!is.na(change)]) %in% ig$states)
+# )
+#
+# network_check <- function(
+#   network
+# ) stopifnot(
+#   is.igraph(network),
+#   "state" %in% names(vertex_attr(network)),
+#   all(vertex_attr(network, "state") %in% network$states),
+#   all(c("draw", "active") %in% names(edge_attr(network)))
+# )
 
 #' @title base SIR network for networks exercises
 #'
@@ -25,7 +48,7 @@ network_check_Np <- function(N, p) stopifnot(
 network_build <- function(
   N, p
 ) {
-  network_check_Np(N, p)
+  network_check_Np(N, p) # MTM internal validation function
   network <- make_full_graph(N, directed = FALSE) # make a network where everyone is connected
 
   # define model states
@@ -37,17 +60,14 @@ network_build <- function(
   # ASIDE: does it matter which individual is set to "I"?
   # ASIDE: We used `V(network)$state <- "S"` because its more obvious for beginners
   # what that means. However, why might e.g. `V(network)$state <- network$states[1]`
-  # be preferable? Where else in this function definition does that sort of
-  # pattern apply?
+  # be preferable? Where else in the `MTM::network_...` function definitions
+  # does that sort of pattern apply?
 
-
-  # randomly draw a transmission value for each edge.
-  E(network)$draw <- runif(ecount(network)) <= p
+  E(network)$draw <- runif(ecount(network)) <= p # randomly draw a transmission value for each edge.
   # ASIDE: how many times does a particular connection between individuals need
   # to be considered for transmission?
 
-  # define edge attribute for showing transmission
-  E(network)$active <- FALSE
+  E(network)$active <- FALSE  # define edge attribute for showing transmission
 
   return(network)
 }
@@ -64,41 +84,10 @@ network_build <- function(
 network_percolate <- function(
   network
 ) {
-  stopifnot(
-    "'ig' is an igraph." = is.igraph(network),
-    "'ig' has a graph attribute 'p'." = "p" %in% graph_attr_names(network),
-    "'ig' graph attribute 'p' is a probability." = between(network$p, 0, 1),
-    "'ig' edges all have attribute 'draw', a probability" = all(between(E(network)$draw, 0, 1))
-  )
-  remove_edges <- E(network)[ draw < (1-network$p) ]
-  network$p <- 1
+  network_check_attributes(network)
+  remove_edges <- E(network)[ draw == FALSE ]
   return(delete_edges(network, remove_edges))
 }
-
-#' not exported; only for checking, which course participants should have to
-#' engage with
-#'
-#' @param ig the object to check; want: an igraph, with pertinent properties
-#' @return NULL
-network_check <- function(
-  network
-) stopifnot(
-  is.igraph(network),
-  "state" %in% names(vertex_attr(network)),
-  all(vertex_attr(network, "state") %in% network$states),
-  all(c("draw", "active") %in% names(edge_attr(network)))
-)
-
-#' not exported; only for checking, which course participants should have to
-#' engage with
-#'
-#' @param ig the object to check; want: an igraph, with pertinent properties
-#' @return NULL
-network_check_changes <- function(ig) stopifnot(
-  is.igraph(ig),
-  "change" %in% names(vertex_attr(ig)),
-  all(vertex_attr(ig, "change", V(ig)[!is.na(change)]) %in% ig$states)
-)
 
 #' @title compute a new network from initial states & changes
 #'
@@ -125,23 +114,6 @@ network_update <- function(
     E(network)$active <- E(changes)$active
   }
   return(network)
-}
-
-#' @title check if there any infectious individuals in network
-#'
-#' @param network an igraph, the network
-#'
-#' @return a logical scalar
-#'
-#' @examples
-#' population <- network_build_basic(N = 30, p = 0.1)
-#' # TODO
-#'
-#' @export
-network_is_infectious <- function(
-  network
-) {
-  return(length(V(network)[state %in% network$inf_states]) > 0)
 }
 
 #' @title given an SIR network population, what is the next state under Reed-Frost model?
@@ -171,18 +143,18 @@ network_next_state <- function(
 
   # if there are infectious & susceptible individuals
   if (length(susceptible) & length(infectious)) {
-    # find all the transmission routes
-    # first find potential paths; `%->%` selects all edges from
-    # a left-hand-side vertex set (i.e. infectious)
-    # to a right-hand-side vertex set (i.e. susceptible)
-    # then, within the possible transmission routes, a subset will occur randomly
+    # find all the transmission routes:
+    #  1. find potential paths: `%->%` selects all edges from
+    #     a left-hand-side vertex set (i.e. infectious)
+    #     to a right-hand-side vertex set (i.e. susceptible)
+    #  2. along possible transmission routes, some occur
     transmitting_paths <- E(delta)[
       infectious %->% susceptible
     ][
-      draw <= delta$p
+      draw == TRUE
     ]
 
-    # there are any transmitting paths
+    # are there any transmitting paths?
     if (length(transmitting_paths)) {
       # infect all the individuals at the ends of those paths
       new_infections <- susceptible[.inc(transmitting_paths)]
@@ -194,7 +166,22 @@ network_next_state <- function(
   return(delta)
 }
 
-
+#' @title check if there any infectious individuals in network
+#'
+#' @param network an igraph, the population network
+#'
+#' @return a logical scalar
+#'
+#' @examples
+#' population <- network_build_basic(N = 30, p = 0.1)
+#' # TODO
+#'
+#' @export
+network_is_infectious <- function(
+  network
+) {
+  return(length(V(network)[state %in% network$inf_states]) > 0)
+}
 
 #' @title the algorithm to simulate Reed-Frost model on a network
 #'
@@ -249,6 +236,8 @@ network_run_reed_frost <- function(
 }
 
 #' @title flatten a network into its states
+#' 
+#' @param network an igraph, representing population
 #'
 #' @export
 network_flatten <- function(network) return(
@@ -256,7 +245,12 @@ network_flatten <- function(network) return(
 )
 
 #' @title flatten a simulated series of networks
-#'
+#' 
+#' @param network_run a list of igraphs, snapshots of the population state
+#' 
+#' @return a \code{\link[data.table]{data.table}}, columns t (integer, 1:n) & one column for each of the each of the network states
+#' (using the `MTM`-provide `network_...` functions, defaults to S, I, & R)
+#' 
 #' @export
 network_flatten_run <- function(network_run) {
   return(as.data.table(t(rbind(t = 1:length(network_run), sapply(network_run, network_flatten)))))
@@ -264,6 +258,14 @@ network_flatten_run <- function(network_run) {
 
 #' @title sample a series of Reed-Frost SIR simulations
 #'
+#' @param n an integer; how many samples?
+#' @inheritParams network_build
+#' @param setup_fun a function to create new networks; must have the same signature as \code{\link{network_build}}
+#' @param update_fun a function to compute the next state; must have the same signature as \code{\link{network_next_state}}
+#' @param ref.seed a random seed reference value; each sample run seed is offset from this value
+#' 
+#' @return a \code{\link[data.table]{data.table}}, columns sample (integer, 1:n) & columns from \code{\link{network_flatten_run}}
+#' 
 #' @export
 network_sample_reed_frost <- function(
   n,
@@ -271,55 +273,70 @@ network_sample_reed_frost <- function(
   setup_fun = network_build,
   update_fun = network_next_state,
   ref.seed = 0
-) rbindlist(
-  lapply(1:n, function(i) {
-    set.seed(i+ref.seed);
-    return(network_flatten_run(network_run_reed_frost(setup_fun(N, p), update_fun)))
-  }), idcol = "sample"
-)
+) {
+  # TODO check parameters
+  return(rbindlist(
+    lapply(1:n, function(i) {
+      set.seed(i + ref.seed);
+      return(network_flatten_run(network_run_reed_frost(setup_fun(N, p), update_fun)))
+    }), idcol = "sample"
+  ))
+}
 
 #' @title plot summary of a series of simulations
 #'
+#' @param s.dt a data.table, of the same structure as returned by \code{\link{network_sample_reed_frost}}
+#'
+#' @return a patchwork'd ggplot object
+#'
 #' @export
 network_plot_histograms <- function(s.dt) {
-  # assert: s.dt is ordered by t, and last entry by sample corresponds to end o
+  # assert: s.dt is ordered by t, and last entry by sample corresponds to end
   # assert: samples is 1:N
-  ref.dt <- s.dt[,.(duration=t[.N]-1, final_size = R[.N]), keyby=sample]
+  ref.dt <- s.dt[, .SD[.N][,.(duration = t-1, final_size = R)], keyby=sample]
   samples <- ref.dt[, sample[.N]]
 
-  heat.dt <- ref.dt[ , .N, by=.(duration, final_size) ]
+  # count data.tables
+  heat.dt     <- ref.dt[, .N, keyby=.(duration, final_size)]
   durahist.dt <- ref.dt[, .N, keyby=.(duration)]
   sizehist.dt <- ref.dt[, .N, keyby=.(final_size)]
 
+  # determine (ceiling rounded) probability of most likely outcome
   max.den <- ceiling(max(durahist.dt$N, sizehist.dt$N)/samples*10)/10
 
-  sx <- scale_x_continuous("Duration", breaks = function(ls) seq(0, ls[2], by=4))
+  # setup reference scales
+  sx <- scale_x_continuous("Duration",   breaks = function(ls) seq(0, ls[2], by=4))
   sy <- scale_y_continuous("Final Size", breaks = function(ls) seq(0, ls[2], by=10))
   sdenx <- scale_x_continuous("Density", breaks = function(ls) seq(0, max.den, by=0.1))
   sdeny <- scale_y_continuous("Density", breaks = function(ls) seq(0, max.den, by=0.1))
-  geom_dens <- function(fill = "grey60", stat = "identity", width = 1, ...) geom_bar(fill=fill, stat=stat, width=width, ...)
+  sdenfill <- scale_fill_distiller("Density", palette = "Reds", direction = 1)
+  coords <- function(xmax = NA, ymax = NA) coord_cartesian(
+    xlim = c(0, xmax), ylim = c(0, ymax), expand = FALSE
+  )
 
+  # convenience geom definition
+  geom_dens <- function(fill = "grey60", stat = "identity", width = 1, ...) geom_bar(fill=fill, stat=stat, width=width, ...)
+  
+  # heat map of duration vs final size outcomes
   p.heat <- ggplot(heat.dt) + aes(duration, final_size, fill = N/samples) +
     geom_tile(alpha = 0.7) +
-    sx + sy +
-    coord_cartesian(xlim = c(0, NA), ylim = c(0, NA), expand = FALSE) +
-    scale_fill_distiller("Density", palette = "Reds", direction = 1) +
-    theme_minimal() +
-    theme(legend.position = c(.95, 0.05), legend.justification = c(1,0))
+    sx + sy + sdenfill + coords() +
+    theme_minimal() + theme(legend.position = c(.95, 0.05), legend.justification = c(1,0))
 
+  # density plot of durations
   p.dur <- ggplot(durahist.dt) + aes(duration, N/samples) +
-    geom_dens() + sx + sdeny +
-    theme_minimal() + theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
-    coord_cartesian(xlim=c(0, NA), ylim = c(0, max.den), expand = FALSE)
+    geom_dens() +
+    sx + sdeny + coords(ymax = max.den) +
+    theme_minimal() + theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
+  # density plot of final sizes
   p.sz <- ggplot(sizehist.dt) + aes(N/samples, final_size) +
-    geom_dens(orientation = "y") + sdenx + sy +
-    theme_minimal() + theme(axis.title.y = element_blank(), axis.text.y = element_blank()) +
-    coord_cartesian(xlim=c(0, max.den), ylim = c(0, NA), expand = FALSE)
+    geom_dens(orientation = "y") +
+    sdenx + sy + coords(xmax = max.den) +
+    theme_minimal() + theme(axis.title.y = element_blank(), axis.text.y = element_blank())
 
-  # Used for testing only, please delete
-  # sampler_output <- sampler(num_samples = 1000, simfunc = igraph_sim, observef = rf_observer, n = 50, p = 0.06)
-
+  # roll them all up
+  # TODO replace plot_spacer with some text info?
   p.tot <- p.dur + plot_spacer() + p.heat + p.sz +
     plot_layout(ncol = 2, nrow = 2, widths = c(4, 1), heights = c(1, 4))
 
@@ -329,18 +346,21 @@ network_plot_histograms <- function(s.dt) {
 
 #' @title plot the time series samples
 #'
+#' @inheritParams network_plot_histograms
+#'
 #' @export
-network_plot_series <- function(s.dt) {
+network_plot_series <- function(s.dt, layer_order = c("S", "R", "I")) {
+  # TODO also incorporate histograms here?
+  # would be useful to show the final size + duration ones
+  # but also prevalence peak / timing 
   if (!"sample" %in% colnames(s.dt)) {
     s.dt <- copy(s.dt)[, sample := 1 ]
   }
   alph <- s.dt[, 1/sqrt(length(unique(sample))) ]
   wide.dt <- melt(s.dt, id.vars = c("sample", "t"))
   return(ggplot(wide.dt) +
-    aes(t, value, color = variable, group = interaction(sample, variable)) +
-    geom_line(data = function(dt) dt[variable == "S"], alpha = alph) +
-    geom_line(data = function(dt) dt[variable == "R"], alpha = alph) +
-    geom_line(data = function(dt) dt[variable == "I"], alpha = alph) +
+    aes(t, value, color = variable, group = interaction(variable, sample)) +
+    lapply(layer_order, function(ly) geom_line(data = function(dt) dt[variable == ly], alpha = alph)) +
     scale_x_continuous(name = "Simulation time") +
     scale_y_continuous(name = NULL) +
     scale_color_manual(name = NULL, values = SIRcolors, guide = guide_legend(override.aes = list(alpha = 1))) +
@@ -349,12 +369,31 @@ network_plot_series <- function(s.dt) {
   )
 }
 
-network_animate_series <- function(sim_output) {
-
+network_extract_active_directed <- function(net, el, vpos) {
+  eact <- E(net)[active == TRUE]
+  if (length(eact)) {
+    src <- V(net)[.inc(eact)][state != "I"]
+    tmp <- el[eact, , drop = FALSE]
+    swp <- !(tmp[, 1, drop = FALSE] %in% src)
+    tmp[swp, 1] <- tmp[swp, 2]
+    tmp[swp, 2] <- el[eact, 1][swp]
+    res <- cbind(vpos[tmp[,1],,drop=FALSE], vpos[tmp[, 2],,drop=FALSE])
+    colnames(res) <- paste(colnames(res), rep(c("start", "end"), each = 2), sep = ".")
+    as.data.table(res)[, eid := as.integer(eact) ]
+  } else {
+    data.table()
+  }
 }
 
-plot_network_series <- function(sim_output) {
-  init <- sim_output[[1]]
+#' @title create an animated plot of transmission on the population
+#' 
+#' @inheritParams network_flatten_run 
+#' 
+#' @return gganimate object
+#' 
+#' @export
+network_animate_series <- function(network_run) {
+  init <- network_run[[1]]
   pl <- layout_(init, with_fr(coords = layout_as_star(init)), normalize())
   colnames(pl) <- c("vx", "vy")
   epairs <- as_edgelist(init)
@@ -364,40 +403,40 @@ plot_network_series <- function(sim_output) {
   colnames(ends) <- paste0(colnames(ends), ".end")
   e.ref <- as.data.table(cbind(starts, ends))[, eid := 1L:.N ]
   v.ref <- as.data.table(pl)[, vid := 1L:.N ]
+  
   e.active <- rbindlist(lapply(
-    c(sim_output, sim_output[length(sim_output)]), function(net) e.ref[E(net)[active == TRUE], ]
+    c(network_run, network_run[length(network_run)]),
+    network_extract_active_directed, el = epairs, vpos = pl
   ), idcol = "time")[, time := time - 1L ]
+  
   v.states <- rbindlist(lapply(
-    sim_output, function(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
+    network_run, function(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
   ), idcol = "time")
 
-  geom_net <- function(tm) list(
-    geom_segment(
-      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
-      e.ref,
-      size = 0.25, alpha = 0.5
-    ),
+  # TODO hide edges as they become irrelevant to transmission?
+  # TODO add labels for active infections, cumulative infections?
+  
+  return(ggplot() + geom_segment(
+    aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
+    e.ref,
+    size = 0.25, alpha = 0.5
+  ) + 
     geom_segment(
       aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = eid),
-      e.active[time %in% tm],
-      size = 0.75, alpha = 1
-    ),
+      e.active,
+      size = 0.75, alpha = 1, arrow = arrow()
+    ) +
     geom_point(
       aes(vx, vy, color = state, size = state, group = vid),
-      v.states[time %in% tm]
-    ),
-    scale_color_manual(guide = "none", values = c(SIRcolors, c(active="red", inactive="grey"))),
-    scale_size_manual(guide = "none", values = c(S=1, I=3, R=1))
-  )
-
-  return(ggplot() +
-           geom_net(1:length(sim_output)) +
-           transition_time(time) +
-           coord_equal() + theme_minimal() + theme(
-             axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-             axis.title = element_blank(), panel.grid = element_blank(),
-             legend.position = "none"
-           ))
+      v.states
+    ) +
+    transition_time(time) +
+    scale_color_manual(guide = "none", values = c(SIRcolors, c(active="red", inactive="grey"))) +
+    scale_size_manual(guide = "none", values = c(S=5, I=3, R=1)) +
+    coord_equal() + theme_minimal() + theme(
+    axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+    axis.title = element_blank(), panel.grid = element_blank(),
+    legend.position = "none"
+  ) + labs(title = "Time: {frame_time}"))
 
 }
-
