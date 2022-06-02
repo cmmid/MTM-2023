@@ -7,6 +7,8 @@ desire: stable against future revisions to course schedule (e.g. reordering
 Preliminary solution: short, "nickname" prefix by session
 Using `network_` for network session functions
 
-learnr is a somewhat heavy dependency; should make it optional at package install, for versions of the course that don't care about using it -- i.e. just want to use the scripts version of the materials?
-
 for the scripts vs learnr versions of package materials, determine some way to have write-once approach? might not be appropriate, as likely some distinctions between what material is most effective in what format?
+
+definitely for the solutions vs scripts versions:
+ - define a "solution block" identifier
+ - create scripted solution to read all the solution files, replace the solution block with a TODO block, and write the result to the corresponding not-solution file

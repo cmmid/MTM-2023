@@ -11,9 +11,13 @@ tutorial.list <- basename(list.dirs(system.file("tutorials", package = "MTM"), r
 #'
 #' @export
 launch <- function(session) {
-  if (is.integer(session)) session <- tutorial.list[session]
-  session <- match.arg(session, MTM::tutorial.list)
-  learnr::run_tutorial(session, package = "MTM")
+  if (requireNamespace("learnr", quietly = TRUE)) {
+    if (is.integer(session)) session <- tutorial.list[session]
+    session <- match.arg(session, MTM::tutorial.list)
+    learnr::run_tutorial(session, package = "MTM")
+  } else {
+    warning("Launching the tutorials requires 'learnr' package installed.")
+  }
 }
 
 checked.dir.create <- function(path, ...) {
