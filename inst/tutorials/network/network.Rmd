@@ -9,11 +9,6 @@ library(learnr)
 library(MTM)
 library(igraph)
 knitr::opts_chunk$set(echo = FALSE)
-
-# `?` <- function(e1, e2) {
-#   h <- .Primitive("?")(e1, e2)
-#   tools:::Rd2txt(utils:::.getHelpFile(as.character(h)))
-# }
 ```
 
 ## Warmup

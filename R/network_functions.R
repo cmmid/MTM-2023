@@ -38,7 +38,7 @@ check_RFparms <- function(parms) {
 #' @section Asides:
 #' Note that in the function body, the first vertex is set to "I".
 #' Does it matter which individual is set to "I"? Why or why not?
-#' 
+#'
 #' The function uses `V(network)$state <- "S"` because its
 #' more obvious for beginners what that does. However, why might
 #' e.g. `V(network)$state <- network$states[1]` be preferable? Where else
@@ -54,7 +54,7 @@ check_RFparms <- function(parms) {
 #' undirected edges. Initialized with one *I*nfectious vertex, and edges
 #' each assigned a random number on (0, 1).
 #'
-#' @examples 
+#' @examples
 #' require(MTM)
 #' require(igraph) # for plotting utilities
 #' quickplot <- function(net) plot(net,
@@ -70,8 +70,8 @@ check_RFparms <- function(parms) {
 #' # to see how `network_build()` works.
 #' sirpop <- network_build(list(N=30, p=0.2))
 #' quickplot(sirpop)
-#' 
-#' @export 
+#'
+#' @export
 network_build <- function(
   parms
 ) {
@@ -96,7 +96,7 @@ network_build <- function(
 #' @title Transform a network by percolation
 #'
 #' @inheritParams network_build
-#' 
+#'
 #' @param network, an igraph object, such as produced by [network_build];
 #' for when you want to repeatedly percolate the same base network with
 #' different probabilities.
@@ -110,7 +110,7 @@ network_build <- function(
 #' parms <- list(N=30, p=0.2)
 #' sirpop.base <- network_build(parms)
 #' layout.base <- layout_nicely(sirpop.base)
-#' 
+#'
 #' quickplot <- function(net) plot(net,
 #'   vertex.size = 5,
 #'   # set color according to state
@@ -121,12 +121,12 @@ network_build <- function(
 #'   edge.color = rgb(red = 0.6, 0, 0, alpha = (1-E(net)$draw)^3),
 #'   layout = layout.base
 #' )
-#' 
+#'
 #' # repeat these next steps a few times, w/ different `p` to see
 #' # to see how `network_percolate()` works.
 #' sirpop.perc <- network_percolate(within(parms, p <- 0.05), sirpop.base)
 #' quickplot(sirpop.perc)
-#' 
+#'
 #' @export
 network_percolate <- function(
   parms, network = network_build(parms)
@@ -186,7 +186,7 @@ network_update <- function(
 #' @return an `igraph` representing the transitions that occur and edges involved
 #'
 #' @seealso network_solve
-#' 
+#'
 #' @examples
 #' require(MTM)
 #' require(igraph) # for plotting utilities
@@ -195,7 +195,7 @@ network_update <- function(
 #' sirpop <- network_build(parms)
 #' layout.base <- layout_nicely(sirpop)
 #' onestep <- network_dReedFrost(0, sirpop, parms)
-#' 
+#'
 #' quickplot <- function(net, vcols, ecols) plot(net,
 #'   vertex.size = 5,
 #'   # set color according to state
@@ -283,18 +283,18 @@ network_is_infectious <- function(
 #' returning a series of network states
 #'
 #' @param y, an [igraph] network, the initial state of the population
-#' 
+#'
 #' @param times, a numeric vector, the times to report the state; cast
 #' to `0:as.integer(max(times))`. If `NULL` (the default) runs until extinct.
-#' 
+#'
 #' @param func, an R function, defined as `function(t, y, parms, ...)`, which
 #' returns a graph capturing state changes. The graph must have the same
 #' vertices and edges as in `y`, but can have different attributes.
 #'
 #' @param parms, parameters passed to `func`.
-#' 
+#'
 #' @param ..., other arguments passed to `func`.
-#' 
+#'
 #' @return a list of [igraph]s, where the list entries correspond to the population
 #'   state at time t (e.g. `list[[1]]` is the initial network state after introduction)
 #'
@@ -353,34 +353,34 @@ network_solve <- function(
 }
 
 #' @title Aggregate Network into States
-#' 
+#'
 #' @param y an `igraph`, representing a population OR a list of such `igraph`s
 #'
 #' @export
-network_flatten <- function(y) {
-  if (is.igraph(y)) {
+network_flatten <- function(y, one = is.igraph(y)) {
+  if (one) {
     return(
       factor(V(y)$state, levels = y$states, ordered = TRUE) |>
       table() |> as.list() |> as.data.table()
     )
   } else { # assume it's a list of igraphs
-    lapply(y, network_flatten) |> rbindlist(idcol = "t")
+    y |> lapply(network_flatten, one = TRUE) |> rbindlist(idcol = "t")
   }
 }
 
 #' @title sample a series of Reed-Frost SIR simulations
 #'
 #' @param n an integer; how many samples?
-#' 
+#'
 #' @inheritParams network_solve
-#' 
+#'
 #' @param setup_func a function to create new networks; must have the same signature as [network_build]()
-#' 
+#'
 #' @param ref.seed a random seed reference value; each sample run seed is offset from this value
-#' 
+#'
 #' @return a [data.table::data.table], a sample column (integer, 1:`n`) &
 #' columns from [network_flatten]
-#' 
+#'
 #' @export
 network_sample_ReedFrost <- function(
   n,
@@ -405,14 +405,14 @@ network_sample_ReedFrost <- function(
 }
 
 #' @title Summarize Network Runs
-#' 
+#'
 #' @description Calculates final size and duration of
 #' simulated epidemics on networks.
-#' 
+#'
 #' @param dt, an object coercable by [data.table::as.data.table()].
 #' Expected to have columns `sample`,`t`, and `R`.
 #' See [network_sample()] return value
-#' 
+#'
 #' @export
 network_summarize <- function(
   dt
@@ -423,28 +423,26 @@ network_summarize <- function(
   ]
 }
 
-network_extract_active_directed <- function(net, el, vpos) {
-  eact <- E(net)[active == TRUE]
+network_extract_active_directed <- function(
+  network, eref
+) {
+  eact <- E(network)[active == TRUE]
   if (length(eact)) {
-    src <- V(net)[.inc(eact)][state != "I"]
-    tmp <- el[eact, , drop = FALSE]
-    swp <- !(tmp[, 1, drop = FALSE] %in% src)
-    tmp[swp, 1] <- tmp[swp, 2]
-    tmp[swp, 2] <- el[eact, 1][swp]
-    res <- cbind(vpos[tmp[,1],,drop=FALSE], vpos[tmp[, 2],,drop=FALSE])
-    colnames(res) <- paste(colnames(res), rep(c("start", "end"), each = 2), sep = ".")
-    as.data.table(res)[, eid := as.integer(eact) ]
+    nonsrc <- V(network)[.inc(eact)][state != "I"]
+    eactive <- eref[eid %in% as.integer(eact)]
+    eactive[start %in% as.integer(nonsrc), c("start", "end") := .(end, start) ]
+    return(eactive)
   } else {
-    data.table()
+    return(eref[0])
   }
 }
 
 #' @title create an animated plot of transmission on the population
-#' 
+#'
 #' @inheritParams network_flatten
-#' 
+#'
 #' @return gganimate object
-#' 
+#'
 #' @export
 network_animate <- function(ys) {
   init <- ys[[1]]
@@ -457,26 +455,26 @@ network_animate <- function(ys) {
   colnames(ends) <- paste0(colnames(ends), ".end")
   e.ref <- as.data.table(cbind(starts, ends))[, eid := 1L:.N ]
   v.ref <- as.data.table(pl)[, vid := 1L:.N ]
-  
+
   e.active <- c(ys, ys[length(ys)]) |>
     lapply(
       network_extract_active_directed,
       el = epairs, vpos = pl
     ) |> rbindlist(idcol = "time")
   e.active[, time := time - 1L ]
-  
+
   v.states <- ys |> lapply(
-    function(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
+    \(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
   ) |> rbindlist(idcol = "time")
 
   # TODO hide edges as they become irrelevant to transmission?
   # TODO add labels for active infections, cumulative infections?
-  
+
   return(ggplot() + geom_segment(
     aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
     e.ref,
     size = 0.25, alpha = 0.5
-  ) + 
+  ) +
     geom_segment(
       aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = eid),
       e.active,
@@ -497,5 +495,91 @@ network_animate <- function(ys) {
     axis.title = element_blank(), panel.grid = element_blank(),
     legend.position = "none"
   ) + labs(title = "Time: {frame_time}"))
+
+}
+
+
+
+
+
+#' a scale for coloring networks
+#'
+#' @export
+scale_color_network <- rejig(
+  ggplot2::scale_color_manual,
+  guide = "none", values = c(SIRcolors, c(`TRUE`="red", `FALSE`="grey"))
+)
+
+#' @export
+scale_size_vertex <- rejig(
+  ggplot2::scale_size_manual,
+  guide = "none", values = c(S=5, I=3, R=1)
+)
+
+#' @export
+network_theme <- rejig(
+  ggplot2::theme,
+  axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+  axis.title = element_blank(), panel.grid = element_blank(),
+  legend.position = "none"
+)
+
+#' @export
+geom_vertex <- rejig(
+  ggplot2::geom_point,
+  mapping = aes(vx, vy, color = state, size = state, group = vid)
+)
+
+#' @export
+geom_edge <- rejig(
+  ggplot2::geom_segment,
+  mapping = aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = active)
+)
+
+#' provides a ggplot-based picture of vertices and edges
+#'
+#' @param e.ref data.frame, with columns v(x|y).(start|end) edge locations;
+#'   un-directed, so order of start vs end not important
+#' @param e.active data.frame, with columns v(x|y).(start|end) edge locations,
+#'   corresponding to which edges are active; directed, so order matters
+#'   end corresponds to point with arrow
+#' @param v.states data.frame, with columns v(x|y) corresponding to vertex
+#'   positions + state
+#'
+#' @export
+network_ggplot <- function(
+  e.ref, e.active, v.states
+) return(
+  ggplot() +
+    geom_edge(
+      data = e.ref,
+      size = 0.25, alpha = 0.5
+    ) +
+    geom_edge(
+      data = e.active,
+      arrow = arrow(), size = 0.75
+    ) +
+    geom_vertex(data = v.states) +
+    scale_color_network() +
+    scale_size_vertex() +
+    coord_equal() + theme_minimal() + network_theme()
+)
+
+#' @export
+network_plot_one <- function(network) {
+  v.ref <- as.data.table(network$layout)[, vid := 1L:.N ]
+  setnames(v.ref, c("V1", "V2"), c("vx", "vy"))
+  e.ref <- setnames(as.data.table(as_edgelist(network)), c("V1", "V2"), c("start", "end"))
+  e.ref[, eid := 1L:.N ][, active := FALSE ]
+  e.ref[v.ref, c("vx.start", "vy.start") := .(vx, vy), on=.(start = vid)]
+  e.ref[v.ref, c("vx.end", "vy.end") := .(vx, vy), on=.(end = vid)]
+
+  e.active <- network_extract_active_directed(network, e.ref)
+  v.states <- v.ref[, .(vid, vx, vy, state = V(network)$state) ]
+
+  return(network_ggplot(e.ref, e.active, v.states))
+
+  # TODO hide edges as they become irrelevant to transmission?
+  # TODO add labels for active infections, cumulative infections?
 
 }
