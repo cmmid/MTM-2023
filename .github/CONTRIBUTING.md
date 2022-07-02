@@ -1,5 +1,11 @@
 # Contributing
 
+## Organizing principles
+
+ - *Pedagogy First*: Code should be written to be read by beginners. This approach
+ overlaps with "well engineered", but sometimes the better engineering
+ abstractions are in tension with comprehensibility for novices
+
 ## Organization
 
  - *Package Functions*: as normal, in the `R/` folder; see below for naming conventions. In general, session-specific content should be in filename(s) prefixed indicating the association. Non-specific, utility / support / cross-section etc objections/function should be grouped logically according role; we do *not* want one-function-per-file.
