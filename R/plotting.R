@@ -1,8 +1,8 @@
 
 #' @inheritParams ggplot2::scale_x_continuous
-#' 
+#'
 #' @rdname plotting
-#' 
+#'
 #' @export
 scale_x_density <- rejig(
   scale_x_continuous, name = "Density"
@@ -28,27 +28,27 @@ scale_fill_density <- rejig(
 )
 
 #' @inheritParams ggplot2::scale_x_continuous
-#' 
+#'
 #' @rdname plotting
-#' 
+#'
 #' @export
 scale_x_duration <- rejig(
   scale_x_continuous, name = "Duration"
 )
 
 #' @inheritParams ggplot2::scale_x_continuous
-#' 
+#'
 #' @rdname plotting
-#' 
+#'
 #' @export
 scale_x_simtime <- rejig(
   scale_x_continuous, name = expression(t)
 )
 
 #' @inheritParams ggplot2::scale_color_manual
-#' 
+#'
 #' @rdname plotting
-#' 
+#'
 #' @export
 scale_color_compartment <- rejig(
  scale_color_manual,
@@ -57,21 +57,21 @@ scale_color_compartment <- rejig(
 )
 
 #' @inheritParams ggplot2::geom_bar
-#' 
+#'
 #' @rdname plotting
-#' 
+#'
 #' @export
 geom_density <- rejig(
-  geom_bar, 
+  geom_bar,
   fill = "grey60", stat = "identity", width = 1
 )
 
 #' @inheritDotParams ggplot2::coord_cartesian
-#' 
+#'
 #' @param xmax alternate parameterisation for xlim
-#' 
+#'
 #' @param ymax alternate parameterisation for ylim
-#' 
+#'
 #' @export
 coord_max <- function(
   xmax = NA, ymax = NA,
@@ -90,30 +90,30 @@ SIRcolors <- c(S = "dodgerblue", I = "firebrick", R = "forestgreen")
 #' @title Multi-dimensional density plot
 #'
 #' @param dt a [data.table], with a `sample` column and at least other two columns
-#' of properties to visualise 
+#' of properties to visualise
 #'
 #' @return a [patchwork]'d [ggplot2] object
-#' 
+#'
 #' @export
 plot_2D_density <- function(
     dt,
     margins = setdiff(colnames(s.dt), "sample")[1:2],
     scales = mget(sprintf("scale_%s_%s", c("x", "y"), margins))
 ) {
-  
+
   samples <- dt[, length(sample)]
-  
+
   mkeys <- as.list(margins)
   names(mkeys) <- c("mx", "my")
-  
+
   # count data.tables
   heat.dt     <- dt[, .N, keyby = margins]
   histmx.dt <- dt[, .N, keyby = margins["mx"] ]
   histmy.dt <- dt[, .N, keyby = margins["my"] ]
-  
+
   # determine (ceiling rounded) probability of most likely outcome
   max.den <- ceiling(max(histmx.dt$N, histmx.dt$N)/samples*10)/10
-  
+
   # setup reference scales
   sx <- scales[[1]](breaks = function(ls) seq(0, ls[2], by=4))
   sy <- scales[[2]](breaks = function(ls) seq(0, ls[2], by=10))
@@ -123,7 +123,7 @@ plot_2D_density <- function(
   sdenfill <- scale_fill_distiller("Density", palette = "Reds", direction = 1)
 
   # heat map of duration vs final size outcomes
-  p.heat <- ggplot(heat.dt) + 
+  p.heat <- ggplot(heat.dt) +
     aes(mx, my, fill = N/samples) +
     geom_tile(alpha = 0.7) +
     sx + sy + scale_fill_density() +
@@ -132,7 +132,7 @@ plot_2D_density <- function(
     theme(
       legend.position = c(.95, 0.05), legend.justification = c(1,0)
     )
-  
+
   # density plot of margin 1
   p.mx <- ggplot(histmx.dt) + aes(mx, N/samples) +
     geom_dens() +
@@ -140,7 +140,7 @@ plot_2D_density <- function(
     theme_minimal() + theme(
       axis.title.x = element_blank(), axis.text.x = element_blank()
     )
-  
+
   # density plot of margin 2
   p.my <- ggplot(histmy.dt) + aes(N/samples, my) +
     geom_dens(orientation = "y") +
@@ -148,19 +148,19 @@ plot_2D_density <- function(
     theme_minimal() + theme(
       axis.title.y = element_blank(), axis.text.y = element_blank()
     )
-  
+
   # roll them all up
   # TODO replace plot_spacer with some text info?
   p.tot <- p.dur + plot_spacer() + p.heat + p.sz +
     plot_layout(ncol = 2, nrow = 2, widths = c(4, 1), heights = c(1, 4))
-  
+
   return(p.tot)
-  
+
 }
 
 #' @export
 plot_series <- function(
-  dt, colorder = c("S", "R", "I")
+    dt, colorder = c("S", "R", "I")
 ) {
   if (!"sample" %in% colnames(dt)) {
     dt <- as.data.table(dt)[, sample := 1 ]

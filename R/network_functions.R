@@ -90,6 +90,11 @@ network_build <- function(
   E(network)$draw <- runif(ecount(network))
   # define edge attribute for showing transmission
   E(network)$active <- FALSE
+
+  set.seed(N) # fix rng for layout; all size N networks have same layout
+  network <- network |> add_layout_(with_fr(coords = layout_randomly(network)), normalize())
+  set.seed(Sys.time()) # scramble rng after
+
   return(network)
 }
 
@@ -565,21 +570,41 @@ network_ggplot <- function(
     coord_equal() + theme_minimal() + network_theme()
 )
 
+
+#' extract table-formated data for plotting
+#'
+#' @param network an igraph object, with features as from `network_build`
+#'
+#' @return a list, with elements `v.ref` (the vertices reference) and
+#' `e.ref` (the edges reference), both `data.table`s
+#'
+#' @export
+network_to_ev_dts <- function(network) {
+  v.ref <- as.data.table(
+    network$layout
+  )[, vid := 1L:.N ] |>
+    setnames(old = c("V1", "V2"), new = c("vx", "vy"))
+  e.ref <- as.data.table(
+    as_edgelist(network)
+  )[, eid := 1L:.N ][, active := FALSE ] |>
+    setnames(old = c("V1", "V2"), new = c("start", "end"))
+  e.ref[v.ref, c("vx.start", "vy.start") := .(vx, vy), on=.(start = vid)]
+  e.ref[v.ref, c("vx.end"  , "vy.end"  ) := .(vx, vy), on=.(end = vid)]
+
+  return(list(v.ref = v.ref, e.ref = e.ref))
+}
+
 #' @export
 network_plot_one <- function(network) {
-  v.ref <- as.data.table(network$layout)[, vid := 1L:.N ]
-  setnames(v.ref, c("V1", "V2"), c("vx", "vy"))
-  e.ref <- setnames(as.data.table(as_edgelist(network)), c("V1", "V2"), c("start", "end"))
-  e.ref[, eid := 1L:.N ][, active := FALSE ]
-  e.ref[v.ref, c("vx.start", "vy.start") := .(vx, vy), on=.(start = vid)]
-  e.ref[v.ref, c("vx.end", "vy.end") := .(vx, vy), on=.(end = vid)]
+  ev_digest <- network_to_ev_dts(network)
 
-  e.active <- network_extract_active_directed(network, e.ref)
-  v.states <- v.ref[, .(vid, vx, vy, state = V(network)$state) ]
+  e.active <- with(
+    ev_digest, network_extract_active_directed(network, e.ref)
+  )
+  v.states <- with(
+    ev_digest, v.ref[, .(vid, vx, vy, state = V(network)$state) ]
+  )
 
-  return(network_ggplot(e.ref, e.active, v.states))
-
-  # TODO hide edges as they become irrelevant to transmission?
-  # TODO add labels for active infections, cumulative infections?
+  return(network_ggplot(ev_digest$e.ref, e.active, v.states))
 
 }
