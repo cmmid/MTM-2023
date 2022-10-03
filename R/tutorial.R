@@ -33,7 +33,7 @@ checked.dir.create <- function(path, ...) {
 #'
 #' @param path, string; the path to enclosing directory. If this directory does not exist, will create it
 #' @param overwrite, boolean; overwrite existing files (corresponding to the course scripts)?
-#' @param solutions, boolean; copy the `sol/` folder (which contains the solutions)
+#' @param solutions, boolean; copy the `solutions/` folder (which contains the solutions)
 #'
 #' @details This function creates a local copy of the R scripts associated with
 #' the Modern Techniques in Modelling (MTM) short course, for students to edit
@@ -79,13 +79,13 @@ scripts <- function(
     srcdir, full.names = TRUE, recursive = FALSE, include.dirs = TRUE
   )
 
-  res <- file.copy(from      = grep("sol", srcfiles, invert = TRUE, value = TRUE),
+  res <- file.copy(from      = grep("solutions", srcfiles, invert = TRUE, value = TRUE),
                    to        = path,
                    overwrite = overwrite,
                    recursive = TRUE)
 
   if (solutions) {
-    res <- c(res, file.copy(from      = grep("sol", srcfiles, value = TRUE),
+    res <- c(res, file.copy(from      = grep("solutions", srcfiles, value = TRUE),
                             to        = path,
                             overwrite = overwrite,
                             recursive = TRUE))
