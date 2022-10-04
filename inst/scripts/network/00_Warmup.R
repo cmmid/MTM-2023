@@ -3,35 +3,20 @@
 require(MTM)
 require(igraph)
 
-#' TODO remove this guidance? shift it to some utility function?
-
-#' For the code below, the general guidance is to run the code,
-#' check the results in the console or plots tab, and then
-#' answer the questions yourself or amongst a small group.
-#'
-#' Answering some of the questions will entail changing function
-#' arguments or filling in missing arguments. These are marked
-#' with `???` placeholders.
-#'
-#' For some of those, we suggest relevant functions with
-#' "hint: ?FUNCTION", as in `?FUNCTION` will prompt you with the
-#' documentation of a function that may be useful
-#'
-#' There are some items marked with ASIDE; you may wish to save
-#' these until after the course to explore.
-#'
-#' Lastly, this material is written using the `igraph` library.
-#' There are other libraries that provide the same basic
-#' functionality, but via different approaches, e.g. `networkx`
+reminder(
+"This material is written using the `igraph` library.
+There are other libraries that provide the same basic
+functionality, but via different approaches, e.g. `networkx`"
+)
 
 ##################### PART A ################################
 
-#' the igraph library has several functions to create common
+#' the `igraph` library has several functions to create common
 #' network structures, including both deterministic ones
 #' (e.g. fully connected graphs) and probabilistic generators
 #' (e.g. Erdos-Renyi random graph)
 #'
-#' In igraph, the general convention is that the deterministic
+#' In `igraph`, the general convention is that the deterministic
 #' functions start `make_...`, and the probabilistic generators
 #' start `sample_...`
 ig10 <- make_full_graph(n = 10)
@@ -53,7 +38,7 @@ plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 #' gives a different layout each time
 plot(ig10); plot(ig10) # compare these two
 #' To get the same plot, you can generate a layout for a
-#' graph (as we do above)
+#' graph (as we do above in the non-ASIDE bits)
 plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two
 #' this can be useful for comparing across graphs as well
 plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
@@ -106,7 +91,8 @@ plot(make_star(30, mode = "undirected"), layout = ig30layout)
 #'
 #' There are also the `V(g)[...]` and `E(g)[...]` functions for
 #' accessing the `V`ertices and `E`dges that match the properties
-#' in the `[...]` block (much like using `which(...)` from base R)
+#' in the `[...]` block (much like using `which(...)` or `subset(...)`
+#' from base R)
 
 #' assign vertex properties; in this example, give the population
 #' the Susceptible status, then change one individual to the

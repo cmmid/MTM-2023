@@ -1,92 +1,100 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
 NULL
 
-network_check_Np <- function(N, p) stopifnot(
-  "'N' must be an integer." = is.integer(N) || (N == as.integer(N)),
-  "'N' must be a scalar." = length(N) == 1,
-  "'N' must be positive." = N > 0,
-  "'p' must be numeric." = is.numeric(p),
-  "'p' must be a probability." = between(p, 0, 1),
-  "'p' must be a scalar." = length(p) == 1
-)
+assert_SIRgraph <- function(network) {
+  stopifnot(
+    "'network' is not an igraph." = is.igraph(network),
+    "'network' edges do not have a numeric 'draw' attribute." =
+      is.numeric(E(network)$draw),
+    "'network' does not have a character-vector states attribute." =
+      is.character(network$states),
+    "'V(network)$state' is not a character-vector." =
+      is.character(V(network)$state),
+    "'V(network)$state' are not all in 'network$states'." =
+      all(V(network)$state %in% network$states),
+    "'E(network)$draw' is not a probability." = all((0 <= E(network)$draw) & (E(network)$draw <= 1))
+  )
+  invisible(network)
+}
 
-network_check_attributes <- function(network) stopifnot(
+network_check <- function(network) stopifnot(
   "'network' is an igraph." = is.igraph(network),
   "'network' has a graph attribute 'p'." = "p" %in% graph_attr_names(network),
   "'network' graph attribute 'p' is a probability." = between(network$p, 0, 1),
   "'network' edges all have attribute 'draw', a probability" = all(between(E(network)$draw, 0, 1))
 )
 
-# network_check_changes <- function(ig) stopifnot(
-#   is.igraph(ig),
-#   "change" %in% names(vertex_attr(ig)),
-#   all(vertex_attr(ig, "change", V(ig)[!is.na(change)]) %in% ig$states)
-# )
-#
-# network_check <- function(
-#   network
-# ) stopifnot(
-#   is.igraph(network),
-#   "state" %in% names(vertex_attr(network)),
-#   all(vertex_attr(network, "state") %in% network$states),
-#   all(c("draw", "active") %in% names(edge_attr(network)))
-# )
-
-#' @title base SIR network for networks exercises
+#' @title Base SIR network for networks exercises
 #'
 #' @param N, a positive integer; the population size
-#' @param p, a numeric on 0 to 1; the probability of transmission between
-#' individuals per time step
 #'
 #' @details Note, this step actually performs all the relevant random number
-#' draws, therefore to get matching results (e.g. to compare with other stduents)
+#' draws, therefore to get matching results (e.g. to compare with other students)
 #' the random number seed must be set ahead of calling this
 #'
 #' @return an igraph object, with N vertices, all connected by undirected edges
 #'
 #' @export
 network_build <- function(
-  N, p
+  N
 ) {
-  network_check_Np(N, p) # MTM internal validation function
-  network <- make_full_graph(N, directed = FALSE) # make a network where everyone is connected
+  # validate 'N'
+  N |> assert_scalar() |> assert_natural()
 
-  # define model states
+  # make a network where everyone is connected
+  network <- make_full_graph(N, directed = FALSE)
+
+  # define model states. n.b.:
+  # `network$NAME <- VALUE` is equivalent to `graph_attr(network, NAME) <- VALUE`
   network$states <- c("S", "I", "R")
   network$inf_states <- "I"
 
-  V(network)$state <-    "S" # start out everyone as Susceptible
-  V(network)[1]$state <- "I" # ... except set one Infectious individual.
-  # ASIDE: does it matter which individual is set to "I"?
-  # ASIDE: We used `V(network)$state <- "S"` because its more obvious for beginners
-  # what that means. However, why might e.g. `V(network)$state <- network$states[1]`
+  # start out everyone as Susceptible
+  V(network)$state <-    "S"
+  # ... except set one Infectious individual.
+  V(network)[1]$state <- "I"
+  # @aside: Does it matter which individual is set to "I"?
+  # @aside: We used `V(network)$state <- "S"` because its more obvious for beginners
+  # what that does. However, why might e.g. `V(network)$state <- network$states[1]`
   # be preferable? Where else in the `MTM::network_...` function definitions
-  # does that sort of pattern apply?
+  # would that pattern also be preferred?
 
-  E(network)$draw <- runif(ecount(network)) <= p # randomly draw a transmission value for each edge.
-  # ASIDE: how many times does a particular connection between individuals need
-  # to be considered for transmission?
+  # randomly draw a transmission value for each edge.
+  E(network)$draw <- runif(ecount(network))
+  # @aside: In the Reed-Frost model, how many times does a particular connection
+  # between individuals need to be considered for transmission? What are some
+  # model additions (e.g. different transitions) would change how many times a
+  # connection is tested?
 
-  E(network)$active <- FALSE  # define edge attribute for showing transmission
+  # define edge attribute for showing transmission
+  E(network)$active <- FALSE
 
   return(network)
 }
 
 #' @title transforms a network by percolation (selectively keeping / removing edges)
 #'
-#' @param ig, an igraph object; the base network, it must have a graph attribute
-#' 'p' which is a probability, and edge attribute 'draw'
+#' @param network, an igraph object; the base network, it must have an edge attribute
+#' 'draw'
 #'
 #' @return a new igraph object, with potentially fewer edges. it's 'p' attribute
 #' will be == 1
 #'
 #' @export
 network_percolate <- function(
-  network
+  network, p
 ) {
-  network_check_attributes(network)
-  remove_edges <- E(network)[ draw == FALSE ]
-  return(delete_edges(network, remove_edges))
+  # validate network & p
+  network |> assert_SIRgraph()
+  p |> assert_scalar() |> assert_probability()
+
+  # identify all edges where p < draw
+  # i.e. going to *keep* all edges draw <= p
+  remove_edges <- E(network)[ p < draw ]
+  # return a new graph with removed edges & reset draw
+  return(
+    network |> delete_edges(remove_edges) |> set_edge_attr("draw", 0)
+  )
 }
 
 #' @title compute a new network from initial states & changes
@@ -116,7 +124,7 @@ network_update <- function(
   return(network)
 }
 
-#' @title given an SIR network population, what is the next state under Reed-Frost model?
+#' @title Compute 1-step transition for Reed Frost Network Model
 #'
 #' @param network, the population; an [igraph] graph with vertex "state" attribute
 #'   in set {S, I, R} and graph "p" attribute
@@ -128,10 +136,10 @@ network_update <- function(
 #'
 #'
 #' @export
-network_next_state <- function(
-  network
+network_dReedFrost <- function(
+  t, y, parms, ...
 ) {
-  delta <- network
+  delta <- y
   # the individuals that are infectious or susceptible,
   # as igraph vertex sets
   infectious <- V(delta)[state == "I"]
@@ -147,11 +155,12 @@ network_next_state <- function(
     #  1. find potential paths: `%->%` selects all edges from
     #     a left-hand-side vertex set (i.e. infectious)
     #     to a right-hand-side vertex set (i.e. susceptible)
-    #  2. along possible transmission routes, some occur
+    #  2. along possible transmission routes, some occur, based
+    #     on draw value
     transmitting_paths <- E(delta)[
       infectious %->% susceptible
     ][
-      draw == TRUE
+      draw <= parms$p
     ]
 
     # are there any transmitting paths?
@@ -183,16 +192,29 @@ network_is_infectious <- function(
   return(length(V(network)[state %in% network$inf_states]) > 0)
 }
 
-#' @title the algorithm to simulate Reed-Frost model on a network
+#' @title General Simulator for Network Populations.
 #'
-#' @param initial_network, an [igraph] network, the initial state of the population
-#' @param update_fun, a function which receives an [igraph] network and `p`, and returns
-#'   a network with vertex attribute `change`, indicating which vertices change,
-#'   and edge attribute `active`, indicating which edges contributed to transmission
+#' @description Simulates a discrete-time transition function on a network,
+#' returning a series of network states
+#'
+#' @param y, an [igraph] network, the initial state of the population
+#' 
+#' @param times, a numeric vector, the times to report the state; cast
+#' to `0:as.integer(max(times)). if `NULL` (the default) runs until extinct.
+#' 
+#' @param func, an R function, defined as `function(t, y, parms, ...)`, which
+#' returns a list, first element a graph capturing state changes, and optional
+#' second element the global values required at each point in time. The graph
+#' must *exactly match* the vertices and edges in `y`.
+#'
+#' @param parms, parameters passed to `func`.
+#' 
+#' @param ..., other arguments passed to `func`.
+#' 
 #' @return a list of [igraph]s, where the list entries correspond to the population
 #'   state at time t (e.g. `list[[1]]` is the initial network state after introduction)
 #'
-#' This function takes the Reed Frost model parameters (N, p) and implementation
+#' @details This function takes the Reed Frost model parameters (N, p) and implementation
 #' of the model (set by setupfun, deltafun). Using those, it performs the model
 #' iteration loop, and returns the series networks
 #'
@@ -220,12 +242,13 @@ network_is_infectious <- function(
 #' quickplot(networkstates[[4]])
 #'
 #' @export
-network_run_reed_frost <- function(
-  initial_network,
-  update_fun = network_next_state
+network_solve <- function(
+  y, times = NULL,
+  func = network_dReedFrost,
+  parms, ...
 ) {
   # initialize storage
-  current_network <- initial_network
+  current_network <- y
   network_storage  <- list(current_network)
   while(network_is_infectious(current_network)) {
     delta <- update_fun(current_network)
@@ -237,48 +260,45 @@ network_run_reed_frost <- function(
 
 #' @title flatten a network into its states
 #' 
-#' @param network an igraph, representing population
+#' @param network an igraph, representing a population OR a list of such igraphs
 #'
 #' @export
-network_flatten <- function(network) return(
-  table(factor(V(network)$state, levels = network$states, ordered = TRUE))
-)
-
-#' @title flatten a simulated series of networks
-#' 
-#' @param network_run a list of igraphs, snapshots of the population state
-#' 
-#' @return a \code{\link[data.table]{data.table}}, columns t (integer, 1:n) & one column for each of the each of the network states
-#' (using the `MTM`-provide `network_...` functions, defaults to S, I, & R)
-#' 
-#' @export
-network_flatten_run <- function(network_run) {
-  return(as.data.table(t(rbind(t = 1:length(network_run), sapply(network_run, network_flatten)))))
+network_flatten <- function(network) {
+  if (is.igraph(network)) {
+    return(
+      factor(V(network)$state, levels = network$states, ordered = TRUE) |>
+      table() |> as.list() |> as.data.table()
+    )
+  } else { # assume it's a list of igraphs
+    lapply(network, network_flatten) |> rbindlist(idcol = "t")
+  }
 }
 
 #' @title sample a series of Reed-Frost SIR simulations
 #'
 #' @param n an integer; how many samples?
-#' @inheritParams network_build
-#' @param setup_fun a function to create new networks; must have the same signature as \code{\link{network_build}}
-#' @param update_fun a function to compute the next state; must have the same signature as \code{\link{network_next_state}}
+#' 
+#' @inheritParams network_solve
+#' 
+#' @param setup_func a function to create new networks; must have the same signature as \code{\link{network_build}}
+#' @param func a function to compute the next state; must have the same signature as \code{\link{network_dReedFrost}}
 #' @param ref.seed a random seed reference value; each sample run seed is offset from this value
 #' 
 #' @return a \code{\link[data.table]{data.table}}, columns sample (integer, 1:n) & columns from \code{\link{network_flatten_run}}
 #' 
 #' @export
-network_sample_reed_frost <- function(
+network_sample_ReedFrost <- function(
   n,
-  N, p,
+  parms,
+  func = network_dReedFrost,
   setup_fun = network_build,
-  update_fun = network_next_state,
   ref.seed = 0
 ) {
   # TODO check parameters
   return(rbindlist(
     lapply(1:n, function(i) {
       set.seed(i + ref.seed);
-      return(network_flatten_run(network_run_reed_frost(setup_fun(N, p), update_fun)))
+      return(network_flatten(network_solve(setup_fun(N, p), update_fun)))
     }), idcol = "sample"
   ))
 }

@@ -50,9 +50,10 @@ plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 ```
 
 ```{r intro_networks_A_quiz}
-quiz(
-  question("Describe the graphs these functions create.", answer("", correct = TRUE), type = "learnr_text")
-)
+quiz(question_freeresponse(
+  "Describe the graphs these functions create.",
+  "Some reply text."
+))
 ```
 
 ### ASIDE
@@ -68,53 +69,35 @@ plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
 
 ```
 
-### Exercise 
-
-*Here's a simple exercise with an empty code chunk provided for entering the answer.*
-
-Write the R code required to add two plus two:
-
-```{r two-plus-two, exercise=TRUE}
-
-```
-
-### Exercise with Code
-
-*Here's an exercise with some prepopulated code as well as `exercise.lines = 5` to provide a bit more initial room to work.*
-
-Now write a function that adds any two numbers and then call it:
-
-```{r add-function, exercise=TRUE, exercise.lines = 5}
-add <- function() {
-  
-}
-```
+TODO: port more of warmup? Ignore warmup, since we don't have them work with igraph?
 
 ## SIR on a Network, Part 1
 
-Now that we have some familiarity with how `igraph` works for representing networks, we can turn our attention to using those representations to model infectious disease dynamics.
+Given some familiarity with how `igraph` represents networks, we can use that package to model infectious disease dynamics.
 
-Recalling the earlier course materials defining _variables_ and _parameters_, as well as the Network session materials describing the Reed-Frost *SIR* model:
+Recalling the earlier course materials distinguishing model _variables_ and _parameters_, as well as the Network session materials describing the Reed-Frost *SIR* model: What are the _variables_ and _parameters_ in the Reed-Frost model?
 
-What are the _variables_ and _parameters_ in the Reed-Frost model? What is the `network_build` function (from `MTM` package) doing to capture those?
+Run this block to examine the `network_build` (from `MTM` package) function - this will printing the function body. How is the `network_build` function representing those?
+
+```{r p1_network_build, exercise = TRUE}
+network_build
+```
 
 ```{r parti_var_and_par_quiz}
 quiz(
   question_freeresponse(
-    "Which *parameters* are present?",
-    "_N_, the size of the population & _p_, the probability of transmission from infectious individuals during a time step."
+    "Which *variables* are present? Where do the appear?",
+    "_S_, the susceptibles & _I_, the infectious; _R_ is also present in a definition sense, though no individuals in the population are in _R_ initially. The *variables* appear only in the function body."
   ),
   question_freeresponse(
-    "Which *variables* are present?",
-    "_S_, the susceptibles & _I_, the infectious; _R_ is also present in a definition sense, though no individuals in the population are in _R_ initially."
+    "Which *parameters* are present? Where do they appear?",
+    "_N_, the size of the population & _p_, the probability of transmission from infectious individuals during a time step. They are inputs to the function, which are then used in various ways in the function body."
+  ),
+  question_freeresponse(
+    "ASIDE: Why do you think `network_build` is organised this way?",
+    "Variables concern the model structure, and their arrangement is fixed (as Reed-Frost SIR) at this stage. During setup, parameters are the parts that vary, which is why they are inputs to this function."
   )
 )
-```
-
-HINT: Use this block to examine that function, by printing the function body or by examining the function arguments.
-
-```{r p1_network_build, exercise = TRUE}
-network_build
 ```
 
 
