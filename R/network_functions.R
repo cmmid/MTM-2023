@@ -17,13 +17,6 @@ assert_SIRgraph <- function(network) {
   invisible(network)
 }
 
-network_check <- function(network) stopifnot(
-  "'network' is an igraph." = is.igraph(network),
-  "'network' has a graph attribute 'p'." = "p" %in% graph_attr_names(network),
-  "'network' graph attribute 'p' is a probability." = between(network$p, 0, 1),
-  "'network' edges all have attribute 'draw', a probability" = all(between(E(network)$draw, 0, 1))
-)
-
 #' @title Base SIR network for networks exercises
 #'
 #' @param N, a positive integer; the population size
