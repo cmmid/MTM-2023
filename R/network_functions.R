@@ -1,7 +1,7 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
 NULL
 
-assert_SIRgraph <- function(network) {
+check_SIRgraph <- function(network) {
   stopifnot(
     "'network' is not an igraph." = is.igraph(network),
     "'network' edges do not have a numeric 'draw' attribute." =
@@ -17,73 +17,84 @@ assert_SIRgraph <- function(network) {
   invisible(network)
 }
 
+check_RFparms <- function(parms) {
+  stopifnot(
+    "'parms' is not a list." = is.list(parms),
+    "'parms' does not have members 'N' and 'p'." = c("N", "p") %in% names(parms)
+  )
+  parms$N |> check_scalar() |> check_natural()
+  parms$p |> check_scalar() |> check_natural()
+  invisible(parms)
+}
+
 #' @title Base SIR network for networks exercises
 #'
-#' @param N, a positive integer; the population size
+#' @param parms, a `list(N=integer, p=probability)`; the Reed-Frost model parameters.
 #'
 #' @details Note, this step actually performs all the relevant random number
 #' draws, therefore to get matching results (e.g. to compare with other students)
 #' the random number seed must be set ahead of calling this
 #'
-#' @return an igraph object, with N vertices, all connected by undirected edges
+#' @section Asides
+#' Note that in the function body, the first vertex is set to "I".
+#' Does it matter which individual is set to "I"? Why or why not?
+#' 
+#' The function uses `V(network)$state <- "S"` because its
+#' more obvious for beginners what that does. However, why might
+#' e.g. `V(network)$state <- network$states[1]` be preferable? Where else
+#' in the `MTM::network_...` function definitions would that pattern also
+#' be preferred?
+#'
+#' In the Reed-Frost model, how many times does a particular connection
+#' between individuals need to be considered for transmission? What are some
+#' model additions (e.g. different transitions) would change how many times a
+#' connection is tested?
+#'
+#' @return an igraph object, with `parms$N` vertices, all connected by undirected edges
 #'
 #' @export
 network_build <- function(
-  N
+  parms
 ) {
-  # validate 'N'
-  N |> assert_scalar() |> assert_natural()
-
+  # validate parms
+  parms |> check_RFparms()
   # make a network where everyone is connected
-  network <- make_full_graph(N, directed = FALSE)
-
-  # define model states. n.b.:
-  # `network$NAME <- VALUE` is equivalent to `graph_attr(network, NAME) <- VALUE`
+  network <- make_full_graph(parms$N, directed = FALSE)
+  # define model states. as graph attributes. see also: `?graph_attr`
   network$states <- c("S", "I", "R")
   network$inf_states <- "I"
-
-  # start out everyone as Susceptible
+  # start out everyone as *S*usceptible
   V(network)$state <-    "S"
-  # ... except set one Infectious individual.
+  # ... except set one *I*nfectious individual.
   V(network)[1]$state <- "I"
-  # @aside: Does it matter which individual is set to "I"?
-  # @aside: We used `V(network)$state <- "S"` because its more obvious for beginners
-  # what that does. However, why might e.g. `V(network)$state <- network$states[1]`
-  # be preferable? Where else in the `MTM::network_...` function definitions
-  # would that pattern also be preferred?
-
-  # randomly draw a transmission value for each edge.
+  # draw a random transmission value for each edge.
   E(network)$draw <- runif(ecount(network))
-  # @aside: In the Reed-Frost model, how many times does a particular connection
-  # between individuals need to be considered for transmission? What are some
-  # model additions (e.g. different transitions) would change how many times a
-  # connection is tested?
-
   # define edge attribute for showing transmission
   E(network)$active <- FALSE
-
   return(network)
 }
 
-#' @title transforms a network by percolation (selectively keeping / removing edges)
+#' @title Transform a network by percolation
 #'
-#' @param network, an igraph object; the base network, it must have an edge attribute
-#' 'draw'
+#' @inheritParams network_build
+#' 
+#' @param network, an igraph object, such as produced by [network_build];
+#' for when you want to repeatedly percolate the same base network with
+#' different probabilities.
 #'
-#' @return a new igraph object, with potentially fewer edges. it's 'p' attribute
-#' will be == 1
+#' @return a new igraph object, with potentially fewer edges. it's 'E()$draw' attribute
+#' will be == 0 (i.e., always transmit)
 #'
 #' @export
 network_percolate <- function(
-  network, p
+  parms, network = network_build(parms)
 ) {
-  # validate network & p
-  network |> assert_SIRgraph()
-  p |> assert_scalar() |> assert_probability()
-
+  # validate parms and network
+  parms |> check_RFparms()
+  network |> check_SIRgraph()
   # identify all edges where p < draw
   # i.e. going to *keep* all edges draw <= p
-  remove_edges <- E(network)[ p < draw ]
+  remove_edges <- E(network)[ parms$p < draw ]
   # return a new graph with removed edges & reset draw
   return(
     network |> delete_edges(remove_edges) |> set_edge_attr("draw", 0)
@@ -287,11 +298,12 @@ network_sample_ReedFrost <- function(
   setup_fun = network_build,
   ref.seed = 0
 ) {
+  n |> check_natural()
   # TODO check parameters
   return(rbindlist(
     lapply(1:n, function(i) {
       set.seed(i + ref.seed);
-      return(network_flatten(network_solve(setup_fun(N, p), update_fun)))
+      return(network_flatten(network_solve(setup_fun(N, p), func)))
     }), idcol = "sample"
   ))
 }
