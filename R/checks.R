@@ -16,6 +16,6 @@ check_probability <- function(p) {
 }
 
 check_scalar <- function(x) {
-  stopifnot("'x' must be a scalar." = length(x) == 1)
+  stopifnot("'x' must be a scalar." = length(x) == 1L)
   invisible(x)
 }

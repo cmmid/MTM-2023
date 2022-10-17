@@ -15,11 +15,6 @@ tutorial_help <- function(h) {
   tools:::Rd2txt(utils:::.getHelpFile(h))
 }
 
-#' @title defines reference colors used in plots throughout MTM course
-#'
-#' @export
-SIRcolors <- c(S = "dodgerblue", I = "firebrick", R = "forestgreen")
-
 #' @title a `learnr::question_text` wrapper
 #'
 #' @param text, see `learnr::question_text`
