@@ -1,4 +1,5 @@
 # from github.com/pearsonca/cabputils, (c) 2022 Carl A. B. Pearson
+# reproduced here for their utility w/o having to add an additional dependency
 
 #' @title [base::match.call] Extension
 #'
@@ -6,7 +7,7 @@
 #' also included.
 #'
 #' @inheritParams base::match.call
-#' 
+#'
 match.call.defaults <- function(
   definition = sys.function(sys.parent()),
   call = sys.call(sys.parent()),
@@ -18,11 +19,11 @@ match.call.defaults <- function(
   # get the formals, tossing any ellipsis
   fs <- formals(definition, envir)
   fs$... <- NULL
-  
+
   # for any arguments set in formals & not in the call
   for(nm in setdiff(names(fs), names(mc)))
     mc[[nm]] <- fs[[nm]] # add those to the call
-  
+
   return(mc)
 }
 
@@ -51,24 +52,24 @@ rejig <- function(FUN, ..., .ENV = environment(FUN)) {
     "FUN isn't a function." = is.function(FUN),
     "FUN is a primitive function." = !is.primitive(FUN)
   )
-  
+
   dots <- as.list(match.call())[-1] # get some new defaults
   dots$FUN <- dots$.ENV <- NULL # drop all the not-defaults
-  
+
   if (length(dots) == 0) {
     warning("... is empty. Just returning FUN.")
     return(FUN)
   }
-  
+
   .FUN <- FUN # make a duplicate of FUN
   forms <- formals(FUN) # get the original defaults
-  
+
   # potentially more validation: check for ... argument
   # in FUN and try to partial match all arguments in
   # rejig
   hasdots <- "..." %in% names(forms)
   replacements <- names(forms)[pmatch(names(dots), names(forms))]
-  
+
   if (any(is.na(replacements)) && !hasdots) {
     errmsg <- sprintf("
 FUN does not have ... argument, and
@@ -78,13 +79,13 @@ rejig ... arguments do not match FUN arguments:
     )
     stop(errmsg)
   }
-  
+
   # correct any partially matched defaults
   names(dots)[!is.na(replacements)] <- replacements[!is.na(replacements)]
   # set the new defaults
   formals(.FUN)[names(dots)] <- dots
   environment(.FUN) <- .ENV
-  
+
   if (hasdots && any(is.na(replacements))) {
     # the internals of FUN may pass around the ellipsis, which now
     # excludes newly set default variables, so need to use it
@@ -94,7 +95,7 @@ rejig ... arguments do not match FUN arguments:
       eval(mc)
     })
   }
-  
+
   return(.FUN)
-  
+
 }

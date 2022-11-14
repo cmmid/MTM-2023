@@ -1,58 +1,59 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
 NULL
 
-#' @title network coloring scale
+#' @title Network Color Scale
 #'
-#' @description a \code{\link[ggplot2]{scale_manual}} for coloring networks
+#' @description a [ggplot2::scale_color_manual] for coloring networks
 #'
-#' @param ... see \code{\link[ggplot2]{scale_manual}}, `scale_color_manual`
-#'   arguments
-#'
-#' @seealso \code{\link{gg_scale_wrapper}}, \code{\link[ggplot2]{scale_manual}}
+#' @inheritParams ggplot2::scale_color_manual
 #'
 #' @export
-scale_color_network <- gg_scale_wrapper(
-  scale_color_manual,
+scale_color_network <- rejig(
+  ggplot2::scale_color_manual,
   guide = "none", values = c(SIRcolors, c(`TRUE`="red", `FALSE`="grey"))
 )
 
-#' @title vertex size scale
+#' @title Vertex Size Scale
 #'
-#' @description a \code{\link[ggplot2]{scale_manual}} for sizing network vertices
+#' @description a [ggplot2::scale_size_manual] for sizing network vertices
 #'
-#' @param ... see \code{\link[ggplot2]{scale_manual}}, `scale_size_manual`
-#'   arguments
-#'
-#' @seealso \code{\link{gg_scale_wrapper}}, \code{\link[ggplot2]{scale_manual}}
+#' @param ... see [ggplot2::scale_size_manual] arguments
 #'
 #' @export
-scale_size_vertex <- gg_scale_wrapper(
+scale_size_vertex <- rejig(
   scale_size_manual,
   guide = "none", values = c(S=5, I=3, R=1)
 )
 
 #' @title network plotting theme
 #'
-#' @param ... see \code{\link[ggplot2]{theme}} for all arguments
+#' @inheritParams ggplot2::theme_minimal
 #'
-#' @description a \code{\link[ggplot2]{theme}} wrapper function, with defaults
-#'  for network plots
-#'
-#' @seealso gg_theme_wrapper, ggplot2::theme
+#' @description a [ggplot2::theme], with defaults for network plots
 #'
 #' @export
-network_theme <- gg_theme_wrapper(
-  axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-  axis.title = element_blank(), panel.grid = element_blank(),
-  legend.position = "none"
-)
+theme_network <- function(
+  base_size = 11, base_family = "",
+  base_line_size = base_size/22,
+  base_rect_size = base_size/22
+) {
+  theme_minimal(
+    base_size = base_size, base_family = base_family,
+    base_line_size = base_line_size,
+    base_rect_size = base_rect_size
+  ) + theme(
+    axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+    axis.title = element_blank(), panel.grid = element_blank(),
+    legend.position = "none"
+  )
+}
 
 #' a ggplot2 geom for vertices
 #'
 #' @seealso gg_geom_wrapper, ggplot2::geom_point
 #'
 #' @export
-geom_vertex <- gg_geom_wrapper(
+geom_vertex <- rejig(
   geom_point,
   mapping = aes(vx, vy, color = state, size = state, group = vid)
 )
@@ -62,7 +63,7 @@ geom_vertex <- gg_geom_wrapper(
 #' @seealso gg_geom_wrapper, ggplot2::geom_segment
 #'
 #' @export
-geom_edge <- gg_geom_wrapper(
+geom_edge <- rejig(
   geom_segment,
   mapping = aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = active)
 )
@@ -93,7 +94,7 @@ network_ggplot <- function(
   geom_vertex(data = v.states) +
   scale_color_network() +
   scale_size_vertex() +
-  coord_equal() + theme_minimal() + network_theme()
+  coord_equal() + theme_network()
 )
 
 #' extract table-formated data for plotting

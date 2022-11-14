@@ -22,4 +22,5 @@ Imports:
     patchwork
 Suggests:
     gifski,
-    learnr
+    learnr,
+    usethis

@@ -1,5 +1,4 @@
-#' require the MTM library to get generic course support functions / definitions
-#' also require igraph for network items
+
 require(MTM)
 require(igraph)
 
@@ -9,8 +8,19 @@ There are other libraries that provide the same basic
 functionality, but via different approaches, e.g. `networkx`"
 )
 
-##################### PART A ################################
+#' @section Motivation
+#'
+#' Network-based models (aka, graphs) are useful when the system you are trying
+#' to capture has lots of relationship structure that needs to be represented
+#' to accurately reproduce what is going on.
+#'
+#' In this warmup, we're going to show you how to build up these two networks:
 
+network_warmup_vaccine_random # random vaccination in a small population
+network_warmup_vaccine_ordered # targetted vaccination
+
+#' @section Basic Structures
+#'
 #' the `igraph` library has several functions to create common
 #' network structures, including both deterministic ones
 #' (e.g. fully connected graphs) and probabilistic generators
@@ -19,6 +29,7 @@ functionality, but via different approaches, e.g. `networkx`"
 #' In `igraph`, the general convention is that the deterministic
 #' functions start `make_...`, and the probabilistic generators
 #' start `sample_...`
+
 ig10 <- make_full_graph(n = 10)
 ig30 <- make_full_graph(n = 30)
 ig10layout <- layout_with_graphopt(ig10)
@@ -31,16 +42,16 @@ ig30gnp <- sample_gnp(30, 0.2)
 plot(ig10gnp, layout = ig10layout); print(ig10gnp)
 plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 
-#' Q: How would you describe the graphs these functions create?
-#' TODO more make_... function examples
+#' @question How would you distinguish the graphs created by `make_full_graph()`
+#' versus `sample_gnp()`?
+#' @answer
+#' @hint reading `?make_full_graph` and `?sample_gnp` might be helpful.
 
-#' ASIDE: note that by default, plotting an igraph object
-#' gives a different layout each time
-plot(ig10); plot(ig10) # compare these two
-#' To get the same plot, you can generate a layout for a
-#' graph (as we do above in the non-ASIDE bits)
-plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout) # compare these two
-#' this can be useful for comparing across graphs as well
+#' @aside Generally, each visualisation an igraph object gives different layouts
+#' To get the same plot, you can generate a layout for a graph (as we do above).
+#' Layouts can be useful for comparing across different graphs as well
+plot(ig10); plot(ig10) # compare these two vs the next two
+plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout)
 plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
 
 

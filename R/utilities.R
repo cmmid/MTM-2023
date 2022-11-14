@@ -35,27 +35,29 @@ question_freeresponse <- function(text, reply, ...) question_text(
   ...
 )
 
-#' @title Reminder Text for Scripts
-#' 
+#' @title Reminders for Scripts
+#'
 #' @param custom, text to display after generic reminder
-#' 
+#'
 #' @param text, the generic reminder
-#' 
+#'
 #' @export
+#' @examples
+#' reminder("Some exhortation.")
 reminder <- function(custom = NULL, text =
-"For the code below, our general guidance is to run the code,
+"For the script below, our general guidance is to run the code,
 check the results in the console or plots tab, and then
-answer the questions yourself or amongst a small group.
+answer the associated questions yourself or amongst a small group.
 
 Answering some of the questions will entail changing function
 arguments or filling in missing arguments. These are marked
-with `???` placeholders.
+with `TODO(...)` placeholders.
 
 For some of those, we suggest relevant functions with
-'hint: ?FUNCTION', as in `?FUNCTION` will prompt you with the
+'@hint: ?FUNCTION', as in `?FUNCTION` will prompt you with the
 documentation of a function that may be useful
 
-There are some items marked with ASIDE; skip these until you
+There are some items marked with @aside; skip these until you
 have completed all other elements of a particular activity."
 ) {
   message("\n", text)

@@ -522,14 +522,6 @@ scale_size_vertex <- rejig(
 )
 
 #' @export
-network_theme <- rejig(
-  ggplot2::theme,
-  axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-  axis.title = element_blank(), panel.grid = element_blank(),
-  legend.position = "none"
-)
-
-#' @export
 geom_vertex <- rejig(
   ggplot2::geom_point,
   mapping = aes(vx, vy, color = state, size = state, group = vid)
@@ -567,7 +559,7 @@ network_ggplot <- function(
     geom_vertex(data = v.states) +
     scale_color_network() +
     scale_size_vertex() +
-    coord_equal() + theme_minimal() + network_theme()
+    coord_equal() + theme_network()
 )
 
 
