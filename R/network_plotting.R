@@ -1,6 +1,42 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
 NULL
 
+#' @exportS3Method
+as.data.table.igraph <- function(ig, keep.rownames) {
+  eprops <- ig |> edge_attr() |> as.data.table()
+  eprops[, eid := 1:.N ]
+  el <- ig |> as_edgelist() |> as.data.table()
+  el[, eid := 1:.N ]
+  vprops <- ig |> vertex_attr() |> as.data.table()
+  vprops[, vid := 1:.N ]
+  vl <- ig$layout |> as.data.table() |> setnames(c("V1", "V2"), c("x", "y"))
+  vl[, vid := 1:.N ]
+  base <- merge(eprops, el, by="eid")
+  rbind(base, setnames(copy(base), c("V1", "V2"), c("V2", "V1")))
+}
+
+#' @title GGplot for [igraph]
+#'
+#' @description a [ggplot2::ggplot] specialization for [igraph] objects
+#'
+#' @param data an [igraph] object
+#'
+#' @inheritDotParams ggplot2::ggplot
+#'
+#' @exportS3Method
+ggplot.igraph <- function(data, ...) {
+  # transform the incoming igraph object into a formatted data.table
+  # x1, y1, x2, y2, eid, v1id, v2id, [eproperties], [v1properties, first appearance]
+  eprops <- data |> edge_attr() |> as.data.table()
+  eprops[, eid := 1:.N ]
+  el <- data |> as_edgelist() |> as.data.table()
+  el[, eid := 1:.N ]
+  dt <- `...`
+  return(ggplot2::ggplot(dt, ...))
+}
+
+edge
+
 #' @title Network Color Scale
 #'
 #' @description a [ggplot2::scale_color_manual] for coloring networks

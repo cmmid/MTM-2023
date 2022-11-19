@@ -1,6 +1,8 @@
 
 require(MTM)
 require(igraph)
+require(ggplot2)
+require(patchwork)
 
 reminder(
 "This material is written using the `igraph` library.
@@ -16,8 +18,21 @@ functionality, but via different approaches, e.g. `networkx`"
 #'
 #' In this warmup, we're going to show you how to build up these two networks:
 
-network_warmup_vaccine_random # random vaccination in a small population
-network_warmup_vaccine_ordered # targetted vaccination
+network_quickplot <- function(..., col.values, col.labels) {
+  return(ggplot(...) + geom_edge() + geom_vertex() + scale_color_graph(
+    values = col.values, labels = col.labels
+  ))
+}
+
+#' @TODO side-by-side, simple plot code
+# random vaccination in a small population
+p1 <- network_quickplot(network_warmup_vaccine_random)
+# targetted vaccination
+p2 <- network_quickplot(network_warmup_vaccine_ordered)
+
+p1 + p2 + plot_annotation(tag_levels = list(
+  "Random Vaccination", "Targetted Vaccination"
+))
 
 #' @section Basic Structures
 #'

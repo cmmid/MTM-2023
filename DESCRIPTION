@@ -6,14 +6,14 @@ Authors@R:
            email = "carl.pearson@lshtm.ac.uk", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0701-7860"))
 Description: Provides functions, data resources, and other materials used in the
-    Modern Techniques in Modelling short course offered at LSHTM.
+    Modern Techniques in Modelling (MTM) short course offered at LSHTM.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.2
 Depends:
-    R (>= 4.1)
+    R (>= 4.2)
 Imports: 
     data.table,
     gganimate,
