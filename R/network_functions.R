@@ -503,24 +503,6 @@ network_animate <- function(ys) {
 
 }
 
-
-
-
-
-#' a scale for coloring networks
-#'
-#' @export
-scale_color_network <- rejig(
-  ggplot2::scale_color_manual,
-  guide = "none", values = c(SIRcolors, c(`TRUE`="red", `FALSE`="grey"))
-)
-
-#' @export
-scale_size_vertex <- rejig(
-  ggplot2::scale_size_manual,
-  guide = "none", values = c(S=5, I=3, R=1)
-)
-
 #' @export
 geom_vertex <- rejig(
   ggplot2::geom_point,

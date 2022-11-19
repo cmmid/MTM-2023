@@ -10,14 +10,12 @@ NULL
 #' @export
 scale_color_network <- rejig(
   ggplot2::scale_color_manual,
-  guide = "none", values = c(SIRcolors, c(`TRUE`="red", `FALSE`="grey"))
+  guide = "none", values = c(SIRcolors, c(active="red", inactive="grey"))
 )
 
 #' @title Vertex Size Scale
 #'
-#' @description a [ggplot2::scale_size_manual] for sizing network vertices
-#'
-#' @param ... see [ggplot2::scale_size_manual] arguments
+#' @inheritParams ggplot2::scale_size_manual
 #'
 #' @export
 scale_size_vertex <- rejig(
@@ -43,14 +41,13 @@ theme_network <- function(
     base_rect_size = base_rect_size
   ) + theme(
     axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-    axis.title = element_blank(), panel.grid = element_blank(),
-    legend.position = "none"
+    axis.title = element_blank(), panel.grid = element_blank()
   )
 }
 
-#' a ggplot2 geom for vertices
+#' @title GGPlot-like Vertex Geom
 #'
-#' @seealso gg_geom_wrapper, ggplot2::geom_point
+#' @inheritParams ggplot2::geom_point
 #'
 #' @export
 geom_vertex <- rejig(
@@ -58,9 +55,9 @@ geom_vertex <- rejig(
   mapping = aes(vx, vy, color = state, size = state, group = vid)
 )
 
-#' a ggplot2 geom for edges
+#' @title GGPlot-like Vertex Geom
 #'
-#' @seealso gg_geom_wrapper, ggplot2::geom_segment
+#' @inheritParams ggplot2::geom_segment
 #'
 #' @export
 geom_edge <- rejig(
