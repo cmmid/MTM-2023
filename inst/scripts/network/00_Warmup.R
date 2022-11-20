@@ -1,13 +1,13 @@
 
-require(MTM)
-require(igraph)
-require(ggplot2)
-require(patchwork)
+require(MTM)        # for overall course functions
+require(igraph)     # for the network capabilities
+require(ggplot2)    # for plotting
+require(patchwork)  # for combining plots
 
 reminder(
-"This material is written using the `igraph` library.
-There are other libraries that provide the same basic
-functionality, but via different approaches, e.g. `networkx`"
+"This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
 )
 
 #' @section Motivation
@@ -18,33 +18,42 @@ functionality, but via different approaches, e.g. `networkx`"
 #'
 #' In this warmup, we're going to show you how to build up these two networks:
 
-network_quickplot <- function(..., col.values, col.labels) {
-  return(ggplot(...) + geom_edge() + geom_vertex() + scale_color_graph(
-    values = col.values, labels = col.labels
-  ))
-}
+# set some vertex and edge colors
+demo.cols <- c(
+  vaccinated = "blue", unvaccinated = "yellow",
+  transmissible = "grey", blocked = "transparent"
+)
 
-#' @TODO side-by-side, simple plot code
 # random vaccination in a small population
-p1 <- network_quickplot(network_warmup_vaccine_random)
+p1 <- network_quickplot(
+  network_warmup_vaccine_random,
+  values = demo.cols
+)
 # targetted vaccination
-p2 <- network_quickplot(network_warmup_vaccine_ordered)
+p2 <- network_quickplot(
+  network_warmup_vaccine_ordered,
+  values = demo.cols
+)
 
-p1 + p2 + plot_annotation(tag_levels = list(
-  "Random Vaccination", "Targetted Vaccination"
-))
+# show the plots side-by-side
+p1 + p2 + plot_annotation(tag_levels = list(c(
+  "Random\nVaccination", "Targetted\nVaccination"
+))) & theme(plot.tag.position = c(0.5, 1))
+
+#' These plots highlight an important insight from the discussion portion of the
+#' module: that relationships can matter. Now let's work through the functions
+#' of the `igraph` library to build-up networks like this.
 
 #' @section Basic Structures
 #'
-#' the `igraph` library has several functions to create common
-#' network structures, including both deterministic ones
-#' (e.g. fully connected graphs) and probabilistic generators
-#' (e.g. Erdos-Renyi random graph)
+#' the `igraph` library has several functions to create common network
+#' structures, including both deterministic ones (e.g. connected graphs and
+#' lattices) and probabilistic generators (e.g. Erdos-Renyi random graph).
 #'
-#' In `igraph`, the general convention is that the deterministic
-#' functions start `make_...`, and the probabilistic generators
-#' start `sample_...`
+#' In `igraph`, the general convention is that the deterministic functions start
+#' with `make_...`, and the probabilistic generators start with `sample_...`
 
+# TODO refactor use quickplot + patchwork
 ig10 <- make_full_graph(n = 10)
 ig30 <- make_full_graph(n = 30)
 ig10layout <- layout_with_graphopt(ig10)
@@ -57,12 +66,19 @@ ig30gnp <- sample_gnp(30, 0.2)
 plot(ig10gnp, layout = ig10layout); print(ig10gnp)
 plot(ig30gnp, layout = ig30layout); print(ig30gnp)
 
-#' @question How would you distinguish the graphs created by `make_full_graph()`
-#' versus `sample_gnp()`?
+#' @question How would you describe the difference between the graphs created by
+#' `make_full_graph()` versus `sample_gnp()`?
 #' @answer
-#' @hint reading `?make_full_graph` and `?sample_gnp` might be helpful.
-
-#' @aside Generally, each visualisation an igraph object gives different layouts
+#' @question How about the difference between the graphs created by
+#' `make_full_graph()` versus `make_lattice()`?
+#' @answer
+#' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
+#' `sample_gnp()`, which do you think is behind the plots we first looked at?
+#' @answer
+#'
+#' @hint `?make_full_graph`, `?make_lattice`, and `?sample_gnp` might help.
+#'
+#' @aside Generally, each plotting of an igraph object gives different layouts
 #' To get the same plot, you can generate a layout for a graph (as we do above).
 #' Layouts can be useful for comparing across different graphs as well
 plot(ig10); plot(ig10) # compare these two vs the next two

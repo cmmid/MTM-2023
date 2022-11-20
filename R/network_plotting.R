@@ -148,6 +148,36 @@ geom_edge <- rejig(
   mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state)
 )
 
+
+#' @title Demo Network Plotter
+#'
+#' @description Provides a quick plotter with most elements constrained
+#'
+#' @param ig an [igraph]
+#'
+#' @param edgeargs a list of arguments to [geom_edge()]
+#'
+#' @param vertexargs a list of arguments to [geom_vertex()]
+#'
+#' @inheritParams ggplot2::scale_color_manual
+#'
+#' @return a [ggplot2::ggplot]
+#'
+#' @export
+network_quickplot <- function(
+    ig, values, labels,
+    edgeargs = list(), vertexargs = list()
+) {
+  return(eval(substitute(
+    ggplot(ig) + do.call(geom_edge, edgeargs) +
+    do.call(geom_vertex, vertexargs) +
+    coord_equal() +
+    scale_color_network(
+      values = values, labels = labels
+    ) + theme_network()
+  )))
+}
+
 #' provides a ggplot-based picture of vertices and edges
 #'
 #' @param e.ref data.frame, with columns v(x|y).(start|end) edge locations;
