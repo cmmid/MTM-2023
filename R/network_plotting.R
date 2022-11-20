@@ -1,41 +1,87 @@
 #' @import igraph data.table ggplot2 gganimate patchwork
 NULL
 
+#' @title Convert [igraph] to [data.table]
+#'
+#' @param ig the [igraph]
+#'
+#' @param keep.rownames logical; not yet supported. TODO: have this cause
+#' preservation of vertex and edge named IDs (if present)
+#'
+#' @return a [data.table], with columns `V2`, `V1` (vertex ids), `eid` (edge ids),
+#' layout data (`x1`, `y1`, `x2`, `y2`), and then edge attributes (various,
+#' corresponding to the [igraph::edge_attr()] of `ig`) and vertex attributes (
+#' various, corresponding to the [igraph::vertex_attr()] of `ig`, prepended with
+#' `V1` and `V2` to identify associated vertex).
+#'
+#' @export as.data.table.igraph
 #' @exportS3Method
-as.data.table.igraph <- function(ig, keep.rownames) {
+as.data.table.igraph <- function(ig, keep.rownames, ...) {
+  # extract edge properties
   eprops <- ig |> edge_attr() |> as.data.table()
   eprops[, eid := 1:.N ]
   el <- ig |> as_edgelist() |> as.data.table()
   el[, eid := 1:.N ]
+  # extract vertex properties
   vprops <- ig |> vertex_attr() |> as.data.table()
   vprops[, vid := 1:.N ]
   vl <- ig$layout |> as.data.table() |> setnames(c("V1", "V2"), c("x", "y"))
   vl[, vid := 1:.N ]
+  # model of resulting data: edges, edge properties, vertex ids, vertex properties
   base <- merge(eprops, el, by="eid")
-  rbind(base, setnames(copy(base), c("V1", "V2"), c("V2", "V1")))
+  base[vl, on=.(V1=vid), c("x1", "y1") := .(x, y)]
+  base[vl, on=.(V2=vid), c("x2", "y2") := .(x, y)]
+  vpropnames <- setdiff(colnames(vprops), "vid")
+
+  setnames(vprops, vpropnames, paste0("V1.", vpropnames))
+  vpropnames <- paste0("V1.", vpropnames)
+  setnames(vprops, "vid", "V1")
+  extended <- merge(base, vprops, by="V1")
+
+  setnames(vprops, vpropnames, gsub("V1", "V2", vpropnames))
+  vpropnames <- gsub("V1", "V2", vpropnames)
+  setnames(vprops, "V1", "V2")
+  extended <- merge(extended, vprops, by="V2")
+
+  setkey(extended, eid, V1, V2) |> setcolorder()
 }
 
 #' @title GGplot for [igraph]
 #'
-#' @description a [ggplot2::ggplot] specialization for [igraph] objects
+#' @description a [ggplot2::ggplot()] specialization for [igraph] objects
 #'
 #' @param data an [igraph] object
 #'
 #' @inheritDotParams ggplot2::ggplot
 #'
+#' @details Applies [as.data.table.igraph()] to `data` and then passes it into
+#' [ggplot2::ggplot()]
+#'
+#' @export ggplot.igraph
 #' @exportS3Method
-ggplot.igraph <- function(data, ...) {
-  # transform the incoming igraph object into a formatted data.table
-  # x1, y1, x2, y2, eid, v1id, v2id, [eproperties], [v1properties, first appearance]
-  eprops <- data |> edge_attr() |> as.data.table()
-  eprops[, eid := 1:.N ]
-  el <- data |> as_edgelist() |> as.data.table()
-  el[, eid := 1:.N ]
-  dt <- `...`
-  return(ggplot2::ggplot(dt, ...))
+ggplot.igraph <- function(data, mapping = aes(), ..., environment = parent.frame()) {
+  return(ggplot2::ggplot(data |> as.data.table.igraph(), mapping, ..., environment))
 }
 
-edge
+#' @title Get Vertex Data
+#'
+#' @description Extract vertex data from [data.table]s made from [igraph]s
+#'
+#' @param dt [data.table] object from [as.data.table.igraph()]
+#'
+#' @details Intended for use with [geom_vertex()]. Extracts the unique vertices,
+#' their positions, and any attribute data.
+#'
+#' @export
+network_vertex_data <- function(dt) {
+  v1 <- unique(dt[,.SD,.SDcols = patterns("^V1|x1|y1")])
+  setnames(v1, c("V1", "x1", "y1"), c("vid", "x", "y"))
+  setnames(v1, names(v1), gsub("V1\\.","", names(v1)))
+  v2 <- unique(dt[,.SD,.SDcols = patterns("^V2|x2|y2")])[!(V2 %in% v1$vid)]
+  setnames(v2, c("V2", "x2", "y2"), c("vid", "x", "y"))
+  setnames(v2, names(v2), gsub("V2\\.","", names(v2)))
+  return(rbind(v1, v2) |> setkey(vid))
+}
 
 #' @title Network Color Scale
 #'
@@ -88,7 +134,8 @@ theme_network <- function(
 #' @export
 geom_vertex <- rejig(
   geom_point,
-  mapping = aes(vx, vy, color = state, size = state, group = vid)
+  mapping = aes(x = x, y = y, color = state),
+  data = network_vertex_data
 )
 
 #' @title GGPlot-like Vertex Geom
@@ -98,7 +145,7 @@ geom_vertex <- rejig(
 #' @export
 geom_edge <- rejig(
   geom_segment,
-  mapping = aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = active)
+  mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state)
 )
 
 #' provides a ggplot-based picture of vertices and edges

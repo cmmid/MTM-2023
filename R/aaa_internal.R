@@ -84,13 +84,14 @@ rejig ... arguments do not match FUN arguments:
   names(dots)[!is.na(replacements)] <- replacements[!is.na(replacements)]
   # set the new defaults
   formals(.FUN)[names(dots)] <- dots
-  environment(.FUN) <- .ENV
+# TODO: figure out the right way to do this
+#  environment(.FUN) <- .ENV
 
   if (hasdots && any(is.na(replacements))) {
     # the internals of FUN may pass around the ellipsis, which now
     # excludes newly set default variables, so need to use it
     body(.FUN) <- substitute({
-      mc <- cabputils::match.call.defaults()
+      mc <- MTM:::match.call.defaults()
       mc[[1]] <- FUN
       eval(mc)
     })

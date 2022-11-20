@@ -6,14 +6,14 @@ ref.ig <- make_lattice(length=10, dim=2) |>
   add_layout_(on_grid())
 
 modgraph <- function(src.ig, vaccinees) {
-  V(src.ig)$status <- "unvaccinated"
-  V(src.ig)$status[vaccinees] <- "vaccinated"
+  V(src.ig)$state <- "unvaccinated"
+  V(src.ig)$state[vaccinees] <- "vaccinated"
 
-  # use vaccine status to split
-  E(src.ig)$status <- "transmissible"
+  # use vaccine state to split
+  E(src.ig)$state <- "transmissible"
   E(src.ig)[
-    .inc(V(src.ig)[status == "vaccinated"])
-  ]$status <- "blocked"
+    .inc(V(src.ig)[state == "vaccinated"])
+  ]$state <- "blocked"
   src.ig
 }
 
@@ -36,11 +36,11 @@ usethis::use_data(
 #' @examples
 #' tmp.ig <- network_warmup_vaccine_ordered
 #' E(tmp.ig)$color <- "grey"
-#' E(tmp.ig)[status == "blocked"]$color <- NA
+#' E(tmp.ig)[state == "blocked"]$color <- NA
 #'
 #' plot(tmp.ig)
 #' tmp.ig <- network_warmup_vaccine_random
 #' E(tmp.ig)$color <- "grey"
-#' E(tmp.ig)[status == "blocked"]$color <- NA
+#' E(tmp.ig)[state == "blocked"]$color <- NA
 #'
 #' plot(tmp.ig)
