@@ -26,13 +26,13 @@ demo.cols <- c(
 
 # random vaccination in a small population
 p1 <- network_quickplot(
-  network_warmup_vaccine_random,
-  values = demo.cols
+  network_warmup_vaccine_random, values = demo.cols,
+  edgeargs = list(), vertexargs = list()
 )
 # targetted vaccination
 p2 <- network_quickplot(
-  network_warmup_vaccine_ordered,
-  values = demo.cols
+  network_warmup_vaccine_ordered, values = demo.cols,
+  edgeargs = list(), vertexargs = list()
 )
 
 # show the plots side-by-side
@@ -42,7 +42,8 @@ p1 + p2 + plot_annotation(tag_levels = list(c(
 
 #' These plots highlight an important insight from the discussion portion of the
 #' module: that relationships can matter. Now let's work through the functions
-#' of the `igraph` library to build-up networks like this.
+#' of the `igraph` library to build-up networks like these as well as those used
+#' in the later exercises.
 
 #' @section Basic Structures
 #'
@@ -53,51 +54,77 @@ p1 + p2 + plot_annotation(tag_levels = list(c(
 #' In `igraph`, the general convention is that the deterministic functions start
 #' with `make_...`, and the probabilistic generators start with `sample_...`
 
-# TODO refactor use quickplot + patchwork
-ig10 <- make_full_graph(n = 10)
-ig30 <- make_full_graph(n = 30)
-ig10layout <- layout_with_graphopt(ig10)
-ig30layout <- layout_with_graphopt(ig30)
-plot(ig10, layout = ig10layout); print(ig10)
-plot(ig30, layout = ig30layout); print(ig30)
+igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
+igB <- make_full_graph(n = 25) |> add_layout_(with_graphopt())
+igLgnp <- sample_gnp(n = 9, p = 0.2) |> set_graph_attr("layout", igL$layout)
+igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
+igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
+igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
 
-ig10gnp <- sample_gnp(10, 0.2)
-ig30gnp <- sample_gnp(30, 0.2)
-plot(ig10gnp, layout = ig10layout); print(ig10gnp)
-plot(ig30gnp, layout = ig30layout); print(ig30gnp)
+p <- network_quickplot(igL) +
+  network_quickplot(igB, edgeargs = list(color="grey", alpha = .3)) +
+network_quickplot(igLgnp) +
+  network_quickplot(igBgnp, edgeargs = list(color="grey", alpha = .5)) +
+network_quickplot(igLl) +
+  network_quickplot(igBl) +
+plot_annotation(tag_levels = list(c(
+  "N=9 Cluster", "N=25 Cluster",
+  "N=9 Random", "N=25 Random",
+  "N=9 Lattice", "N=25 Lattice"
+))) + plot_layout(ncol = 2, nrow = 3) & theme(plot.tag.position = c(0.5, 1))
+
+print(p)
 
 #' @question How would you describe the difference between the graphs created by
-#' `make_full_graph()` versus `sample_gnp()`?
-#' @answer
-#' @question How about the difference between the graphs created by
-#' `make_full_graph()` versus `make_lattice()`?
-#' @answer
+#' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
+#' @answer The `make_...` generators produce graphs with fixed properties; all
+#' vertices connected for `make_full_graph()` and vertices connected in a grid
+#' for `make_lattice()` (a typical 2D one for the basic arguments, or more
+#' complicated grids if you fiddled around with `dim=` arguments).
+#'
 #' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
 #' `sample_gnp()`, which do you think is behind the plots we first looked at?
-#' @answer
+#' @answer The example networks above are made with `make_lattice()`, with some
+#' other modifications. In the later exercises, we will use `make_full_graph()`.
 #'
-#' @hint `?make_full_graph`, `?make_lattice`, and `?sample_gnp` might help.
+#' @hint look at `?make_full_graph`, `?make_lattice`, and `?sample_gnp`.
 #'
-#' @aside Generally, each plotting of an igraph object gives different layouts
-#' To get the same plot, you can generate a layout for a graph (as we do above).
-#' Layouts can be useful for comparing across different graphs as well
+#' @aside Note that we are adding layouts to the plots above. We do that to
+#' ensure getting particular plots; without, each plotting of an igraph object
+#' gives different arrangements of vertices and edges.
+
+# TODO show randomness in layouts
+# also show the baked in igraph plotting
 plot(ig10); plot(ig10) # compare these two vs the next two
 plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout)
 plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
 
-
-##################### PART B ################################
-
-#' The generation functions are useful building blocks, but
-#' are not typically sufficient to get networks that exactly
-#' match our models. For that, there are tools to add/delete
-#' edges and vertices, to merge graphs, and so on.
+#' @section Modifying Networks, part 1
 #'
-#' We will show some highlights here.
+#' In the previous section, we built some foundational networks using the tools
+#' in [igraph]. But those had none of the attributes that we discussed as part
+#' of the module or that can be seen as part of the initial networks we looked
+#' at in this practical.
+#'
+#' To make those networks, we need to use some of the other [igraph] tools for
+#' adding and deleting vertices and edges, and for assigning properties to edges
+#' and vertices.
 
-#' delete every other edge
-ig10mod <- delete_edges(ig10, 1:(ecount(ig10)/2)*2)
-plot(ig10, layout = ig10layout); plot(ig10mod, layout = ig10layout)
+# delete every other edge
+igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
+igLmod <- igL |> delete_edges(1:(ecount(igL)/2)*2)
+network_quickplot(igL) + network_quickplot(igLmod) +
+  plot_annotation(tag_levels = list(c(
+    "N=9 Cluster", "N=9 Cluster--"
+  ))) + plot_layout(ncol = 2) & theme(plot.tag.position = c(0.5, 1))
+
+# TODO: delete edges from lattice networks
+
+# TODO: add vertices + edges
+
+# TODO: add whole other graphs
+
+# TODO: recycle below
 
 #' add edges to a star graph
 ig10star <- make_star(10, mode = "undirected")
@@ -123,8 +150,22 @@ plot(make_star(30, mode = "undirected"), layout = ig30layout)
 #' TODO some aside code
 
 
-##################### PART C ################################
-
+#' @section Modifying Networks, part 2
+#'
+#' This shows us one approach to modifying networks: directly adding and/or
+#' deleting their edges and vertices. We *could* have done this for the initial
+#' networks. In those networks, we have some _vaccinated_ and _unvaccinated_
+#' individuals, and the edges (over which transmission occurs) connecting
+#' vaccinated individuals do not appear. But the conceptual model here is not
+#' that these people no longer contact the unvaccinated population, simply that
+#' transmission does not occur along those contacts.
+#'
+#' We can create plots (and more importantly, simulations) that maintain these
+#' interactions while *also* capturing that this transmission is route is
+#' blocked. To do so, we typically modify the attributes of edges and vertices,
+#' often based on the attributes their connected edges and vertices.
+#'
+#' TODO: merge this
 #' We frequently use network models to capture detailed structural
 #' relationships between elements. However, we still need to model
 #' the infectious disease phenomena. In `igraph`, we can assign
@@ -136,18 +177,12 @@ plot(make_star(30, mode = "undirected"), layout = ig30layout)
 #' in the `[...]` block (much like using `which(...)` or `subset(...)`
 #' from base R)
 
+#' TODO: switch this to be about vaccinated and unvaccinated
 #' assign vertex properties; in this example, give the population
 #' the Susceptible status, then change one individual to the
 #' Infectious status
 V(ig10)$state <- "S"
 V(ig10)[1]$state <- "I"
-
-#' there are some special attributes that get used in plotting, e.g.
-#' `color`. We can use our model attributes to decide how to set
-#' those special attributes if we want to visualize what we've done
-V(ig10)$color <- "dodgerblue"
-V(ig10)[state == "I"]$color <- "firebrick"
-plot(ig10, layout = ig10layout)
 
 #' Q: Using the `ig30` network, set about 10% of the population to
 #' "I" and check your results by plotting them as above. Try this a
@@ -159,7 +194,15 @@ V(ig30)$color <- "dodgerblue"
 V(ig30)[state == "I"]$color <- "firebrick"
 plot(ig30, layout = ig30layout)
 
-#'
+#' TODO: @aside this material, highlighting what you need to do in base [igraph]
+#' for these visuals
+#' there are some special attributes that get used in plotting, e.g.
+#' `color`. We can use our model attributes to decide how to set
+#' those special attributes if we want to visualize what we've done
+V(ig10)$color <- "dodgerblue"
+V(ig10)[state == "I"]$color <- "firebrick"
+plot(ig10, layout = ig10layout)
+
 
 #' use vertex and edge properties
 #' in particular, we should give them code that will visualize SIR & transmission pathways
@@ -183,6 +226,19 @@ plot(ig30, layout = ig30layout)
 #' Q: how could you select all vertices at the end of an edge where the other end
 #' is infectious?
 
+#' @section Follow Up Work
+#'
+#' We only touched the surface of the capabilities of the [igraph] library.
+#' There are many other network generation functions (try `igraph::make_` or
+#' `igraph::sample_` and then TAB to see suggestions for others), as well as
+#' functions to save and load networks in various formats (TODO: examples).
+#'
+#' [igraph] also has a wealth of analytical tools for computing various metrics.
+#' We do not use those in this session, but they are often part of evaluations
+#' to try to understand why simulations on different networks have different
+#' features, or to predict what kind of epidemic outcomes will result from
+#' different network properties.
+
 #' TODO from practical 3 demo - what network property calculations
 #' do we use? have them use some of the igraph network metric calculations
 
@@ -190,8 +246,6 @@ plot(ig30, layout = ig30layout)
 #' edge lists, adjaceny lists,
 #' reading in / writing out
 #' generators e.g. erdos-renyi
-
-
 
 
 

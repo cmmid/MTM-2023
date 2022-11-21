@@ -9,39 +9,50 @@ NULL
 #' preservation of vertex and edge named IDs (if present)
 #'
 #' @return a [data.table], with columns `V2`, `V1` (vertex ids), `eid` (edge ids),
-#' layout data (`x1`, `y1`, `x2`, `y2`), and then edge attributes (various,
-#' corresponding to the [igraph::edge_attr()] of `ig`) and vertex attributes (
-#' various, corresponding to the [igraph::vertex_attr()] of `ig`, prepended with
-#' `V1` and `V2` to identify associated vertex).
+#' layout data (`x1`, `y1`, `x2`, `y2`), and then optionally edge attributes (
+#' various, corresponding to the [igraph::edge_attr()] of `ig`) and vertex
+#' attributes (various, corresponding to the [igraph::vertex_attr()] of `ig`,
+#' prepended with `V1` and `V2` to identify associated vertex).
 #'
 #' @export as.data.table.igraph
 #' @exportS3Method
 as.data.table.igraph <- function(ig, keep.rownames, ...) {
   # extract edge properties
-  eprops <- ig |> edge_attr() |> as.data.table()
-  eprops[, eid := 1:.N ]
-  el <- ig |> as_edgelist() |> as.data.table()
-  el[, eid := 1:.N ]
-  # extract vertex properties
-  vprops <- ig |> vertex_attr() |> as.data.table()
-  vprops[, vid := 1:.N ]
+  if (ig |> edge_attr_names() |> length()) {
+    el <- ig |> as_edgelist() |> as.data.table()
+    el[, eid := 1:.N ]
+    eprops <- ig |> edge_attr() |> as.data.table()
+    eprops[, eid := 1:.N ]
+    base <- merge(eprops, el, by="eid")
+  } else {
+    base <- ig |> as_edgelist() |> as.data.table()
+    base[, eid := 1:.N ]
+  }
+
+  if (is.null(ig$layout)) ig$layout <- layout_nicely(ig)
+
   vl <- ig$layout |> as.data.table() |> setnames(c("V1", "V2"), c("x", "y"))
   vl[, vid := 1:.N ]
   # model of resulting data: edges, edge properties, vertex ids, vertex properties
-  base <- merge(eprops, el, by="eid")
   base[vl, on=.(V1=vid), c("x1", "y1") := .(x, y)]
   base[vl, on=.(V2=vid), c("x2", "y2") := .(x, y)]
-  vpropnames <- setdiff(colnames(vprops), "vid")
 
-  setnames(vprops, vpropnames, paste0("V1.", vpropnames))
-  vpropnames <- paste0("V1.", vpropnames)
-  setnames(vprops, "vid", "V1")
-  extended <- merge(base, vprops, by="V1")
-
-  setnames(vprops, vpropnames, gsub("V1", "V2", vpropnames))
-  vpropnames <- gsub("V1", "V2", vpropnames)
-  setnames(vprops, "V1", "V2")
-  extended <- merge(extended, vprops, by="V2")
+  # extract vertex properties
+  vpropnames <- ig |> vertex_attr_names()
+  if (vpropnames |> length()) {
+    vprops <- ig |> vertex_attr() |> as.data.table()
+    vprops[, vid := 1:.N ]
+    setnames(vprops, vpropnames, paste0("V1.", vpropnames))
+    vpropnames <- paste0("V1.", vpropnames)
+    setnames(vprops, "vid", "V1")
+    extended <- merge(base, vprops, by="V1")
+    setnames(vprops, vpropnames, gsub("V1", "V2", vpropnames))
+    vpropnames <- gsub("V1", "V2", vpropnames)
+    setnames(vprops, "V1", "V2")
+    extended <- merge(extended, vprops, by="V2")
+  } else {
+    extended <- base
+  }
 
   setkey(extended, eid, V1, V2) |> setcolorder()
 }
@@ -166,7 +177,8 @@ geom_edge <- rejig(
 #' @export
 network_quickplot <- function(
     ig, values, labels,
-    edgeargs = list(), vertexargs = list()
+    edgeargs = list(color = "grey"),
+    vertexargs = list(color = "black")
 ) {
   return(eval(substitute(
     ggplot(ig) + do.call(geom_edge, edgeargs) +
