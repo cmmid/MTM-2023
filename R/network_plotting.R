@@ -57,7 +57,7 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
     setnames(vprops, vpropnames, gsub("V1", "V2", vpropnames))
     vpropnames <- gsub("V1", "V2", vpropnames)
     setnames(vprops, "V1", "V2")
-    extended <- merge(extended, vprops, by="V2")
+    extended <- merge(extended, vprops, by="V2", all.x = TRUE)
   } else {
     extended <- base
   }
@@ -113,9 +113,8 @@ network_vertex_data <- function(dt) {
 #'
 #' @export
 network_edge_data <- function(dt) {
-  e.dt <- unique(dt[,.SD,.SDcols = !patterns("^V(1|2)")])
-
-  return(e.dt |> subset(!is.na(eid)) |> setkey(eid))
+  return(dt[, .SD, .SDcols = !patterns("^V[12]")] |> unique() |>
+    subset(!is.na(eid)) |> setkey(eid))
 }
 
 #' @title Network Color Scale
@@ -201,9 +200,9 @@ geom_edge <- rejig(
 #'
 #' @export
 network_quickplot <- function(
-    ig, values, labels,
-    edgeargs = list(color = "grey"),
-    vertexargs = list(color = "black")
+  ig, values, labels,
+  edgeargs = list(),
+  vertexargs = list()
 ) {
   return(eval(substitute(
     ggplot(ig) + do.call(geom_edge, edgeargs) +

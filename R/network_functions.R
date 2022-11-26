@@ -56,20 +56,11 @@ check_RFparms <- function(parms) {
 #'
 #' @examples
 #' require(MTM)
-#' require(igraph) # for plotting utilities
-#' quickplot <- function(net) plot(net,
-#'   vertex.size = 5,
-#'   # set color according to state
-#'   vertex.color = SIRcolors[V(net)$state],
-#'   vertex.frame.color = NA, vertex.label = NA,
-#'   # visually emphasize connections more likely to transmit
-#'   edge.width = (1-E(net)$draw)^3,
-#'   edge.color = rgb(red = 0.6, 0, 0, alpha = (1-E(net)$draw)^3)
-#' )
+#'
 #' # repeat these next steps a few times, w/ different `N`
 #' # to see how `network_build()` works.
 #' sirpop <- network_build(list(N=30, p=0.2))
-#' quickplot(sirpop)
+#' network_quickplot(sirpop, edgeargs = list(), vertexargs = list())
 #'
 #' @export
 network_build <- function(
@@ -89,9 +80,9 @@ network_build <- function(
   # draw a random transmission value for each edge.
   E(network)$draw <- runif(ecount(network))
   # define edge attribute for showing transmission
-  E(network)$active <- FALSE
+  E(network)$state <- "inactive"
 
-  set.seed(N) # fix rng for layout; all size N networks have same layout
+  set.seed(parms$N) # fix rng for layout; all size N networks have same layout
   network <- network |> add_layout_(with_fr(coords = layout_randomly(network)), normalize())
   set.seed(Sys.time()) # scramble rng after
 
@@ -111,26 +102,12 @@ network_build <- function(
 #'
 #' @examples
 #' require(MTM)
-#' require(igraph) # for plotting utilities
 #' parms <- list(N=30, p=0.2)
-#' sirpop.base <- network_build(parms)
-#' layout.base <- layout_nicely(sirpop.base)
-#'
-#' quickplot <- function(net) plot(net,
-#'   vertex.size = 5,
-#'   # set color according to state
-#'   vertex.color = SIRcolors[V(net)$state],
-#'   vertex.frame.color = NA, vertex.label = NA,
-#'   # visually emphasize connections more likely to transmit
-#'   edge.width = (1-E(net)$draw)^3,
-#'   edge.color = rgb(red = 0.6, 0, 0, alpha = (1-E(net)$draw)^3),
-#'   layout = layout.base
-#' )
 #'
 #' # repeat these next steps a few times, w/ different `p` to see
 #' # to see how `network_percolate()` works.
-#' sirpop.perc <- network_percolate(within(parms, p <- 0.05), sirpop.base)
-#' quickplot(sirpop.perc)
+#' sirpop <- network_percolate(within(parms, p <- 0.05))
+#' network_quickplot(sirpop, edgeargs = list(), vertexargs = list())
 #'
 #' @export
 network_percolate <- function(
@@ -177,7 +154,7 @@ network_update <- function(
   if (length(changedv)) {
     # apply them to original network
     V(y)[changedv]$state <- changedv$change
-    E(y)$active <- E(dy)$active
+    E(y)$state <- E(dy)$state
   }
   return(y)
 }
@@ -194,35 +171,16 @@ network_update <- function(
 #'
 #' @examples
 #' require(MTM)
-#' require(igraph) # for plotting utilities
 #' parms <- list(N=30, p=0.1)
 #' set.seed(8675309)
 #' sirpop <- network_build(parms)
-#' layout.base <- layout_nicely(sirpop)
 #' onestep <- network_dReedFrost(0, sirpop, parms)
 #'
-#' quickplot <- function(net, vcols, ecols) plot(net,
-#'   vertex.size = 5,
-#'   # set color according to state
-#'   vertex.color = vcols,
-#'   vertex.frame.color = NA, vertex.label = NA,
-#'   # visually emphasize connections more likely to transmit
-#'   edge.width = (1-E(net)$draw)^3,
-#'   edge.color = ecols,
-#'   layout = layout.base
-#' )
 #' # the initial state
-#' quickplot(
-#'   sirpop,
-#'   vcols = SIRcolors[V(sirpop)$state],
-#'   ecols = rgb(red = 0.6, 0, 0, alpha = (1-E(sirpop)$draw)^3)
-#' )
+#' network_quickplot(sirpop, edgeargs = list(), vertexargs = list())
+#'
 #' # the changes
-#' quickplot(
-#'   onestep,
-#'   vcols = fifelse(is.na(V(onestep)$change), "grey", SIRcolors[V(onestep)$change]),
-#'   ecols = fifelse(E(onestep)$active, "red", "lightgrey")
-#' )
+#' network_quickplot(onestep, edgeargs = list(), vertexargs = list())
 #'
 #' @export
 network_dReedFrost <- function(
@@ -237,7 +195,7 @@ network_dReedFrost <- function(
   # all infectious individuals will recover
   V(dy)[infectious]$change <- "R"
   # whatever happened previously now over
-  E(dy)$active <- FALSE
+  E(dy)$state <- "inactive"
 
   # if there are infectious & susceptible individuals
   if (length(susceptible) & length(infectious)) {
@@ -257,7 +215,7 @@ network_dReedFrost <- function(
     if (length(transmitting_paths)) {
       # infect all the individuals at the ends of those paths
       new_infections <- susceptible[.inc(transmitting_paths)]
-      E(dy)[transmitting_paths]$active <- TRUE
+      E(dy)[transmitting_paths]$state <- "active"
       V(dy)[new_infections]$change <- "I"
     }
   }
@@ -309,7 +267,6 @@ network_is_infectious <- function(
 #'
 #' @examples
 #' require(MTM)
-#' require(igraph) # for plotting utilities
 #' # guarantee a network with some transmission
 #' set.seed(42)
 #' parms <- list(N = 30, p = 0.1)
@@ -318,21 +275,10 @@ network_is_infectious <- function(
 #'   parms = parms
 #' )
 #'
-#' layout.base <- layout_nicely(ys[[1]])
-#' quickplot <- function(net) plot(net,
-#'   vertex.size = 5,
-#'   # set color according to state
-#'   vertex.color = SIRcolors[V(net)$state],
-#'   vertex.frame.color = NA, vertex.label = NA,
-#'   # visually emphasize connections more likely to transmit
-#'   edge.width = (1-E(net)$draw)^3,
-#'   edge.color = fifelse(E(net)$active, "red", "lightgrey"),
-#'   layout = layout.base
-#' )
-#' quickplot(ys[[1]])
-#' quickplot(ys[[2]])
-#' quickplot(ys[[3]])
-#' quickplot(ys[[4]])
+#' network_quickplot(ys[[1]])
+#' network_quickplot(ys[[2]])
+#' network_quickplot(ys[[3]])
+#' network_quickplot(ys[[4]])
 #'
 #' @export
 network_solve <- function(

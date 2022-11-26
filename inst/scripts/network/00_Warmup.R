@@ -24,6 +24,10 @@ demo.cols <- c(
   transmissible = "grey", blocked = "transparent"
 )
 
+override_quickplot <- function(
+  ..., edgeargs = list(color = "grey"), vertexargs = list(color = "black")
+) network_quickplot(...,  edgeargs = edgeargs, vertexargs = vertexargs)
+
 # random vaccination in a small population
 p1 <- network_quickplot(
   network_warmup_vaccine_random, values = demo.cols,
