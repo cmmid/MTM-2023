@@ -37,6 +37,14 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
   base[vl, on=.(V1=vid), c("x1", "y1") := .(x, y)]
   base[vl, on=.(V2=vid), c("x2", "y2") := .(x, y)]
 
+  if (vl[!(vid %in% base[, union(V1, V2)]), .N]) {
+    base <- rbind(
+      base,
+      vl[!(vid %in% base[, union(V1, V2)]), .(V1 = vid, x1 = x, y1 = y)],
+      fill = TRUE
+    )
+  }
+
   # extract vertex properties
   vpropnames <- ig |> vertex_attr_names()
   if (vpropnames |> length()) {
@@ -91,7 +99,23 @@ network_vertex_data <- function(dt) {
   v2 <- unique(dt[,.SD,.SDcols = patterns("^V2|x2|y2")])[!(V2 %in% v1$vid)]
   setnames(v2, c("V2", "x2", "y2"), c("vid", "x", "y"))
   setnames(v2, names(v2), gsub("V2\\.","", names(v2)))
-  return(rbind(v1, v2) |> setkey(vid))
+  return(rbind(v1, v2) |> subset(!is.na(vid)) |> setkey(vid))
+}
+
+#' @title Get Edge Data
+#'
+#' @description Extract edge data from [data.table]s made from [igraph]s
+#'
+#' @param dt [data.table] object from [as.data.table.igraph()]
+#'
+#' @details Intended for use with [geom_edge()]. Extracts the unique edges,
+#' their ends, and any attribute data.
+#'
+#' @export
+network_edge_data <- function(dt) {
+  e.dt <- unique(dt[,.SD,.SDcols = !patterns("^V(1|2)")])
+
+  return(e.dt |> subset(!is.na(eid)) |> setkey(eid))
 }
 
 #' @title Network Color Scale
@@ -156,7 +180,8 @@ geom_vertex <- rejig(
 #' @export
 geom_edge <- rejig(
   geom_segment,
-  mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state)
+  mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state),
+  data = network_edge_data
 )
 
 
