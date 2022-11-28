@@ -47,12 +47,12 @@ check_RFparms <- function(parms) {
 #'
 #' In the Reed-Frost model, how many times does a particular connection
 #' between individuals need to be considered for transmission? What are some
-#' model additions (e.g. different transitions) would change how many times a
-#' connection is tested?
+#' model additions (_e.g._ different transitions) that would change how many
+#' times a connection is tested?
 #'
-#' @return an igraph object, with `parms$N` vertices, all connected by
-#' undirected edges. Initialized with one *I*nfectious vertex, and edges
-#' each assigned a random number on (0, 1).
+#' @return an [igraph], fully connected, with undirected edges, and `parms$N`
+#' vertices. Initialized with one *I*nfectious vertex, and [igraph::edge_attr()]
+#' `draw`, a random deviate on (0, 1).
 #'
 #' @examples
 #' require(MTM)

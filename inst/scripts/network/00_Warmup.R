@@ -30,13 +30,11 @@ override_quickplot <- function(
 
 # random vaccination in a small population
 p1 <- network_quickplot(
-  network_warmup_vaccine_random, values = demo.cols,
-  edgeargs = list(), vertexargs = list()
+  network_warmup_vaccine_random, values = demo.cols
 )
 # targetted vaccination
 p2 <- network_quickplot(
-  network_warmup_vaccine_ordered, values = demo.cols,
-  edgeargs = list(), vertexargs = list()
+  network_warmup_vaccine_ordered, values = demo.cols
 )
 
 # show the plots side-by-side
@@ -65,17 +63,16 @@ igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
 igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
 igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
 
-p <- network_quickplot(igL) +
-  network_quickplot(igB, edgeargs = list(color="grey", alpha = .3)) +
-network_quickplot(igLgnp) +
-  network_quickplot(igBgnp, edgeargs = list(color="grey", alpha = .5)) +
-network_quickplot(igLl) +
-  network_quickplot(igBl) +
-plot_annotation(tag_levels = list(c(
-  "N=9 Cluster", "N=25 Cluster",
-  "N=9 Random", "N=25 Random",
-  "N=9 Lattice", "N=25 Lattice"
-))) + plot_layout(ncol = 2, nrow = 3) & theme(plot.tag.position = c(0.5, 1))
+p <- patchwork_grid(list(list(
+  "N=9 Cluster"  = network_quickplot(igL, simple = TRUE),
+  "N=25 Cluster" = network_quickplot(igB, simple = TRUE)
+), list(
+  "N=9 Random"  = network_quickplot(igLgnp, simple = TRUE),
+  "N=25 Random" = network_quickplot(igBgnp, simple = TRUE)
+), list(
+  "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE),
+  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE)
+)))
 
 print(p)
 
@@ -97,11 +94,11 @@ print(p)
 #' ensure getting particular plots; without, each plotting of an igraph object
 #' gives different arrangements of vertices and edges.
 
-# TODO show randomness in layouts
-# also show the baked in igraph plotting
-plot(ig10); plot(ig10) # compare these two vs the next two
-plot(ig10, layout = ig10layout); plot(ig10, layout = ig10layout)
-plot(ig10, layout = ig10layout); plot(ig10gnp, layout = ig10layout)
+patchwork_grid(list(list(
+  "Original" = network_quickplot(igL, simple = TRUE),
+  "...Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE),
+  "& Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE)
+)))
 
 #' @section Modifying Networks, part 1
 #'

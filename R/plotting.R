@@ -61,7 +61,7 @@ scale_color_compartment <- rejig(
 #' @rdname plotting
 #'
 #' @export
-geom_density <- rejig(
+geom_edf <- rejig(
   geom_bar,
   fill = "grey60", stat = "identity", width = 1
 )

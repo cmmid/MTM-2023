@@ -201,8 +201,9 @@ geom_edge <- rejig(
 #' @export
 network_quickplot <- function(
   ig, values, labels,
-  edgeargs = list(),
-  vertexargs = list()
+  edgeargs = if (simple) list(color = "grey90") else list(),
+  vertexargs = if (simple) list(color = "black") else list(),
+  simple = FALSE
 ) {
   return(eval(substitute(
     ggplot(ig) + do.call(geom_edge, edgeargs) +
