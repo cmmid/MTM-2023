@@ -180,3 +180,39 @@ plot_series <- function(
     theme(legend.position = c(1, 0.5), legend.justification = c(1, 0.5))
   )
 }
+
+# TODO support a `...`s version?
+
+#' @title Patchwork Grid
+#'
+#' @description Provides a quick way to convert a named list structure
+#' (possibly nested) of plots into a tagged grid arrangement of those plots.
+#'
+#' @param plist a list of named lists of [ggplot2] objects, representing a set
+#' of plots to layout as a grid.
+#'
+#' @export
+patchwork_grid <- function(plist) {
+  # TODO more checks
+  stopifnot(
+    "`plist` not a list." = is.list(plist),
+    "Empty `plist`." = length(plist) != 0
+  )
+
+  rown <- length(plist)
+  coln <- length(plist[[1]])
+
+  allps <- Reduce(c, plist)
+  nms <- names(allps)
+
+  return(
+    Reduce(`+`, allps) +
+      plot_annotation(tag_levels = list(nms)) +
+      plot_layout(ncol = coln, nrow = rown) &
+      theme(
+        plot.tag.position = c(0.5, 1),
+        plot.tag = element_text(vjust = 0)
+      )
+  )
+
+}

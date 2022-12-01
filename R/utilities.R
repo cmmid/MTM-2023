@@ -65,40 +65,6 @@ have completed all other elements of a particular activity."
   invisible(NULL)
 }
 
-#' @title Patchwork Grid
-#'
-#' @description Provides a quick way to convert a named list structure
-#' (possibly nested) of plots into a tagged grid arrangement of those plots.
-#'
-#' @param plist a list of named lists of [ggplot2] objects, representing a set
-#' of plots to layout as a grid.
-#'
-#' @export
-patchwork_grid <- function(plist) {
-  # TODO more checks
-  stopifnot(
-    "`plist` not a list." = is.list(plist),
-    "Empty `plist`." = length(plist) != 0
-  )
-
-  rown <- length(plist)
-  coln <- length(plist[[1]])
-
-  allps <- Reduce(c, plist)
-  nms <- names(allps)
-
-  return(
-    Reduce(`+`, allps) +
-    plot_annotation(tag_levels = list(nms)) +
-    plot_layout(ncol = coln, nrow = rown) &
-    theme(
-      plot.tag.position = c(0.5, 1),
-      plot.tag = element_text(vjust = 0)
-    )
-  )
-
-}
-
 #' @export
 nested_lapply <- function(X, FUN, ...) {
   if (!is.null(names(X))) {
