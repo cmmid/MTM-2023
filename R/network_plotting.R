@@ -62,6 +62,8 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
     extended <- base
   }
 
+  for (gn in setdiff(graph_attr_names(ig), c("layout", "sorted"))) attr(extended, gn) <- graph_attr(ig, gn)
+
   setkey(extended, eid, V1, V2) |> setcolorder()
 }
 
@@ -362,7 +364,7 @@ network_plot_series <- function(
   return(ggplot(wide.dt) +
     aes(t, value, color = variable, group = interaction(variable, sample)) +
     lapply(layer_order, function(ly) geom_line(data = function(dt) dt[variable == ly], alpha = alph)) +
-    scale_x_continuous(name = "Simulation time") +
+    scale_x_simtime() +
     scale_y_continuous(name = NULL) +
     scale_color_manual(name = NULL, values = SIRcolors, guide = guide_legend(override.aes = list(alpha = 1))) +
     theme_minimal() +
@@ -370,11 +372,26 @@ network_plot_series <- function(
   )
 }
 
+# TODO turn this into specialized version of network_edge_data
+# function(dt) {
+#   return(dt[, .SD, .SDcols = !patterns("^V[12]")] |> unique() |>
+#            subset(!is.na(eid)) |> setkey(eid))
+# }
+
+#' @title Extract Active Edges
+#'
+#' @param dt a [data.table] resulting from [as.data.table.igraph()],
+#' applied to an [igraph] with both vertex and edge attributes `state`.
+#'
+#'
 #' @export
-network_extract_active_directed <- function(
-  network, eref
+network_active_edges <- function(
+  dt
 ) {
-  eact <- E(network)[active == TRUE]
+  # extract the active edges ...
+  activesub <- dt[state == "active"]
+
+  eact <- E(network)[state == "active"]
   if (length(eact)) {
     nonsrc <- V(network)[.inc(eact)][state != "I"]
     eactive <- eref[eid %in% as.integer(eact)]
@@ -384,6 +401,7 @@ network_extract_active_directed <- function(
     return(eref[0])
   }
 }
+
 
 #' @title create an animated plot of transmission on the population
 #'
@@ -412,5 +430,67 @@ network_animate_series <- function(networks) {
     network_ggplot(ev_digest$e.ref, e.active, v.states) +
     transition_time(time) +  labs(title = "Time: {frame_time}")
   )
+
+}
+
+
+#' @title create an animated plot of transmission on the population
+#'
+#' @inheritParams network_flatten
+#'
+#' @return gganimate object
+#'
+#' @export
+network_animate <- function(ys) {
+  init <- ys[[1]]
+  pl <- layout_(init, with_fr(coords = layout_as_star(init)), normalize())
+  colnames(pl) <- c("vx", "vy")
+  epairs <- as_edgelist(init)
+  starts <- pl[epairs[,1],]
+  colnames(starts) <- paste0(colnames(starts), ".start")
+  ends <- pl[epairs[,2],]
+  colnames(ends) <- paste0(colnames(ends), ".end")
+  e.ref <- as.data.table(cbind(starts, ends))[, eid := 1L:.N ]
+  v.ref <- as.data.table(pl)[, vid := 1L:.N ]
+
+  e.active <- c(ys, ys[length(ys)]) |>
+    lapply(
+      network_extract_active_directed,
+      el = epairs, vpos = pl
+    ) |> rbindlist(idcol = "time")
+  e.active[, time := time - 1L ]
+
+  v.states <- ys |> lapply(
+    \(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
+  ) |> rbindlist(idcol = "time")
+
+  # TODO hide edges as they become irrelevant to transmission?
+  # TODO add labels for active infections, cumulative infections?
+
+  return(ggplot() + geom_segment(
+    aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
+    e.ref,
+    size = 0.25, alpha = 0.5
+  ) +
+    geom_segment(
+      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = eid),
+      e.active,
+      size = 0.75, alpha = 1, arrow = arrow()
+    ) +
+    geom_point(
+      aes(vx, vy, color = state, size = state, group = vid),
+      v.states
+    ) +
+    transition_time(time) +
+    scale_color_compartment(
+      guide = "none",
+      values = c(SIRcolors, c(active="red", inactive="grey"))
+    ) +
+    scale_size_manual(guide = "none", values = c(S=5, I=3, R=1)) +
+    coord_equal() + theme_minimal() + theme(
+      axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
+      axis.title = element_blank(), panel.grid = element_blank(),
+      legend.position = "none"
+    ) + labs(title = "Time: {frame_time}"))
 
 }
