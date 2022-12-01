@@ -1,6 +1,8 @@
 
 require(MTM)        # for overall course functions
 require(igraph)     # for the network capabilities
+# you may not even need these, but they could be
+# useful if you want to do some adhoc plotting
 require(ggplot2)    # for plotting
 require(patchwork)  # for combining plots
 
@@ -24,28 +26,27 @@ demo.cols <- c(
   transmissible = "grey", blocked = "transparent"
 )
 
-override_quickplot <- function(
-  ..., edgeargs = list(color = "grey"), vertexargs = list(color = "black")
-) network_quickplot(...,  edgeargs = edgeargs, vertexargs = vertexargs)
-
-# random vaccination in a small population
-p1 <- network_quickplot(
-  network_warmup_vaccine_random, values = demo.cols
-)
-# targetted vaccination
-p2 <- network_quickplot(
-  network_warmup_vaccine_ordered, values = demo.cols
-)
-
-# show the plots side-by-side
-p1 + p2 + plot_annotation(tag_levels = list(c(
-  "Random\nVaccination", "Targetted\nVaccination"
-))) & theme(plot.tag.position = c(0.5, 1))
+list(list(
+  # random vaccination in a small, orderly population
+  "Random\nVaccination" = network_quickplot(
+    network_warmup_vaccine_random, values = demo.cols
+  ),
+  # targetted vaccination in same
+  "Targetted\nVaccination" = network_quickplot(
+    network_warmup_vaccine_ordered, values = demo.cols
+  )
+)) |> patchwork_grid()
 
 #' These plots highlight an important insight from the discussion portion of the
-#' module: that relationships can matter. Now let's work through the functions
+#' course: that relationships can matter. Now let's work through the functions
 #' of the `igraph` library to build-up networks like these as well as those used
 #' in the later exercises.
+#'
+#' @aside The [network_quickplot()] function is what you will use throughout these
+#' practicals to visualize networks. This function streamlines supplying arguments
+#' to a several [ggplot2] functions and returns the resulting [ggplot2::ggplot]
+#' object. You should recall [patchwork_grid()] from previous sessions where you
+#' were laying out multiple plots for comparison; we use it here in the same way.
 
 #' @section Basic Structures
 #'
@@ -56,6 +57,7 @@ p1 + p2 + plot_annotation(tag_levels = list(c(
 #' In `igraph`, the general convention is that the deterministic functions start
 #' with `make_...`, and the probabilistic generators start with `sample_...`
 
+# make several different kinds of graphs, at two sizes
 igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
 igB <- make_full_graph(n = 25) |> add_layout_(with_graphopt())
 igLgnp <- sample_gnp(n = 9, p = 0.2) |> set_graph_attr("layout", igL$layout)
@@ -63,7 +65,8 @@ igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
 igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
 igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
 
-p <- patchwork_grid(list(list(
+# plot them together as a grid
+list(list(
   "N=9 Cluster"  = network_quickplot(igL, simple = TRUE),
   "N=25 Cluster" = network_quickplot(igB, simple = TRUE)
 ), list(
@@ -72,9 +75,7 @@ p <- patchwork_grid(list(list(
 ), list(
   "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE),
   "N=25 Lattice" = network_quickplot(igBl, simple = TRUE)
-)))
-
-print(p)
+)) |> patchwork_grid()
 
 #' @question How would you describe the difference between the graphs created by
 #' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
@@ -94,11 +95,11 @@ print(p)
 #' ensure getting particular plots; without, each plotting of an igraph object
 #' gives different arrangements of vertices and edges.
 
-patchwork_grid(list(list(
+list(list(
   "Original" = network_quickplot(igL, simple = TRUE),
   "...Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE),
   "& Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE)
-)))
+)) |> patchwork_grid()
 
 #' @section Modifying Networks, part 1
 #'
@@ -111,40 +112,69 @@ patchwork_grid(list(list(
 #' adding and deleting vertices and edges, and for assigning properties to edges
 #' and vertices.
 
-# delete every other edge
-igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
-igLmod <- igL |> delete_edges(1:(ecount(igL)/2)*2)
-network_quickplot(igL) + network_quickplot(igLmod) +
-  plot_annotation(tag_levels = list(c(
-    "N=9 Cluster", "N=9 Cluster--"
-  ))) + plot_layout(ncol = 2) & theme(plot.tag.position = c(0.5, 1))
+# delete every other edge on the lattice
+igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
+igBlmod <- igBl |> delete_edges(1:(ecount(igBl)/2)*2)
 
-# TODO: delete edges from lattice networks
+list(list(
+  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE),
+  "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(x=(x1+x2)/2, y=(y1+y2)/2, label = eid), data = network_edge_data(igBl |> as.data.table())
+)
 
-# TODO: add vertices + edges
+#' @question This is starting to look like the initial networks we plotted.
+#' What collection of edges could we delete to isolate the diagonal set of
+#' vertices?
+#'
+#' @answer There's a clear pattern of adding `11` to `c(1,2,4,10)` until hitting
+#' the top row of vertices, so could do roughly
+#' `del <- c(1,2,4,10) + 11*rep(0:3, each=4); del[15:16] <- c(36, 40)`
+#'
+#' @aside If you wanted to make this work for any size lattice, you have to
+#' consider how that the addition increment changes & how to deal with the
+#' "last row" switch. For example, consider a slightly larger version of the
+#' problem:
 
+igBBl <- make_lattice(length = 7, dim = 2) |> add_layout_(on_grid())
+igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl)/2)*2)
+list(list(
+  "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE),
+  "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(x=(x1+x2)/2, y=(y1+y2)/2, label = eid), data = network_edge_data(igBBl |> as.data.table())
+)
+
+#' In a later section, we'll use some of the other [igraph] capabilities to
+#' do this more cleverly. For now, let's consider the tools to add vertices
+#' and edges to a graph.
+
+# adding edges ...
+iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
+# can be done by naming specific vertices
+iglstarmod <- iglstar |> add_edges(c(c(2,4), c(3,5), c(6,8), c(7,9)))
+
+# TODO fix labels
+list(list(
+  "N=9 Star" = network_quickplot(iglstar, simple = TRUE),
+  "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(x=x + .1, y=y, label = vid), data = network_vertex_data(iglstar |> as.data.table())
+)
+
+#' @question What are some other approaches to add edges in [igraph]?
+#'
+#' @answer You can use `+` with another [igraph]-like entity, either a whole
+#' network or pieces created with [igraph::vertex()], [igraph::vertices()],
+#' [igraph::edge()], or [igraph::edges()].
+#'
+#' @hint check `?add_edges`
+
+#' Now let's use the approach of adding on another graph.
 # TODO: add whole other graphs
 
 # TODO: recycle below
 
-#' add edges to a star graph
-ig10star <- make_star(10, mode = "undirected")
-ig10starmod <- add_edges(ig10star, c(c(2,4), c(3,5), c(6,8), c(7,9)))
-plot(ig10star, layout = ig10layout)
-plot(ig10starmod, layout = ig10layout)
-
-#' add vertices
-ig30starp <- add_vertices(ig10star, 20)
-plot(ig30starp, layout = ig30layout)
-#' note: adding vertices doesn't also add edges
-
-#' Q: Add edges to `ig30starp` to make it a star graph.
-#' Check your work by plotting the result compared to
-#' making a 30 star automatically:
-ig30star <- add_edges(ig30starp, `???`)
-
-plot(ig30star, layout = ig30layout)
-plot(make_star(30, mode = "undirected"), layout = ig30layout)
 
 #' ASIDE: It's also commonly useful to build up graphs
 #' by merging building blocks
@@ -153,13 +183,15 @@ plot(make_star(30, mode = "undirected"), layout = ig30layout)
 
 #' @section Modifying Networks, part 2
 #'
-#' This shows us one approach to modifying networks: directly adding and/or
-#' deleting their edges and vertices. We *could* have done this for the initial
-#' networks. In those networks, we have some _vaccinated_ and _unvaccinated_
+#' The previous section introduced directly modifying networks: adding and/or
+#' deleting edges and vertices. We *could* use this approach to make the
+#' networks from the top of this practical.
+#'
+#' In those networks, we have some _vaccinated_ and _unvaccinated_
 #' individuals, and the edges (over which transmission occurs) connecting
-#' vaccinated individuals do not appear. But the conceptual model here is not
-#' that these people no longer contact the unvaccinated population, simply that
-#' transmission does not occur along those contacts.
+#' vaccinated individuals do not appear - but not because they have been deleted!
+#' The model here is not that these people no longer contact the unvaccinated
+#' population, simply that transmission does not occur along those contacts.
 #'
 #' We can create plots (and more importantly, simulations) that maintain these
 #' interactions while *also* capturing that this transmission is route is
