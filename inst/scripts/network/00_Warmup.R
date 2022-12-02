@@ -154,7 +154,6 @@ iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
 # can be done by naming specific vertices
 iglstarmod <- iglstar |> add_edges(c(c(2,4), c(3,5), c(6,8), c(7,9)))
 
-# TODO fix labels
 list(list(
   "N=9 Star" = network_quickplot(iglstar, simple = TRUE),
   "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE)
@@ -176,16 +175,11 @@ list(list(
 # TODO: recycle below
 
 
-#' ASIDE: It's also commonly useful to build up graphs
-#' by merging building blocks
-#' TODO some aside code
-
-
 #' @section Modifying Networks, part 2
 #'
 #' The previous section introduced directly modifying networks: adding and/or
 #' deleting edges and vertices. We *could* use this approach to make the
-#' networks from the top of this practical.
+#' plots from the top of this practical.
 #'
 #' In those networks, we have some _vaccinated_ and _unvaccinated_
 #' individuals, and the edges (over which transmission occurs) connecting
@@ -198,17 +192,10 @@ list(list(
 #' blocked. To do so, we typically modify the attributes of edges and vertices,
 #' often based on the attributes their connected edges and vertices.
 #'
-#' TODO: merge this
-#' We frequently use network models to capture detailed structural
-#' relationships between elements. However, we still need to model
-#' the infectious disease phenomena. In `igraph`, we can assign
-#' both vertices and edges essentially as many attributes as we
-#' can imagine.
-#'
-#' There are also the `V(g)[...]` and `E(g)[...]` functions for
-#' accessing the `V`ertices and `E`dges that match the properties
-#' in the `[...]` block (much like using `which(...)` or `subset(...)`
-#' from base R)
+#' In [igraph], these attributes can be conveniently queried and modified
+#' using the [igraph::V()] and [igraph::E()] functions for accessing the
+#' *V*ertices and *E*dges that match the properties in the `V(network)[...]`
+#' square braces (much like using `which(...)` or `subset(...)` from base R).
 
 #' TODO: switch this to be about vaccinated and unvaccinated
 #' assign vertex properties; in this example, give the population

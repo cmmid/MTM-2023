@@ -95,10 +95,10 @@ ggplot.igraph <- function(data, mapping = aes(), ..., environment = parent.frame
 #'
 #' @export
 network_vertex_data <- function(dt) {
-  v1 <- unique(dt[,.SD,.SDcols = patterns("^V1|x1|y1")])
+  v1 <- unique(dt[,.SD,.SDcols = patterns("^V1|x1|y1|time")])
   setnames(v1, c("V1", "x1", "y1"), c("vid", "x", "y"))
   setnames(v1, names(v1), gsub("V1\\.","", names(v1)))
-  v2 <- unique(dt[,.SD,.SDcols = patterns("^V2|x2|y2")])[!(V2 %in% v1$vid)]
+  v2 <- unique(dt[,.SD,.SDcols = patterns("^V2|x2|y2|time")])[!(V2 %in% v1$vid)]
   setnames(v2, c("V2", "x2", "y2"), c("vid", "x", "y"))
   setnames(v2, names(v2), gsub("V2\\.","", names(v2)))
   return(rbind(v1, v2) |> subset(!is.na(vid)) |> setkey(vid))
@@ -170,7 +170,7 @@ theme_network <- function(
 #' @export
 geom_vertex <- rejig(
   geom_point,
-  mapping = aes(x = x, y = y, color = state),
+  mapping = aes(x = x, y = y, color = state, group = vid),
   data = network_vertex_data
 )
 
@@ -181,7 +181,7 @@ geom_vertex <- rejig(
 #' @export
 geom_edge <- rejig(
   geom_segment,
-  mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state),
+  mapping = aes(x = x1, y = y1, xend = x2, yend = y2, color = state, group = eid),
   data = network_edge_data
 )
 
@@ -246,42 +246,17 @@ network_ggplot <- function(
   coord_equal() + theme_network()
 )
 
-#' extract table-formated data for plotting
-#'
-#' @param network an igraph object, with features as from `network_build`
-#'
-#' @return a list, with elements `v.ref` (the vertices reference) and
-#' `e.ref` (the edges reference), both `data.table`s
-#'
 #' @export
-network_to_ev_dts <- function(network) {
-  v.ref <- as.data.table(
-    network$layout
-  )[, vid := 1L:.N ] |>
-    setnames(old = c("V1", "V2"), new = c("vx", "vy"))
-  e.ref <- as.data.table(
-    as_edgelist(network)
-  )[, eid := 1L:.N ][, active := FALSE ] |>
-    setnames(old = c("V1", "V2"), new = c("start", "end"))
-  e.ref[v.ref, c("vx.start", "vy.start") := .(vx, vy), on=.(start = vid)]
-  e.ref[v.ref, c("vx.end"  , "vy.end"  ) := .(vx, vy), on=.(end = vid)]
-
-  return(list(v.ref = v.ref, e.ref = e.ref))
-}
-
-#' @export
-network_plot_one <- function(network) {
-  ev_digest <- network_to_ev_dts(network)
-
-  e.active <- with(
-    ev_digest, network_extract_active_directed(network, e.ref)
+network_plot_RF <- function(ig) {
+  return(
+    ggplot(ig) + geom_edge() +
+      geom_edge(data = network_active_edges, arrow = arrow()) +
+      geom_vertex() +
+      coord_equal() +
+      scale_color_network(
+        values = c(SIRcolors, active = "red", inactive = "grey")
+      ) + theme_network()
   )
-  v.states <- with(
-    ev_digest, v.ref[, .(vid, vx, vy, state = V(network)$state) ]
-  )
-
-  return(network_ggplot(ev_digest$e.ref, e.active, v.states))
-
 }
 
 #' @title plot summary of a series of simulations
@@ -391,17 +366,17 @@ network_active_edges <- function(
   # extract the active edges ...
   activesub <- dt[state == "active"]
 
-  eact <- E(network)[state == "active"]
-  if (length(eact)) {
-    nonsrc <- V(network)[.inc(eact)][state != "I"]
-    eactive <- eref[eid %in% as.integer(eact)]
-    eactive[start %in% as.integer(nonsrc), c("start", "end") := .(end, start) ]
-    return(eactive)
+  if (activesub[, .N]) {
+    inf_states <- attr(activesub, "inf_states")
+    # if there are any, return them with V1 and V2 flipped where V2 state is infectious
+    return(rbind(
+      activesub[V2.state %in% inf_states],
+      copy(activesub[V1.state %in% inf_states])[, c("x1", "y1", "x2", "y2") := .(x2, y2, x1, y1)]
+    ) |> network_edge_data())
   } else {
-    return(eref[0])
+    return(activesub)
   }
 }
-
 
 #' @title create an animated plot of transmission on the population
 #'
@@ -412,85 +387,16 @@ network_active_edges <- function(
 #' @seealso gganimate::anim_save
 #'
 #' @export
-network_animate_series <- function(networks) {
-  ev_digest <- network_to_ev_dts(networks[[1]])
+network_animate <- function(networks) {
+  merge_attrs <- setdiff(graph_attr_names(networks[[1]]), c("layout", "sorted"))
+  dts <- c(networks, networks[length(networks)]) |> lapply(as.data.table.igraph) |> rbindlist(idcol = "time")
 
-  e.active <- rbindlist(lapply(
-    c(networks, networks[length(networks)]),
-    network_extract_active_directed, eref = ev_digest$e.ref
-  ), idcol = "time")[, time := time - 1L ]
-
-  v.states <- rbindlist(lapply(
-    networks, function(net) ev_digest$v.ref[, .(vid, vx, vy, state = V(net)$state) ]
-  ), idcol = "time")
+  for (gn in merge_attrs) attr(dts, gn) <- graph_attr(networks[[1]], gn)
 
   # TODO add labels for active infections, cumulative infections?
-
   return(
-    network_ggplot(ev_digest$e.ref, e.active, v.states) +
-    transition_time(time) +  labs(title = "Time: {frame_time}")
+    (dts |> network_plot_RF()) +
+      transition_time(time) + labs(title = "Time: {frame_time}")
   )
-
-}
-
-
-#' @title create an animated plot of transmission on the population
-#'
-#' @inheritParams network_flatten
-#'
-#' @return gganimate object
-#'
-#' @export
-network_animate <- function(ys) {
-  init <- ys[[1]]
-  pl <- layout_(init, with_fr(coords = layout_as_star(init)), normalize())
-  colnames(pl) <- c("vx", "vy")
-  epairs <- as_edgelist(init)
-  starts <- pl[epairs[,1],]
-  colnames(starts) <- paste0(colnames(starts), ".start")
-  ends <- pl[epairs[,2],]
-  colnames(ends) <- paste0(colnames(ends), ".end")
-  e.ref <- as.data.table(cbind(starts, ends))[, eid := 1L:.N ]
-  v.ref <- as.data.table(pl)[, vid := 1L:.N ]
-
-  e.active <- c(ys, ys[length(ys)]) |>
-    lapply(
-      network_extract_active_directed,
-      el = epairs, vpos = pl
-    ) |> rbindlist(idcol = "time")
-  e.active[, time := time - 1L ]
-
-  v.states <- ys |> lapply(
-    \(net) v.ref[, .(vid, vx, vy, state = V(net)$state) ]
-  ) |> rbindlist(idcol = "time")
-
-  # TODO hide edges as they become irrelevant to transmission?
-  # TODO add labels for active infections, cumulative infections?
-
-  return(ggplot() + geom_segment(
-    aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "inactive"),
-    e.ref,
-    size = 0.25, alpha = 0.5
-  ) +
-    geom_segment(
-      aes(vx.start, vy.start, xend = vx.end, yend = vy.end, color = "active", group = eid),
-      e.active,
-      size = 0.75, alpha = 1, arrow = arrow()
-    ) +
-    geom_point(
-      aes(vx, vy, color = state, size = state, group = vid),
-      v.states
-    ) +
-    transition_time(time) +
-    scale_color_compartment(
-      guide = "none",
-      values = c(SIRcolors, c(active="red", inactive="grey"))
-    ) +
-    scale_size_manual(guide = "none", values = c(S=5, I=3, R=1)) +
-    coord_equal() + theme_minimal() + theme(
-      axis.line = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(),
-      axis.title = element_blank(), panel.grid = element_blank(),
-      legend.position = "none"
-    ) + labs(title = "Time: {frame_time}"))
 
 }

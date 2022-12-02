@@ -266,7 +266,8 @@ network_dReedFrost <- function(
 #'
 #' @export
 network_solve <- function(
-  y, times = NULL,
+  y = network_build(parms),
+  times = NULL,
   func = network_dReedFrost,
   parms, ...
 ) {

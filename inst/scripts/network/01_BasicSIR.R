@@ -4,28 +4,42 @@ require(igraph)
 
 reminder()
 
-#' The MTM package includes several functions to support this exercise.
-#' You can view those functions by entering names at the console
-#' prompt, without the parentheses. e.g.:
+#' @section The Reed Frost Model on a Network
+#'
+#' In this practical, we will use the tools from the Warmup to
+#' implement the Reed Frost SIR model (as covered in the
+#' discussion session), use it, and examine some results.
+#'
+#' We start with the following function that collects several
+#' [igraph] steps to initialize the kind of networks we'll
+#' use for simulation:
 
 network_build
 
-#' View `network_build` above, and then answer the following:
-#' 
-#' @question Recalling the definitions from the introductory and Networks MTM sessions,
-#' what Reed Frost model *variables* & *parameters* appear in `network_build`?
-#' Which aspects of the Reed-Frost model are represented here?
-#' 
-#' HINT: you may also want to use the above approach to look at `igraph` functions,
-#' like `make_full_graph()`, `V()`, and `E()`.
+#' @question Recalling the definitions from the introductory and
+#' Networks MTM sessions, what Reed Frost model *variables* &
+#' *parameters* appear in `network_build`? Which aspects of the
+#' Reed-Frost model are represented here?
 #'
-#' A:
-#' variables: S & I (no R yet really, though it is listed in states)
-#' parameters: N & p (N for network size, and p to characterize edges)
+#' @answer
+#'  - variables: S & I (no R yet really, though it is listed in states)
+#'  - parameters: N (N for network size; p isn't used yet)
+#'  Which states are present (S, I, R) and infectious (I), as is the
+#'  fact that edges may be tested for transmission (draw) and either
+#'  lead to transmission or not (active vs inactive)
 
-#' Q: Now consider: what Reed Frost variables & parameters are used for state update?
-#' You can check your answer by considering `network_dReedFrost`
-#' A: All the variables (S, I, & R) are used. p is implicitly used (determines whether draw is TRUE or FALSE)
+
+#' @question Given [network_build()] and how we've specified the Reed
+#' Frost model, how might the variables & parameters be used for
+#' for the "delta" meta-modelling step (i.e., calculating system
+#' changes)?
+#'
+#' @answer We'll check for any edges between *S* and *I* individuals.
+#' For any we find, we'll test them by comparing `draw` and `parms$p`
+#' to see if transmission occurs, which will turn connected *S*s into
+#' *I*s. We'll also turn current *I*s into *R*s.
+#'
+#' @hint compare your thinking to the implementation in `network_dReedFrost`:
 
 network_dReedFrost
 
@@ -40,16 +54,10 @@ network_dReedFrost
 
 set.seed(13)
 
-#' Now let's consider an example run of the Reed-Frost model implemented on a
-#' network:
-sim_example <- network_solve(
-  # setup a population
-  initial_network = network_build(N = 30, p = 0.05),
-)
+list(N = 30, p = 0.05) |> network_solve(parms = _) -> sim_example
 
 #' we can look at the resulting epidemic in summary
-state_example <- network_flatten_run(sim_example)
-state_example
+state_example <- network_flatten(sim_example)
 network_plot_series(state_example)
 #' or watch its evolution on the network:
 #' n.b. the rendering here may take a moment
@@ -103,7 +111,7 @@ network_plot_histograms(samples.dt)
 #' Q: what constraint on N and p could impose to get some kind of consistent features while
 #' varying N? What kinds of "consistent" can be achieved?
 #' Hint: how might you have an R0-like concept in this model?
-#' A: If we consider 
+#' A: If we consider
 samples60.dt <- network_sample_reed_frost(n=1000, N=60, p=30/60*0.1)
 samples120.dt <- network_sample_reed_frost(n=1000, N=120, p=30/120*0.1)
 
