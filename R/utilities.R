@@ -64,10 +64,3 @@ have completed all other elements of a particular activity."
   if (!is.null(custom)) message("\n", custom)
   invisible(NULL)
 }
-
-#' @export
-nested_lapply <- function(X, FUN, ...) {
-  if (!is.null(names(X))) {
-    return(lapply(X, FUN, ...))
-  } else return(lapply(X, nested_lapply, FUN=FUN, ...))
-}

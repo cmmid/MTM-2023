@@ -18,15 +18,14 @@ NULL
 #' @exportS3Method
 as.data.table.igraph <- function(ig, keep.rownames, ...) {
   # extract edge properties
+  el <- ig |> as_edgelist() |> as.data.table()
+  el[, eid := 1:.N ]
   if (ig |> edge_attr_names() |> length()) {
-    el <- ig |> as_edgelist() |> as.data.table()
-    el[, eid := 1:.N ]
     eprops <- ig |> edge_attr() |> as.data.table()
     eprops[, eid := 1:.N ]
     base <- merge(eprops, el, by="eid")
   } else {
-    base <- ig |> as_edgelist() |> as.data.table()
-    base[, eid := 1:.N ]
+    base <- el
   }
 
   if (is.null(ig$layout)) ig$layout <- layout_nicely(ig)

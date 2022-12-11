@@ -1,38 +1,33 @@
 
+require(MTM)
+require(igraph)
 
-#' In the previous exercise, we used a network, but there wasn't
+reminder(
+"This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
+)
+
+#' In the previous practical, we used networks, but there wasn't
 #' actually much structure - each individual in the population was
 #' connected to everyone else. That effectively results in the same
 #' outcome as the Reed-Frost model *without* any network structure.
 #'
-#' In this exercise,
+#' In this exercise, we will consider randomly percolated networks:
 
-alt_network_build <- function(N, p) {
-  return(network_percolate(network_build(N, p)))
-}
+pars <- list(N=30, p=0.05)
+pars |> network_build() -> previous_example
+network_percolate(pars, previous_example) -> sim_example
 
+list(list(
+  "Reference Reed-Frost\nNetwork" = network_quickplot(previous_example),
+  "Percolated\nNetwork" = network_quickplot(sim_example)
+)) |> patchwork_grid()
 
-
-#' the probability here is the probability of infection -
-#' i.e. the probability of contact being effectively infectious.
+#' @question What differs between [network_build()] and [network_percolate()]?
 #'
-#' so we're going to *remove* edges, with 1-p of infection
-percolate_graph <- function(ig, p) {
-  remove_edges <- E(ig)[ runif(ecount(ig)) < (1-p) ]
-  return(delete_edges(ig, remove_edges))
-}
-
-#' Q: what are the Reed Frost variables & parameters represent in `build_network`?
-#' A: variables: S and I (R = N - S - I)
+#' @question variables: S and I (R = N - S - I)
 #'    parameters: N and p
-
-build_network <- function(N, p) {
-  ig <- percolate_graph(make_full_graph(N), p)
-  V(ig)$state <- "S"
-  V(ig)[1]$state <- "I"
-  E(ig)$active <- FALSE
-  return(ig)
-}
 
 #' Q: What Reed Frost variables & parameters are needed for state update?
 #' Added R to variables, but not longer explicitly need N or p

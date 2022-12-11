@@ -2,7 +2,11 @@
 require(MTM)
 require(igraph)
 
-reminder()
+reminder(
+"This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
+)
 
 #' @section The Reed Frost Model on a Network
 #'
@@ -43,57 +47,54 @@ network_build
 
 network_dReedFrost
 
-#' Q: Think back to the idea of a "model iteration loop" concept motivating
-#' earlier sessions, how does Reed-Frost work? Which of the loop constructs,
-#' `for` vs `while` is appropriate? Why?
+#' @question Recall the "model iteration" concept discussed in
+#' earlier sessions. Which of the loop constructs `for` vs `while`
+#' is appropriate for Reed Frost? Why?
 #'
-#' Check your intuition against `network_solve` and the function used
-#' in it's loop condition.
+#' @answer Use a `while` loop, computing as long as there are
+#' any infectious individuals. The Reed Frost model is a finite,
+#' stochastic model, so it has a defined stopping condition.
 #'
-#' A: Use a `while` loop, and compute as long as there are any infectious individuals
+#' @hint Examine `network_solve` to see what's used here.
 
 set.seed(13)
 
 list(N = 30, p = 0.05) |> network_solve(parms = _) -> sim_example
 
 #' we can look at the resulting epidemic in summary
-state_example <- network_flatten(sim_example)
-network_plot_series(state_example)
+sim_example |> network_flatten() |> network_plot_series()
 #' or watch its evolution on the network:
 #' n.b. the rendering here may take a moment
-network_animate_series(sim_example)
+sim_example |> network_animate()
 
 #' our Reed-Frost model is stochastic, so we can get very different
 #' results, e.g.:
 
 set.seed(42)
 
-another_example <- network_flatten_run(
-  network_solve(
-    initial_network = network_build(N = 30, p = 0.05),
-  )
-)
-another_example
-network_plot_series(another_example)
+list(N = 30, p = 0.05) |> network_solve(parms = _) |>
+  network_flatten() |> network_plot_series()
 
 #' ...which means we need to think about typical behavior
 #' across many realizations of the simulation
 #' n.b.: this may take a minute
-samples.dt <- network_sample_reed_frost(n=1000, N=30, p=0.1)
+samples.dt <- network_sample_ReedFrost(n=1000, parms = list(N=30, p=0.1))
 
 #' we can get a holistic sense of the trends in these realizations
 #' by overlaying the time series
-network_plot_series(samples.dt)
+samples.dt |> network_plot_series()
 
 #' but we generally have some particular features in mind when
 #' doing this kind of modelling work, e.g. final size or epidemic
 #' duration
-network_plot_histograms(samples.dt)
+samples.dt |> network_plot_histograms()
 
-#' Q: what do you notice about these distributions?
-#' A: We see both extinction (close to zero final size lump) and
-#' outbreaks (bigger, non-zero lump), which are typically (but not always)
-#' attacking almost the entire population
+#' @question What do you notice about these distributions?
+#'
+#' @answer The results are bi-modal: We see both extinction
+#' (close to zero final size lump) and outbreaks (bigger,
+#' non-zero lump), which are typically (but not always)
+#' attacking almost the entire population.
 
 #' Q: Using the code from earlier, vary p, while holding N constant
 #' What does that do to distribution? Why?

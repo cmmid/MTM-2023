@@ -158,21 +158,38 @@ plot_2D_density <- function(
 
 }
 
+#' @title Generic Compartment Plot
+#'
+#' @description Provides a consistent plot of compartment model results across all sessions.
+#'
+#' @param dt a [data.table::data.table()] with a column `t` (for simulation time), optionally
+#' a `sample` column (for stochastic replicates), and overall in wide format (each other column
+#' referring to compartment) or long format (having `variable` and `value` columns, with `variable`
+#' indicating compartment and `value` the value of that compartment at that time and optionally sample)
+#'
+#' @param compartment.order a character vector, indicating the layer order for the compartments. N.B.
+#' the "first" layer is the first layer drawn (i.e. the bottom-most) and "last" is the last drawn
+#' (i.e. the top-most, typically most visible).
+#'
+#' @details This function is a convenient wrapper to create a [ggplot2::ggplot()] object from typical
+#' series data output from example simulations.
+#'
 #' @export
 plot_series <- function(
-    dt, colorder = c("S", "R", "I")
+  dt,
+  compartment.order = c("S", "R", "I")
 ) {
   if (!"sample" %in% colnames(dt)) {
     dt <- as.data.table(dt)[, sample := 1 ]
   }
   alph <- dt[, 1/sqrt(length(unique(sample))) ]
-  wide.dt <- melt(
+  long.dt <- melt(
     dt, id.vars = c("sample", "t")
   )
   return(
-    ggplot(wide.dt) +
+    ggplot(long.dt) +
     aes(t, value, color = variable, group = interaction(variable, sample)) +
-    lapply(layer_order, function(ly) geom_line(data = function(dt) dt[variable == ly], alpha = alph)) +
+    lapply(compartment.order, function(ly) geom_line(data = function(dt) dt[variable == ly], alpha = alph)) +
     scale_x_simtime() +
     scale_y_continuous(name = NULL) +
     scale_color_compartment() +
