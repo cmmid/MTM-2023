@@ -94,6 +94,7 @@ ggplot.igraph <- function(data, mapping = aes(), ..., environment = parent.frame
 #'
 #' @export
 network_vertex_data <- function(dt) {
+  if (!is(dt, "data.table")) dt <- as.data.table(dt)
   v1 <- unique(dt[,.SD,.SDcols = patterns("^V1|x1|y1|time")])
   setnames(v1, c("V1", "x1", "y1"), c("vid", "x", "y"))
   setnames(v1, names(v1), gsub("V1\\.","", names(v1)))
@@ -114,6 +115,7 @@ network_vertex_data <- function(dt) {
 #'
 #' @export
 network_edge_data <- function(dt) {
+  if (!is(dt, "data.table")) dt <- as.data.table(dt)
   return(dt[, .SD, .SDcols = !patterns("^V[12]")] |> unique() |>
     subset(!is.na(eid)) |> setkey(eid))
 }
@@ -215,35 +217,6 @@ network_quickplot <- function(
     ) + theme_network()
   )))
 }
-
-#' provides a ggplot-based picture of vertices and edges
-#'
-#' @param e.ref data.frame, with columns v(x|y).(start|end) edge locations;
-#'   un-directed, so order of start vs end not important
-#' @param e.active data.frame, with columns v(x|y).(start|end) edge locations,
-#'   corresponding to which edges are active; directed, so order matters
-#'   end corresponds to point with arrow
-#' @param v.states data.frame, with columns v(x|y) corresponding to vertex
-#'   positions + state
-#'
-#' @export
-network_ggplot <- function(
-  e.ref, e.active, v.states
-) return(
-  ggplot() +
-  geom_edge(
-    data = e.ref,
-    size = 0.25, alpha = 0.5
-  ) +
-  geom_edge(
-    data = e.active,
-    arrow = arrow(), size = 0.75
-  ) +
-  geom_vertex(data = v.states) +
-  scale_color_network() +
-  scale_size_vertex() +
-  coord_equal() + theme_network()
-)
 
 #' @export
 network_plot_RF <- function(ig) {

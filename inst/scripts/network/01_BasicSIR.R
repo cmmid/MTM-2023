@@ -78,7 +78,7 @@ list(N = 30, p = 0.05) |> network_solve(parms = _) |>
 #' ...which means we need to think about typical behavior
 #' across many realizations of the simulation
 #' n.b.: this may take a minute
-samples.dt <- network_sample_ReedFrost(n=1000, parms = list(N=30, p=0.1))
+samples.dt <- network_sample_ReedFrost(n=300, parms = list(N=30, p=0.1))
 
 #' we can get a holistic sense of the trends in these realizations
 #' by overlaying the time series
