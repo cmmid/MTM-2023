@@ -10,9 +10,9 @@ e.g. `networkx`."
 
 #' @section The Reed Frost Model on a Network
 #'
-#' In this practical, we will use the tools from the Warmup to
-#' implement the Reed Frost SIR model (as covered in the
-#' discussion session), use it, and examine some results.
+#' We have used the tools from the Warmup to implement the Reed Frost SIR model
+#' (as covered in the discussion session).  In this practical, we'll apply that
+#' implementation and and examine some results.
 #'
 #' We start with the following function that collects several
 #' [igraph] steps to initialize the kind of networks we'll
@@ -20,7 +20,14 @@ e.g. `networkx`."
 
 network_build
 
-#' @question Recalling the definitions from the introductory and
+#' @question What kind of network are we making - deterministic or stochastic?
+#' How can you tell? How does the choice relate to the Reed Frost model?
+#'
+#' @answer Deterministic, and can tell from [igraph::make_full_graph()]
+#' constructor: deterministic methods start with `make_...`. In the Reed Frost
+#' model, "everyone interacts" - same as everyone being connected.
+#'
+#' @question Recalling the definitions from the Introductory and
 #' Networks MTM sessions, what Reed Frost model *variables* &
 #' *parameters* appear in `network_build`? Which aspects of the
 #' Reed-Frost model are represented here?
@@ -31,8 +38,7 @@ network_build
 #'  Which states are present (S, I, R) and infectious (I), as is the
 #'  fact that edges may be tested for transmission (draw) and either
 #'  lead to transmission or not (active vs inactive)
-
-
+#'
 #' @question Given [network_build()] and how we've specified the Reed
 #' Frost model, how might the variables & parameters be used for
 #' for the "delta" meta-modelling step (i.e., calculating system
@@ -61,32 +67,32 @@ set.seed(13)
 
 list(N = 30, p = 0.05) |> network_solve(parms = _) -> sim_example
 
-#' we can look at the resulting epidemic in summary
+# we can look at the resulting epidemic in summary
 sim_example |> network_flatten() |> network_plot_series()
-#' or watch its evolution on the network:
-#' n.b. the rendering here may take a moment
+# or watch its evolution on the network:
+# n.b. the rendering here may take a moment
 sim_example |> network_animate()
 
-#' our Reed-Frost model is stochastic, so we can get very different
-#' results, e.g.:
+# our Reed-Frost model is stochastic, so we can get very different
+# results, e.g.:
 
 set.seed(42)
 
 list(N = 30, p = 0.05) |> network_solve(parms = _) |>
   network_flatten() |> network_plot_series()
 
-#' ...which means we need to think about typical behavior
-#' across many realizations of the simulation
-#' n.b.: this may take a minute
+# ...which means we need to think about typical behavior
+# across many realizations of the simulation
+# n.b.: this may take a minute
 samples.dt <- network_sample_ReedFrost(n=300, parms = list(N=30, p=0.1))
 
-#' we can get a holistic sense of the trends in these realizations
-#' by overlaying the time series
+# we can get a holistic sense of the trends in these realizations
+# by overlaying the time series
 samples.dt |> network_plot_series()
 
-#' but we generally have some particular features in mind when
-#' doing this kind of modelling work, e.g. final size or epidemic
-#' duration
+# but we generally have some particular features in mind when
+# doing this kind of modelling work, e.g. final size or epidemic
+# duration
 samples.dt |> network_plot_histograms()
 
 #' @question What do you notice about these distributions?
@@ -95,24 +101,46 @@ samples.dt |> network_plot_histograms()
 #' (close to zero final size lump) and outbreaks (bigger,
 #' non-zero lump), which are typically (but not always)
 #' attacking almost the entire population.
-
-#' Q: Using the code from earlier, vary p, while holding N constant
+#'
+#' @question Using the code from earlier, vary p, while holding N constant, and
+#' examine the results with the histogram plot. What with the distribution? Why?
+#'
+#' @answer Generally, $p$ lower => more in the extinction lump, vs $p$ higher =>
+#' more in the epidemic lump and epidemic lump pushed higher and earlier,
+#' limited by N. With increasing probability of transmission, random extinction
+#' before taking off is less likely (shrinking the lump near 0). The durations
+#' are generally shorter with increasing $p$ because each generation is
+#' typically larger, so the peak (and subsequent decline) can be hit in fewer
+#' generations.
+#'
+#' @question Again using code from earlier, now vary $N$, holding $p$ constant:
 #' What does that do to distribution? Why?
-#' A: p lower => more in the extinction lump, vs p higher => more in the epidemic lump
-#' and epidemic lump pushed higher (though limited by N).
-
-#' Q: Again using code from earlier, now vary N, holding p constant - what does that do to distribution?
-#' A: Obviously, larger N => larger final sizes. Less obviously: more epidemics.
-#' To do with holding *individual* probability constant & increasing N =>
-#' increasing probability of tranmission since everyone is connected
-#' Also more *reliable* epidemics as there are more events - think of the binomial distribution
-#' more samples => smaller variance
-
-#' ASIDE:
-#' Q: what constraint on N and p could impose to get some kind of consistent features while
-#' varying N? What kinds of "consistent" can be achieved?
-#' Hint: how might you have an R0-like concept in this model?
-#' A: If we consider
-samples60.dt <- network_sample_reed_frost(n=1000, N=60, p=30/60*0.1)
-samples120.dt <- network_sample_reed_frost(n=1000, N=120, p=30/120*0.1)
+#'
+#' @answer Larger $N$ allows for larger final sizes. But it also leads to more
+#' epidemics (i.e. smaller lump near 0).
+#' Holding *individual* transmission probability constant & increasing $N$ =>
+#' increasing probability of *some* transmission since everyone is connected.
+#' Also more *reliable* epidemics as there are more events: for  binomial
+#' distribution more samples => smaller variance.
+#'
+#' @aside
+#' @question what constraint on $N$ and $p$ could impose to get some kind of
+#' "consistent" features while varying $N$ or $p$? What kinds of "consistent"
+#' can be achieved?
+#'
+#' @hint how might you have an R0-like concept in this model?
+#'
+#' @answer Consider how similar the following are in *relative* scale; the only
+#' obvious difference is a shift in time - but that's associated with needing
+#' more generations to hit the peak. We could express time in a relative scale
+#' that would also eliminate this quantitative distinction. The real qualitative
+#' distinction between these is the noise around outcomes - smaller populations
+#' give more random results.
+#'
+#' @examples
+#' samples60.dt <- network_sample_ReedFrost(n=100, list(N=60, p=30/60*0.1))
+#' samples120.dt <- network_sample_ReedFrost(n=100, list(N=120, p=30/120*0.1))
+#'
+#' samples60.dt |> network_plot_histograms()
+#' samples120.dt |> network_plot_histograms()
 
