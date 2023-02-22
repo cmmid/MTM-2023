@@ -219,6 +219,15 @@ patchwork_grid <- function(plist) {
   rown <- length(plist)
   coln <- length(plist[[1]])
 
+  if(is(plist[[1]][[1]], "patchwork")) {
+    ly <- thing2$patches$layout
+    if (rown != 1) {
+      rown <- ly$nrow * rown
+    } else {
+
+    }
+  }
+
   allps <- Reduce(c, plist)
   nms <- names(allps)
 

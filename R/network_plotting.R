@@ -287,6 +287,13 @@ network_plot_histograms <- function(s.dt) {
   # TODO replace plot_spacer with some text info?
   p.tot <- p.dur + plot_spacer() + p.heat + p.sz +
     plot_layout(ncol = 2, nrow = 2, widths = c(4, 1), heights = c(1, 4))
+  # plot_layout(design = "
+  #               AAAAB
+  #               CCCCD
+  #               CCCCD
+  #               CCCCD
+  #               CCCCD
+  #   ")
 
   return(p.tot)
 
