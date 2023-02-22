@@ -1,0 +1,618 @@
+
+require(MTM)        # for overall course functions
+require(igraph)     # for the network capabilities
+
+# you may not even need these, but they could be
+# useful if you want to do some adhoc plotting
+require(ggplot2)    # for plotting
+require(patchwork)  # for combining plots
+
+reminder(
+"This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
+)
+
+#' @section Motivation
+#'
+#' Network-based models (aka, graphs) are useful when the system you are trying
+#' to capture has lots of relationship structure that needs to be represented
+#' to accurately reproduce what is going on.
+#'
+#' In this warmup, we're going to show you how to build up two networks, both of
+#' people on a grid. In one, people are vaccinated at random; in the other, in
+#' a systematic way.
+
+# set some vertex and edge colors
+demo.cols <- c(
+  vaccinated = "blue", unvaccinated = "yellow",
+  transmissible = "grey", blocked = "transparent"
+)
+
+# now plot the two networks side-by-side (`network_warmup_vaccine...` - data
+# included in `MTM`)
+list(list(
+  # random vaccination in a small, orderly population
+  "Random\nVaccination" = network_quickplot(
+    network_warmup_vaccine_random, values = demo.cols
+  ),
+  # targetted vaccination in same
+  "Targetted\nVaccination" = network_quickplot(
+    network_warmup_vaccine_ordered, values = demo.cols
+  )
+)) |> patchwork_grid()
+
+#' These plots highlight an important insight from the discussion portion of the
+#' session: that relationships can matter. Now let's work through the functions
+#' of the `igraph` library to build-up networks like these as well as those we
+#' will use in the later exercises.
+#'
+#' @aside The [network_quickplot()] function is what you will use throughout these
+#' practicals to visualize networks. This function streamlines supplying arguments
+#' to a several [ggplot2] functions and returns the resulting [ggplot2::ggplot]
+#' object. You may recall [patchwork_grid()] from previous sessions where you
+#' were laying out multiple plots for comparison; we use it here in the same way.
+
+#' @section Basic Structures
+#'
+#' the `igraph` library has several functions to create common network
+#' structures, including both deterministic ones (e.g. connected graphs and
+#' lattices) and probabilistic generators (e.g. Erdos-Renyi random graph).
+#'
+#' In `igraph`, the general convention is that the deterministic functions start
+#' with `make_...`, and the probabilistic generators start with `sample_...`
+
+# make several different kinds of graphs, at two sizesm L(ittle) = 9, B(ig) = 25
+igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
+igB <- make_full_graph(n = 25) |> add_layout_(with_graphopt())
+igLgnp <- sample_gnp(n = 9, p = 0.2) |> set_graph_attr("layout", igL$layout)
+igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
+igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
+igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
+# we use `add_layout()` for visualization purposes - it has no other effects
+
+# feel free to inspect those objects if you like, but you can get the overall
+# point by plotting them alongside each other:
+list(list(
+  "N=9 Clique"  = network_quickplot(igL, simple = TRUE),
+  "N=25 Clique" = network_quickplot(igB, simple = TRUE)
+), list(
+  "N=9 Random"  = network_quickplot(igLgnp, simple = TRUE),
+  "N=25 Random" = network_quickplot(igBgnp, simple = TRUE)
+), list(
+  "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE),
+  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE)
+)) |> patchwork_grid()
+
+#' @question How would you describe the difference between the graphs created by
+#' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
+#'
+#' @answer The `make_...` generators produce graphs with fixed properties; all
+#' vertices connected for `make_full_graph()` and vertices connected in a grid
+#' for `make_lattice()` (a typical 2D one for the basic arguments, or more
+#' complicated grids if you fiddled around with `dim=` arguments).
+#' `sample_gnp()` produces a random set of edges amongst the vertices. If you
+#' look at another person's plots, they will likely have different connections.
+#' (You may also notice slightly different layouts, particularly for the "B"
+#' networks.)
+#'
+#' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
+#' `sample_gnp()`, which do you think is behind the plots we first looked at?
+#'
+#' @answer The example networks above are made with `make_lattice()`, with some
+#' other modifications. In the later exercises, we will use `make_full_graph()`,
+#' and then make modifications.
+#'
+#' @hint look at `?make_full_graph`, `?make_lattice`, and `?sample_gnp`.
+#'
+#' @aside Note that we are adding layouts to the plots above. We do that to
+#' ensure getting particular plots; without them, each plot of an igraph object
+#' gives different arrangements of vertices and edges. For example:
+
+list(list(
+  "Original" = network_quickplot(igL, simple = TRUE),
+  "...Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE),
+  "& Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE)
+)) |> patchwork_grid()
+
+#' @section Modifying Networks, part 1
+#'
+#' In the previous section, we built some foundational networks using the tools
+#' in [igraph]. But those had none of the attributes that we discussed as part
+#' of the module or that can be seen as part of the initial networks we looked
+#' at in this practical.
+#'
+#' To make those networks, we need to use some of the other [igraph] tools for
+#' adding and deleting vertices and edges, and for assigning properties to edges
+#' and vertices.
+
+# delete every other edge on the lattice
+igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
+igBlmod <- igBl |> delete_edges(1:(ecount(igBl)/2)*2)
+# repeated definition of igBl, in case it got deleted/changed/etc
+
+list(list(
+  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE),
+  "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(
+    x=(x1+x2)/2, y=(y1+y2)/2, label = eid
+  ), data = network_edge_data(igBl)
+)
+
+#' @question This is starting to look like the initial networks we plotted.
+#' What collection of edges could we delete to isolate the diagonal set of
+#' vertices?
+#'
+#' @answer There's a clear pattern of adding `11` to `c(1,2,4,10)` until hitting
+#' the top row of vertices, so could do roughly
+#' `del <- c(1,2,4,10) + 11*rep(0:3, each=4); del[15:16] <- c(36, 40)`
+#'
+#' @aside If you wanted to make this work for any size lattice, you have to
+#' consider how that the addition increment changes & how to deal with the
+#' "last row" switch. For example, consider a slightly larger version of the
+#' problem:
+
+igBBl <- make_lattice(length = 7, dim = 2) |> add_layout_(on_grid())
+igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl)/2)*2)
+list(list(
+  "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE),
+  "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(x=(x1+x2)/2, y=(y1+y2)/2, label = eid), data = network_edge_data(igBBl)
+)
+
+#' In a later section, we'll use some of the other [igraph] capabilities to
+#' do this more cleverly. For now, let's consider the tools to add vertices
+#' and edges to a graph.
+
+# adding edges ...
+iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
+# can be done by naming specific vertices
+iglstarmod <- iglstar |> add_edges(c(c(2,4), c(3,5), c(6,8), c(7,9)))
+
+list(list(
+  "N=9 Star" = network_quickplot(iglstar, simple = TRUE),
+  "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE)
+)) |> patchwork_grid() & geom_text(
+  aes(x=x + .1, y=y, label = vid), data = network_vertex_data(iglstar |> as.data.table())
+)
+
+#' @question What are some other approaches to add edges in [igraph]?
+#'
+#' @answer You can use `+` with another [igraph]-like entity, either a whole
+#' network or pieces created with [igraph::vertex()], [igraph::vertices()],
+#' [igraph::edge()], or [igraph::edges()].
+#'
+#' @hint check `?add_edges`
+
+#' Now let's use the approach of adding on another graph.
+# TODO: add whole other graphs
+
+# TODO: recycle below
+
+
+#' @section Modifying Networks, part 2
+#'
+#' The previous section introduced directly modifying networks: adding and/or
+#' deleting edges and vertices. We *could* use this approach to make the
+#' plots from the top of this practical.
+#'
+#' In those networks, we have some _vaccinated_ and _unvaccinated_
+#' individuals, and the edges (over which transmission occurs) connecting
+#' vaccinated individuals do not appear - but not because they have been deleted!
+#' The model here is not that these people no longer contact the unvaccinated
+#' population, simply that transmission does not occur along those contacts.
+#'
+#' We can create plots (and more importantly, simulations) that maintain these
+#' interactions while *also* capturing that this transmission route is
+#' blocked. To do so, we typically modify the attributes of edges and vertices,
+#' often based on the attributes their connected edges and vertices.
+#'
+#' In [igraph], these attributes can be conveniently queried and modified
+#' using the [igraph::V()] and [igraph::E()] functions for accessing the
+#' *V*ertices and *E*dges that match the properties in the `V(network)[...]`
+#' square braces (much like using [which()] or [subset()] from base R).
+#'
+#' In this section, we illustrate some of the functionality of [igraph::V()] and
+#' [igraph::E()] to recreate those two initial graphs
+
+# first, we make two initially identical populations - 100 individuals, in
+# 10x10 lattices:
+ordered.pop <- make_lattice(length=10, dim=2) |> add_layout_(on_grid())
+random.pop <- ordered.pop # makes a copy
+
+# now we'll select the vaccinees; first, those individuals on the diagonal of
+# the lattice ...
+orderedvaccinees <- seq(1,100,by=11)
+# then the same number of random individuals. note that we set the seed - this
+# is the one we used to generate the network provided with the MTM package
+set.seed(8675309)
+randomvaccinees <- sample(100, length(orderedvaccinees), replace = FALSE)
+
+# now we'll set the "vaccinated" status of individuals. first, everyone not
+V(ordered.pop)$state <- "unvaccinated"
+V(random.pop)$state <- "unvaccinated"
+# then the different selections to vaccinated
+V(ordered.pop)$state[orderedvaccinees] <- "vaccinated"
+V(random.pop)$state[randomvaccinees] <- "vaccinated"
+
+# Now we can use this state to get subsets of the networks:
+V(ordered.pop)[state == "vaccinated"]
+V(ordered.pop)[state != "vaccinated"]
+
+# We can similarly set attributes for edges, and now we'll use our vertex states
+# to identify which edges to change:
+E(ordered.pop)$state <- "transmissible"
+E(ordered.pop)[
+  .inc(V(ordered.pop)[state == "vaccinated"])
+]$state <- "blocked"
+E(random.pop)$state <- "transmissible"
+E(random.pop)[
+  .inc(V(random.pop)[state == "vaccinated"])
+]$state <- "blocked"
+# `.inc` here is a special function in `igraph` - it means "Edges *inc*ident on
+# this set of vertices." Look at `?igraph-es-indexing` to see others.
+
+# let's see how these all compare:
+
+demo.cols <- c(
+  vaccinated = "blue", unvaccinated = "yellow",
+  transmissible = "grey", blocked = "transparent"
+)
+# recreate this just in case it got lost
+
+# now plot your two networks alongside the MTM ones ...
+list(list(
+  "MTM Random" = network_quickplot(network_warmup_vaccine_random, values = demo.cols),
+  "MTM Targetted" = network_quickplot(network_warmup_vaccine_ordered, values = demo.cols)
+), list(
+  "My Random" = network_quickplot(random.pop, values = demo.cols),
+  "My Targetted" = network_quickplot(ordered.pop, values = demo.cols)
+)) |> patchwork_grid()
+# they should be identical. If you were to recreate the random.pop, however:
+
+randomvaccinees <- sample(100, length(orderedvaccinees), replace = FALSE)
+V(random.pop)$state <- "unvaccinated"
+V(random.pop)$state[randomvaccinees] <- "vaccinated"
+E(random.pop)$state <- "transmissible"
+E(random.pop)[
+  .inc(V(random.pop)[state == "vaccinated"])
+]$state <- "blocked"
+
+# ... you'll find a different distribution, because the random seed differs
+list(list(
+  "MTM Random" = network_quickplot(network_warmup_vaccine_random, values = demo.cols),
+  "MTM Targetted" = network_quickplot(network_warmup_vaccine_ordered, values = demo.cols)
+), list(
+  "My Random" = network_quickplot(random.pop, values = demo.cols),
+  "My Targetted" = network_quickplot(ordered.pop, values = demo.cols)
+)) |> patchwork_grid()
+
+#' @aside Note the code repetition here; we used functions instead when building
+#' the objects for the package. Can you write functions that eliminate the
+#' repetition? Check your work against the MTM package source on github!
+
+#' @section Modifying Networks, part 3
+#'
+#' Now that we have covered some [igraph] basics, particularly using network
+#' attributes, we'll think about how we might use these to represent a
+#' *S*usceptible-*I*nfectious-*R*ecovered epidemic on a network.
+#'
+#' Recall the *SIR* model world from earlier sessions: essentially, when *S*s
+#' and *I*s interact, the *S* individuals may change state to *I*. After some
+#' time, *I* individuals become *R*, both no longer transmitting and immune to
+#' future infection. The dynamics are characterized by $R_0$: the typical number
+#' of new *I*s a single *I* produces, when introduced to an otherwise completely
+#' *S* population.
+#'
+#' Let's use our vaccine lattice to briefly consider a way to represent the
+#' *SIR* model world.
+
+# first, let's make a function to translate our vaccinated & unvaccinated
+# networks
+popsetup <- function(ig) {
+  V(ig)[state != "vaccinated"]$state <- "S"
+  infectee <- sample(V(ig)[state == "S"], 1)
+  V(ig)[infectee]$state <- "I"
+  ig
+}
+
+# now let's make a function to:
+#  - check possible transmission routes
+#  - transmit randomly along some of them
+#  - and then cause infections to recover
+poptransmit <- function(ig, prob = 0.5) {
+  possibleroutes <- E(ig)[V(ig)[state == "S"] %--% V(ig)[state == "I"]]
+  actualroutes <- possibleroutes[runif(length(possibleroutes)) < prob]
+  V(ig)[state == "I"]$state <- "R"
+  V(ig)[(state == "S") & .inc(actualroutes)]$state <- "I"
+  E(ig)[.inc(V(ig)[state == "R"])]$state <- "blocked"
+  E(ig)[actualroutes]$state <- "active"
+  ig
+}
+
+#' @question In those two functions, we've introduced a few new capabilities.
+#' What did you notice?
+#'
+#' @answer In both, we created temporary lists of vertices and edges (`infectee`
+#' in `popsetup`, `...routes` in `poptransmit`), then used them to subset with
+#' with [igraph::V()] and [igraph::E()]. We also used the `%--%` (or between)
+#' operator to find edges between vertices in different sets; you might have
+#' seen it earlier if you read `?igraph-es-indexing`. We also used the
+#' `.inc` function in `V()` - it has an parallel meaning to its use in `E()`;
+#' you can see more of the special functions for `V()` in `?igraph-vs-indexing`.
+
+# now setup the populations, run a few steps, and plot
+ordered.pop <- popsetup(network_warmup_vaccine_ordered)
+ordered.pop1 <- poptransmit(ordered.pop)
+ordered.pop2 <- poptransmit(ordered.pop1)
+ordered.pop3 <- poptransmit(ordered.pop2)
+ordered.pop4 <- poptransmit(ordered.pop3)
+
+random.pop <- popsetup(network_warmup_vaccine_random)
+random.pop1 <- poptransmit(random.pop)
+random.pop2 <- poptransmit(random.pop1)
+random.pop3 <- poptransmit(random.pop2)
+random.pop4 <- poptransmit(random.pop3)
+
+sir.cols <- c(
+  vaccinated = "blue", S = "yellow", I = "firebrick", R = "darkgreen",
+  transmissible = "grey", blocked = "transparent", active = "red"
+)
+
+list(list(
+  "t=0" = network_quickplot(ordered.pop, values = sir.cols),
+  "t=1" = network_quickplot(ordered.pop1, values = sir.cols),
+  "t=2" = network_quickplot(ordered.pop2, values = sir.cols),
+  "t=3" = network_quickplot(ordered.pop3, values = sir.cols),
+  "t=4" = network_quickplot(ordered.pop4, values = sir.cols)
+), list(
+  "t=0" = network_quickplot(random.pop, values = sir.cols),
+  "t=1" = network_quickplot(random.pop1, values = sir.cols),
+  "t=2" = network_quickplot(random.pop2, values = sir.cols),
+  "t=3" = network_quickplot(random.pop3, values = sir.cols),
+  "t=4" = network_quickplot(random.pop4, values = sir.cols)
+)) |> patchwork_grid()
+
+#' @question Try running those previous simulate + plot lines a few times.
+#' What kind of patterns do you see emerging?
+#'
+#' @answer You might have guessed many replies - but its actually hard to really
+#' investigate patterns for this kind of model without running it many times and
+#' systematically comparing the results. That's what we do (for a different
+#' model) in the next few practicals.
+
+#' @section Follow Up Work
+#'
+#' We only touched the surface of the capabilities of the [igraph] library.
+#' There are many other network generation functions (try `igraph::make_` or
+#' `igraph::sample_` and then TAB to see suggestions for others), as well as
+#' functions to save and load networks in various formats (TODO: examples).
+#'
+#' [igraph] also has a wealth of analytical tools for computing various metrics.
+#' We do not use those in this session, but they are often part of evaluations
+#' to try to understand why simulations on different networks have different
+#' features, or to predict what kind of epidemic outcomes will result from
+#' different network properties.
+
+#' TODO from practical 3 demo - what network property calculations
+#' do we use? have them use some of the igraph network metric calculations
+
+#' advanced stuff:
+#' edge lists, adjaceny lists,
+#' reading in / writing out
+#' generators e.g. erdos-renyi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################################
+#                     Introduction to iGraph: Practical 0                     #
+###############################################################################
+
+while (!require(igraph)) install.packages("igraph")
+
+########## 1 - Creating iGraph objects  #######################################
+# igraph is built around working with igraph objects, which are typically built
+# from "edgelists" or "adjacency matrices".
+#
+# An edge list is a N x 2 matrix, where each row-pair corresponds to an edge
+?graph_from_edgelist
+
+# make an edge list - we're (r=row)binding together a series of vertex pairs
+el <- rbind(c(1,2),c(1,3),c(2,3),c(3,4))
+# use it to make an igraph object
+ig <- graph_from_edgelist(el, directed = FALSE)
+# view that object
+plot(ig)
+
+# a) What happens if you change the order of the elements in the assignment
+# of `el` - i.e. swap c(1,2) and c(1,3)?  Or change c(1,2) to c(2,1)?
+# Note, the graph will almost certainly *look* different; check the
+# the edges and vertices in detail.
+# Answer:
+
+el <- #### <YOUR CODE HERE> ####
+ig <- graph_from_edgelist(el, directed = FALSE)
+plot(ig)
+
+# b) Change something about the pairs in `el` such that there will be a
+# meaningful change when you `plot(ig)`
+# Answer:
+
+el <- #### <YOUR CODE HERE> ####
+ig <- graph_from_edgelist(el, directed = FALSE)
+plot(ig)
+
+# While an edge provides a series of this vertex->that vertex, an adjacency matrix
+# has rows and columns correspond to vertices, and then 0 or 1 entry corresponding abscence
+# or presence of an edge
+
+# to make the same plot we made earlier...
+# construct an empty matrix
+al <- matrix(0, nrow=4, ncol = 4)
+# connect the same vertices
+al[1,2] <- al[1,3] <- al[2,3] <- al[3,4] <- 1
+ig <- graph_from_adjacency_matrix(al, mode = "undirected")
+plot(ig)
+# advanced aside: we can also use slice assignment here:
+# el <- rbind(c(1,2),c(1,3),c(2,3),c(3,4))
+# al[el] <- 1 # the same as al[1,2] <- al[1,3] <- ... <- 1
+
+# c) Create `al` such that it produces the same plot as the different `el` you created
+# for (b).
+# Answer:
+al <- matrix(0, nrow=4, ncol = 4)
+#### <YOUR CODE HERE> #### e.g., al[...] <- 1
+ig <- graph_from_adjacency_matrix(al, mode = "undirected")
+plot(ig)
+
+
+# Advanced aside: you may have noticed the arguments `directed = FALSE` and
+# `mode = "undirected`.  We have only talked about undirected graphs so far,
+# but directed graphs can also be useful. In a directed graph,
+# edges go *from* one vertex *to* another.  Feel free to try making them now,
+# but for the rest of the exercises we will only be using *undirected* graphs
+
+# directed options
+el <- rbind(c(1,2),c(1,3),c(2,3),c(3,4))
+ig <- graph_from_edgelist(el)
+plot(ig)
+al <- matrix(0, nrow=4, ncol = 4)
+al[el] <- 1
+ig <- graph_from_adjacency_matrix(al)
+plot(ig)
+
+# You can of course store and read in graphs in various formats
+write_graph(ig, file = "example.csv", format = "edgelist")
+# though pay attention to the directed-ness when reading in from edgelists
+ig2 <- read_graph(file = "example.csv", format = "edgelist")
+ig3 <- read_graph(file = "example.csv", format = "edgelist", directed = FALSE)
+# d) Try out the different formats, so you can recognize which is which.
+# Describe the differences.
+# Answer:
+
+
+
+########## 2 - Better ways of Creating iGraph objects  ########################
+# igraph also provides constructors for archetypal graphs:
+ig.star <- make_star(5, mode = "undirected")
+plot(ig.star)
+ig.ring <- make_ring(5)
+plot(ig.ring)
+
+# and you can do things like add those together:
+ig.combo <- ig.star + ig.ring
+
+# a) What do you expect `ig.combo` looks like plotted?
+# Answer:
+
+
+
+# Let's try it:
+plot(ig.combo)
+
+# that plot is probably one of (1) exactly what you expected and (2) the opposite
+# To get the other (whichever it was for you), you can do something like:
+ig.combo <- graph.union(ig.star, ig.ring)
+plot(ig.combo)
+
+# b) Try some of the other `make_...` functions.
+# What are `make_lattice`, `make_full_graph`, `make_tree` graphs like?
+# Which one do you think will be relevant to the Reed-Frost SIR model?
+# Answer:
+
+
+
+# Finally, you can create new graphs using `-` and `+` operators;
+# note that these operations do *not* change the underlying graph
+# unless you reassign the results
+ig.combo - edge("1|4")
+plot(ig.combo)
+ig.combo <- ig.combo - edge("1|4")
+plot(ig.combo)
+
+########## 3 - Manipulating iGraph objects  ###################################
+# igraph also a variety of ways to interact with edges and vertices
+
+ig.ref <- make_tree(20, mode = "undirected")
+plot(ig.ref)
+
+# igraph provides two useful ways to interact with edges and vertices:
+V(ig.ref)
+E(ig.ref)
+
+# a) How many vertices are there? How many edges?
+# Answer:
+
+
+
+# You can also use `E` and `V` to assign properties
+E(ig.ref)$color <- c("red", "green")
+V(ig.ref)$color <- "blue"
+plot(ig.ref)
+V(ig.ref)$color[c(5,10,15,20)] <- "purple"
+plot(ig.ref)
+
+# There are several specific properties associated with plotting; `?plot.igraph`
+# for more detail.  But these properties can be anything, such as vaccine status:
+
+ig.grid <- make_lattice(length=10, dim=2)
+V(ig.grid)$color <- "yellow"
+plot(ig.grid)
+V(ig.grid)$vax_status <- "unvaccinated"
+V(ig.grid)$vax_status[seq(1,100,by=11)] <- "vaccinated"
+
+# and those properties can be used to filter the graph for other purposes:
+
+V(ig.grid)[vax_status == "vaccinated"]$color <- "blue"
+
+# b) The previous `plot(ig.grid)` appeared as a yellow square; what will
+# setting the 1, 12, 23, ..., 100 vertices to blue do?
+# Answer:
+
+# Check your answer
+plot(ig.grid)
+
+# We can use a similar approach for edge properties:
+E(ig.grid)$transmissible <- TRUE # ...initially make all edges transmissible
+# there are special functions for selecting edges based on vertices and
+# vice versa; use `.inc` (one such function) to make the connections to vaccinated individuals
+# non-transmissible
+E(ig.grid)[.inc( # get incident edges to...
+  V(ig.grid)[vax_status == "vaccinated"] # all vertices with a particular vax_status
+)]$transmissible <- FALSE # and set their property `transmissible` to FALSE
+
+# c) you will probably need to use these special functions in the next
+# practicals.  Read ?`igraph-es-indexing` and ?`igraph-vs-indexing`.
+# List the special filtering functions with a short description of what
+# they do.
+# Answer:
+
+
+# Read these outputs to see how `ig.grid` has changed
+E(ig.grid)$transmissible
+E(ig.grid)[transmissible == FALSE]
+V(ig.grid)[vax_status == "vaccinated"]
+V(ig.grid)[vax_status == "unvaccinated"]
+
+# Let's use these properties to show how our model targetted vaccine
+# campaign has partitioned the network
+E(ig.grid)$color <- "red"
+E(ig.grid)[transmissible == FALSE]$color <- "blue"
+plot(ig.grid)
+
+# recalling to earlier in this practical, we could also simply delete edges
+# based on these properties:
+plot(ig.grid - E(ig.grid)[transmissible == FALSE])
