@@ -4,7 +4,7 @@ This package contains materials to support the Modern Techniques in Modelling (M
 
 ## Installation & Local Use
 
-The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes]() package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github(cmmid/MTM)`.
+The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`.
 
 To create a local copy of the course exercises, you can then use `MTM::scripts()` - the default options copy the scripts to `~/Downloads/MTM`, organized into sub folders by session topic.
 
