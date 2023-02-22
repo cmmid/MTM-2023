@@ -19,7 +19,10 @@ Imports:
     gganimate,
     ggplot2,
     igraph,
-    patchwork
+    patchwork,
+    deSolve,
+    Rcpp,
+    adaptivetau
 Suggests:
     gifski,
     learnr,
