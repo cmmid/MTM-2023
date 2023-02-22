@@ -86,6 +86,7 @@ list(list(
 
 #' @question How would you describe the difference between the graphs created by
 #' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
+#'
 #' @answer The `make_...` generators produce graphs with fixed properties; all
 #' vertices connected for `make_full_graph()` and vertices connected in a grid
 #' for `make_lattice()` (a typical 2D one for the basic arguments, or more
@@ -97,6 +98,7 @@ list(list(
 #'
 #' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
 #' `sample_gnp()`, which do you think is behind the plots we first looked at?
+#'
 #' @answer The example networks above are made with `make_lattice()`, with some
 #' other modifications. In the later exercises, we will use `make_full_graph()`,
 #' and then make modifications.
