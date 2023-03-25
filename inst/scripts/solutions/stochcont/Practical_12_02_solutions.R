@@ -1,6 +1,6 @@
 library('ggplot2') ## for plotting
 library('adaptivetau') ## for stochastic simulations
-library('tidyverse') ## for manipulation of results
+library('data.table')
 
 ## In this practical session, we will use the
 ## "adaptivetau" package to run simulations.
@@ -48,11 +48,8 @@ nsim <- 100 ## number of trial simulations
 ## looks the same as the "lr" data frame from the last session, but containing
 ## multiple simulation runs and an additional column i that represents the
 ## column index
-system.time(traj <- tibble(i=1:nsim) %>%
-  rowwise() %>%
-  mutate(trajectory=list(as.data.frame(
-           ssa.adaptivetau(init.values, transitions, SIRrateF, parms, tf=tmax)))) %>%
-  unnest(trajectory))
+system.time(traj <- lapply(1:nsim, \(sample_id) ssa.adaptivetau(init.values, transitions, SIRrateF, parms, tf=tmax)) |>
+  rbindlist(idcol = "sample_id"))
 
 ## EXERCISE: compare the run time of the command above to running 100
 ## simulations using our Gillespie algorithm from Practical 1. How much is the

@@ -1,5 +1,5 @@
 library('ggplot2') ## for plotting
-library('tidyverse') ## for manipulation of results
+library('data.table') ## for manipulation of results
 
 ## In this practical session, we will simulate the SIR model using the
 ## Gillespie algorithm. The first bit of code below is a function that simulates
@@ -29,7 +29,7 @@ SIR_gillespie <- function(init_state, parms, tf) {
   N <- S + I + R
 
   ## create results data frame
-  results_df <- data.frame(time=0, t(init_state))
+  results_df <- list(as.list(c(time=0, init_state)))
 
   ## loop until end time is reached
   while (time < tf) {
@@ -64,10 +64,10 @@ SIR_gillespie <- function(init_state, parms, tf) {
       time <- tf
     }
     ## add new row to results data frame
-    results_df <- rbind(results_df, c(time=time, S=S, I=I, R=R))
+    results_df[[length(results_df)+1]] <- list(time=time, S=S, I=I, R=R)
   }
   ## return results data frame
-  return(results_df)
+  return(rbindlist(results_df))
 }
 
 init.values <- c(S=249, I=1, R=0) ## initial state
@@ -80,11 +80,12 @@ r <- SIR_gillespie(init_state=init.values, parms=parms, tf=tmax)
 ## Now, plot the result (using ggplot or plot)
 
 ## first, convert the result into a long data frame for plotting
-lr <- as.data.frame(r) %>%
-  gather(variable, value, 2:ncol(.))
+lr <- r |> melt.data.table(
+  id.vars = "time", variable.name = "compartment", value.name = "count"
+)
 
 ## plot the result
-ggplot(lr, aes(x=time, y=value, colour=variable)) +
+ggplot(lr, aes(x=time, y=count, colour=compartment)) +
   geom_line()
 
 ## re-run this a few times to convince yourself the output is different every time
@@ -95,21 +96,19 @@ nsim <- 100 ## number of trial simulations
 ## We store the simulations in a data frame, traj, which
 ## contains the results from multiple simulation runs and an additional column
 ## that represents the simulation index
-traj <- tibble(i=1:nsim) %>%
-  rowwise() %>%
-  mutate(trajectory=list(as.data.frame(
-           SIR_gillespie(init.values, parms, tmax)))) %>%
-  unnest(trajectory)
+traj <- lapply(1:nsim, \(sample_id) SIR_gillespie(init.values, parms, tmax)) |>
+  rbindlist(idcol = "sample_id")
 
 ## convert to long data frame
-mlr <- traj %>%
-  gather(compartment, value, 3:ncol(.))
+mlr <- traj |> melt.data.table(
+  id.vars = c("sample_id", "time"), variable.name = "compartment", value.name = "count"
+)
 
 ## Next, plot the multiple simulation runs
 ## (we only plot the I compartment)
 ggplot(mlr,
-       aes(x=time, y=value, group=i, color=compartment)) +
-  geom_line() +
+       aes(x=time, y=count, group=sample_id, color=compartment)) +
+  geom_line(alpha = 0.1) +
   facet_wrap(~compartment)
 
 ## You'll notice that some outbreaks die out very quickly, while some others are
@@ -117,41 +116,33 @@ ggplot(mlr,
 ## overall outbreak sizes. Which proportion of outbreaks dies out quickly?
 
 ## create data frame of outbreak sizes
-outbreak_sizes <- mlr %>%
-  filter(compartment=="R") %>%
-  group_by(i) %>%
-  filter(time==max(time)) %>%
-  select(i, size=value)
+outbreak_sizes <- mlr[
+  compartment == "R",.(size = count[which.max(time)]), by=sample_id
+]
 
 ## plot it as a histogram
 ggplot(outbreak_sizes, aes(x=size)) +
   geom_histogram()
 
 ## determine number of large outbreaks (defined as larger than 50)
-outbreak_sizes %>%
-  filter(size > 50) %>%
-  nrow
+outbreak_sizes[size > 50, .N]
 
 ## Next, calculate the mean and standard deviation of each state across the
 ## multiple runs. To do that, we need the value of the different states at
 ## pre-defined time steps, whereas adaptivetau only returns the times at which
 ## certain events happened. In order to, for example, extract the values of the
 ## trajectory at integer time points, we can use
-timeTraj <- mlr %>%
-  group_by(i, compartment) %>%
-  summarise(traj=list(data.frame(
-              time=seq(0, tmax, by=0.1),
-              value=approx(x=time, y=value, xout=seq(0, tmax, by=0.1),
-                           method="constant")$y))) %>%
-  unnest(traj)
+time.points <- seq(0, tmax, by=0.1)
+timeTraj <-mlr[, .(
+  time = time.points,
+  count = approx(time, count, xout = time.points, method = "constant")$y
+), by=.(sample_id, compartment)]
 
 ## Now, calculate a summary trajectory containing the mean and standard
 ## deviation (sd) of the number of infectious people at every time step
-sumTraj <- timeTraj %>%
-  filter(compartment=="I") %>%
-  group_by(time) %>%
-  summarise(mean=mean(value),
-            sd=sd(value))
+sumTraj <- timeTraj[compartment == "I",.(
+  trajectories = "all", mean = mean(count), sd = sd(count)
+), by = time]
 
 ## plot
 ggplot(sumTraj, aes(x=time, y=mean, ymin=pmax(0, mean-sd), ymax=mean+sd)) +
@@ -160,17 +151,14 @@ ggplot(sumTraj, aes(x=time, y=mean, ymin=pmax(0, mean-sd), ymax=mean+sd)) +
 
 ## As a second summary, we only consider trajectories that have not gone
 ## extinct, that is where I>0
-sumTrajAll <- sumTraj %>%
-  mutate(trajectories="all")
 
-sumTrajGr0 <- timeTraj %>%
-  filter(compartment=="I", value > 0) %>%
-  group_by(time) %>%
-  summarise(mean=mean(value),
-            sd=sd(value)) %>%
-  mutate(trajectories="greater_than_zero")
+sumTrajGr0 <- timeTraj[
+  (compartment=="I") & (count > 0),
+  .(trajectories = "only >0", mean = mean(count), sd = sd(count)),
+  by=time
+]
 
-iTraj <- bind_rows(sumTrajAll, sumTrajGr0)
+iTraj <- rbind(sumTraj, sumTrajGr0)
 
 ## plot
 ggplot(iTraj, aes(x=time, y=mean, ymin=pmax(0, mean-sd), ymax=mean+sd,
@@ -204,16 +192,15 @@ ode_output_raw <-
   ode(y = init.values, times = seq(0, tmax), func = SIR_model, parms = parms,
       method = "rk4")
 ## Convert to data frame for easy extraction of columns
-ode_output <- as.data.frame(ode_output_raw)
+ode_output <- (as.data.table(ode_output_raw) |> melt.data.table(
+  id.vars = "time", variable.name = "compartment", value.name = "mean"
+))[compartment == "I", .(time, trajectories = "deterministic", mean, sd = 0)]
 
 ## Combine into one big data frame
-allTraj <- ode_output %>%
-  gather(compartment, value, 2:ncol(.)) %>% ## convert to long format
-  filter(compartment=="I") %>%
-  rename(mean=value) %>% ## in deterministic, mean=value
-  mutate(trajectories="deterministic", ## label trajectories
-         sd=0) %>% ## in deterministic, sd=0
-  bind_rows(iTraj)
+allTraj <- rbind(
+  ode_output,
+  iTraj
+)
 
 ## plot
 ggplot(allTraj, aes(x=time, y=mean, colour=trajectories)) +
