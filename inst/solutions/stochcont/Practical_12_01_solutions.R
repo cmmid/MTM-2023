@@ -1,11 +1,38 @@
 library('ggplot2') ## for plotting
 library('data.table') ## for manipulation of results
 
-## In this practical session, we will simulate the SIR model using the
-## Gillespie algorithm. The first bit of code below is a function that simulates
-## an SIR model using the Gillespie algorithm. Take 10 minutes to familiarise
-## yourself with the function and make sure you understand its inner workings.
-## Then, run it using the commands below.
+#' @section Overview
+#' In this practical session, we will simulate the SIR model using
+#' *Gillespie's algorithm*. Take ~10 minutes for this section to review how the
+#' algorithm works in practice.
+
+#' Recall from the discussion: the Gillespie algorithm is about *events* and
+#' *rates*. In the SIR model, there are two events:
+
+SIR_events <- list(
+  infection = c(S = -1, I = +1),
+  recovery = c(I = -1, R = +1)
+)
+
+#' and the associated rates, in terms of a `state = list(S=..., I=..., R=...)`
+#' and `parms = list(beta = ..., gamma = ...)` (and `time`, which is ignored
+#' in the minimal SIR model):
+
+SIR_rates <- function(time, state, parms) with(c(state, parms), {
+  N <- S + I + R
+  return(c(infection = beta * S * I/N, recovery = gamma * I))
+})
+
+#' Then in terms of Gillespie's algorithm, the step change is
+
+stochcont_dGillespie <- function(time, x, parms, ratef, events) {
+  rates <- ratef(x, parms, time) # compute the current rates
+  evt <- events[sample(names(rates), 1, prob = rates)] # sample among the rates
+  dt <- rexp(1, 1/sum(rates)) # sample a time-to-event
+  dX <- x; dX[] <- 0 # make a copy of the state structure for deltas, set to 0
+  dX[names(evt)] <- evt # set the relevant deltas to change based on the map
+  return(list(c(dt, dX)))
+}
 
 ## Function SIR_gillespie.
 ## This takes three arguments:
