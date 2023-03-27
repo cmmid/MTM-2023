@@ -42,7 +42,8 @@ network_build
 #' @question Given [network_build()] and how we've specified the Reed
 #' Frost model, how might the variables & parameters be used for
 #' for the "delta" meta-modelling step (i.e., calculating system
-#' changes)?
+#' changes)? What functions and operators from `igraph` do you
+#' expect to use?
 #'
 #' @answer We'll check for any edges between *S* and *I* individuals.
 #' For any we find, we'll test them by comparing `draw` and `parms$p`
@@ -62,6 +63,8 @@ network_dReedFrost
 #' stochastic model, so it has a defined stopping condition.
 #'
 #' @hint Examine `network_solve` to see what's used here.
+
+network_solve
 
 set.seed(13)
 
@@ -143,4 +146,3 @@ samples.dt |> network_plot_histograms()
 #'
 #' samples60.dt |> network_plot_histograms()
 #' samples120.dt |> network_plot_histograms()
-
