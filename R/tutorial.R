@@ -60,19 +60,27 @@ checked.dir.create <- function(path, ...) {
 #' @export
 scripts <- function(
   path = file.path("~", "Downloads", "MTM"),
-  overwrite = dir.exists(path),
-  solutions  = FALSE
+  overwrite = FALSE,
+  solutions = FALSE
 ) {
   stopifnot(
     "'path' must be a string." = is.character(path),
     "'path' must be a single string." = length(path) == 1
   )
-  if (!dir.exists(path) && !checked.dir.create(path, recursive = T)) {
-    warning(sprintf("'%s' does not exist and/or was not be created.", path))
-    return(NULL)
+
+  dir_exists = dir.exists(path)
+  if (!dir_exists && !checked.dir.create(path, recursive = T)) {
+    warning(sprintf("'%s' does not exist and/or was not created.", path))
+    return(invisible())
   }
 
-  # TODO interactively check overwrite?
+  # Confirm user-requested overwrite
+  if (overwrite && dir_exists) {
+    confirm <- readline(prompt = paste0("Are you sure you want to overwrite files in '", path, "'? (y/n) "))
+    if (confirm != "y") {
+      return(invisible())
+    }
+  }
 
   srcdir   <- system.file("scripts", package = "MTM")
   srcfiles <- list.files(
@@ -91,9 +99,10 @@ scripts <- function(
                             recursive = TRUE))
   }
 
-
-  if (!all(res)) {
+  # file.copy returns FALSE if overwrite == FALSE and the directory exists, and we
+  # don't want that to trigger a warning; hence the (overwrite || !dir_exists) here
+  if ((overwrite || !dir_exists) && !all(res)) {
     warning("Something may have gone wrong with copying.")
-    return(NULL)
+    return(invisible())
   } else return(path)
 }
