@@ -18,72 +18,28 @@ SIR_events <- list(
 #' and `parms = list(beta = ..., gamma = ...)` (and `time`, which is ignored
 #' in the minimal SIR model):
 
-SIR_rates <- function(time, state, parms) with(c(state, parms), {
-  N <- S + I + R
+SIR_rates <- function(time, state, parms) with(c(parms, as.list(state)), {
+  N <- sum(state)
   return(c(infection = beta * S * I/N, recovery = gamma * I))
 })
 
-#' Then in terms of Gillespie's algorithm, the step change is
-
-stochcont_dGillespie <- function(time, x, parms, ratef, events) {
-  rates <- ratef(x, parms, time) # compute the current rates
-  evt <- events[sample(names(rates), 1, prob = rates)] # sample among the rates
-  dt <- rexp(1, 1/sum(rates)) # sample a time-to-event
-  dX <- x; dX[] <- 0 # make a copy of the state structure for deltas, set to 0
-  dX[names(evt)] <- evt # set the relevant deltas to change based on the map
-  return(list(c(dt, dX)))
-}
-
-## Function SIR_gillespie.
-## This takes three arguments:
-## - init_state: the initial state
-##   (a named vector containing the number in S, I and R)
-## - parms: the parameters
-##   (a named vector containing the rates beta and gamma)
-## - tf: the end time
-SIR_gillespie <- function(init_state, parms, tf) {
-
+#' Then in terms of Gillespie's algorithm, a solver is
+stochcont_solve <- function(init_state, transitions, rateFun, params, tf) {
   time <- 0 ## initialise time to 0
-
-  ## assign parameters to easy-access variables
-  beta <- parms["beta"]
-  gamma <- parms["gamma"]
-
-  ## assign states to easy-access variables
-  S <- init_state["S"]
-  I <- init_state["I"]
-  R <- init_state["R"]
-  N <- S + I + R
-
-  ## create results data frame
   results_df <- list(as.list(c(time=0, init_state)))
-
-  ## loop until end time is reached
+  x <- init_state
   while (time < tf) {
     ## update current rates
-    rates <- c()
-    rates["infection"] <- beta * S * I / N
-    rates["recovery"] <- gamma * I
-
+    rates <- rateFun(time, x, parms)
     if (sum(rates) > 0) { ## check if any event can happen
       ## time of next event
-      time <- time + rexp(n=1, rate=sum(rates))
+      time <- time + rexp(n=1, rate = sum(rates))
       ## check if next event is supposed to happen before end time
       if (time <= tf) {
-        ## generate cumulative sum of rates, to determine the type of the next
-        ## event
-        cumulative_rates <- cumsum(rates)
-        ## determine type of next event
-        type <- runif(n=1, min=0, max=sum(rates))
-        if (type < cumulative_rates["infection"]) {
-          ## infection
-          S <- S - 1
-          I <- I + 1
-        } else if (type < cumulative_rates["recovery"]){
-          ## recovery
-          I <- I - 1
-          R <- R + 1
-        }
+        # sample the next event
+        evt <- transitions[[sample(length(rates), 1, prob = rates)]]
+        # use it to update x
+        x[names(evt)] <- x[names(evt)] + evt
       } else { ## next event happens after end time
         time <- tf
       }
@@ -91,18 +47,20 @@ SIR_gillespie <- function(init_state, parms, tf) {
       time <- tf
     }
     ## add new row to results data frame
-    results_df[[length(results_df)+1]] <- list(time=time, S=S, I=I, R=R)
+    results_df[[length(results_df)+1]] <- list(time=time, x)
   }
   ## return results data frame
   return(rbindlist(results_df))
 }
 
 init.values <- c(S=249, I=1, R=0) ## initial state
-parms <- c(beta=1, gamma=0.5) ## parameter vector
+parms <- list(beta=1, gamma=0.5) ## parameter vector
 tmax <- 20 ## end time
 
+r <- stochcont_solve(init.values, SIR_events, SIR_rates, parms, tmax)
+
 ## run Gillespie simulation
-r <- SIR_gillespie(init_state=init.values, parms=parms, tf=tmax)
+# r <- SIR_gillespie(init_state=init.values, parms=parms, tf=tmax)
 
 ## Now, plot the result (using ggplot or plot)
 
