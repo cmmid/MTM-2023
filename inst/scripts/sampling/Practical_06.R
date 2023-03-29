@@ -13,11 +13,11 @@ sampling_dSIR_betagamma
 sampling_maxprevalence
 
 # (a) What is the first function?
-# Answer: a step function for the SIR model, parametrised by beta and gamma,
+# Answer:
 # (b) What are the arguments of the second function?
-# Answer: (1) the parameter values lists, (2) whether or not to plot results, (3) which model to use
+# Answer:
 # (c) What is the output of the second function?
-# Answer: maximum prevalence through the epidemic
+# Answer:
 
 # Let's choose a beta value of 0.4 and a gamma value of 0.2
 max.prevalence = sampling_maxprevalence(parameters = list(beta = 0.4, gamma = 0.2), plot_results = TRUE)
