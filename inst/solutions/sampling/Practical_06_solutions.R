@@ -15,7 +15,7 @@ sampling_maxprevalence
 # (a) What is the first function?
 # Answer: a step function for the SIR model, parametrised by beta and gamma,
 # (b) What are the arguments of the second function?
-# Answer: (1) the parameter values lists, (2) whether or not to plot results, (3) which model to use
+# Answer: (1) the parameter values lists, (2) which model to use, (3) whether or not to plot results
 # (c) What is the output of the second function?
 # Answer: maximum prevalence through the epidemic
 
