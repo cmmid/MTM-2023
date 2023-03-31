@@ -1,10 +1,10 @@
 
 require(MTM)        # for overall course functions
 require(igraph)     # for the network capabilities
+require(ggplot2)    # for plotting
 
 # you may not even need these, but they could be
 # useful if you want to do some adhoc plotting
-require(ggplot2)    # for plotting
 require(patchwork)  # for combining plots
 
 reminder(
@@ -20,7 +20,7 @@ e.g. `networkx`."
 #' to accurately reproduce what is going on.
 #'
 #' In this warmup, we're going to show you how to build up two networks, both of
-#' people on a grid. In one, people are vaccinated at random; in the other, in
+#' people on a contact grid. In one, people are vaccinated at random; in the other, in
 #' a systematic way.
 
 # set some vertex and edge colors
@@ -29,8 +29,9 @@ demo.cols <- c(
   transmissible = "grey", blocked = "transparent"
 )
 
-# now plot the two networks side-by-side (`network_warmup_vaccine...` - data
-# included in `MTM`)
+# plot the two networks side-by-side (`network_warmup_vaccine...` - data
+# included in `MTM`, as are the `network_quickplot` and `patchwork_grid`
+# functions)
 list(list(
   # random vaccination in a small, orderly population
   "Random\nVaccination" = network_quickplot(
@@ -87,21 +88,21 @@ list(list(
 #' @question How would you describe the difference between the graphs created by
 #' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
 #'
-#' @answer The `make_...` generators produce graphs with fixed properties; all
-#' vertices connected for `make_full_graph()` and vertices connected in a grid
-#' for `make_lattice()` (a typical 2D one for the basic arguments, or more
-#' complicated grids if you fiddled around with `dim=` arguments).
-#' `sample_gnp()` produces a random set of edges amongst the vertices. If you
-#' look at another person's plots, they will likely have different connections.
-#' (You may also notice slightly different layouts, particularly for the "B"
-#' networks.)
+#' @answer
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #'
 #' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
 #' `sample_gnp()`, which do you think is behind the plots we first looked at?
 #'
-#' @answer The example networks above are made with `make_lattice()`, with some
-#' other modifications. In the later exercises, we will use `make_full_graph()`,
-#' and then make modifications.
+#' @answer
+#'
+#'
 #'
 #' @hint look at `?make_full_graph`, `?make_lattice`, and `?sample_gnp`.
 #'
@@ -186,10 +187,24 @@ list(list(
 #'
 #' @hint check `?add_edges`
 
-#' Now let's use the approach of adding on another graph.
-# TODO: add whole other graphs
+#' Now let's combine some whole graphs. There are two basic ways to do this:
+#' using the `+` operator between two graphs and using [igraph::graph.union()]
+#'
+#' Let's have a look at what those do:
 
-# TODO: recycle below
+iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
+iglring <- make_ring(9, directed = FALSE) |> add_layout_(in_circle())
+
+list(list(
+  "Addition" = network_quickplot(iglstar + iglring, simple = TRUE),
+  "Union" = network_quickplot(graph.union(iglstar, iglring), simple = TRUE)
+)) |> patchwork_grid()
+
+#' @question What is the difference between [igraph::graph.union()] and
+#' using the `+` operator?
+#' @answer [graph.union()] merges vertices, while the `+`
+#'
+#'
 
 
 #' @section Modifying Networks, part 2
