@@ -11,3 +11,9 @@ NULL
 
 #' @rdname network_data
 "network_warmup_vaccine_random"
+
+#' @rdname network_data
+"network_unstructured_set"
+
+#' @rdname network_data
+"network_structured_set"

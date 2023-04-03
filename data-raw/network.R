@@ -33,6 +33,42 @@ usethis::use_data(
   overwrite = TRUE
 )
 
+require(MTM)
+
+# sample a few hundred networks
+network_unstructured_set <- lapply(
+  1:300, \(sample_id) {
+    set.seed(sample_id)
+    list(N = 50, p = 0.05) |> network_percolate()
+  }
+)
+
+keep_edges <- function(og, keepn) {
+  delete_edges(og, sample(E(og), ecount(og) - keepn))
+}
+
+structure_network <- function(usn) {
+  en <- ecount(usn)
+  one <- rbinom(1, en - 1, 0.5)
+  two <- en - 1 - one
+  og <- make_full_graph(ceiling(vcount(usn)/2)) |> keep_edges(one)
+  tg <- make_full_graph(floor(vcount(usn)/2)) |> keep_edges(two)
+  cg <- og + tg + edge(sample(vcount(og), 1), sample(vcount(tg), 1))
+  V(cg)$state <- V(usn)$state
+  cg$states <- usn$states
+  cg$inf_states <- usn$inf_states
+  cg$layout <- usn$layout
+  return(cg)
+}
+
+network_structured_set <- network_unstructured_set |> lapply(structure_network)
+
+usethis::use_data(
+  network_unstructured_set,
+  network_structured_set,
+  overwrite = TRUE
+)
+
 #' @examples
 #' tmp.ig <- network_warmup_vaccine_ordered
 #' E(tmp.ig)$color <- "grey"
