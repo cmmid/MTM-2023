@@ -33,7 +33,7 @@ checked.dir.create <- function(path, ...) {
 #'
 #' @param path, string; the path to enclosing directory. If this directory does not exist, will create it
 #' @param overwrite, boolean; overwrite existing files (corresponding to the course scripts)?
-#' @param solutions, boolean; copy the `solutions/` folder (which contains the solutions)
+#' @param what, string; the "scripts" or the "solutions"?
 #'
 #' @details This function creates a local copy of the R scripts associated with
 #' the Modern Techniques in Modelling (MTM) short course, for students to edit
@@ -45,9 +45,10 @@ checked.dir.create <- function(path, ...) {
 #' `NN_short_description.R` (where NN is 00, 01, etc - corresponding to the expected
 #' order of completion, with the 00 session being background / preparatory content).
 #'
-#' If used with `solutions = TRUE` argument, there will also be a `sol/` subdirectory,
-#' which will then contain again sessions by name, scripts by order and shortname, with
-#' solutions filled in.
+#' If used with default `what` argument, you will get a "scripts" subdirectory,
+#' and if you ask for `what = "solutions"` there will be a "solutions" subdirectory.
+#' Both will contain sessions by name, scripts by order and shortname, without
+#' and with solutions filled in, respectively.
 #'
 #' @return string or NULL; non-NULL indicates successful creation + copy and is the
 #' top level root of the course material.
@@ -61,12 +62,15 @@ checked.dir.create <- function(path, ...) {
 scripts <- function(
   path = file.path("~", "Downloads", "MTM"),
   overwrite = FALSE,
-  solutions = FALSE
+  what = c("scripts", "solutions")
 ) {
   stopifnot(
     "'path' must be a string." = is.character(path),
     "'path' must be a single string." = length(path) == 1
   )
+
+  refpath <- match.arg(what, several.ok = FALSE)
+  path <- file.path(path, refpath)
 
   dir_exists = dir.exists(path)
   if (!dir_exists && !checked.dir.create(path, recursive = T)) {
@@ -82,22 +86,15 @@ scripts <- function(
     }
   }
 
-  srcdir   <- system.file("scripts", package = "MTM")
+  srcdir   <- system.file(refpath, package = "MTM")
   srcfiles <- list.files(
     srcdir, full.names = TRUE, recursive = FALSE, include.dirs = TRUE
   )
 
-  res <- file.copy(from      = grep("solutions", srcfiles, invert = TRUE, value = TRUE),
+  res <- file.copy(from      = srcfiles,
                    to        = path,
                    overwrite = overwrite,
                    recursive = TRUE)
-
-  if (solutions) {
-    res <- c(res, file.copy(from      = grep("solutions", srcfiles, value = TRUE),
-                            to        = path,
-                            overwrite = overwrite,
-                            recursive = TRUE))
-  }
 
   # file.copy returns FALSE if overwrite == FALSE and the directory exists, and we
   # don't want that to trigger a warning; hence the (overwrite || !dir_exists) here
