@@ -216,29 +216,10 @@ patchwork_grid <- function(plist) {
     "Empty `plist`." = length(plist) != 0
   )
 
-  rown <- length(plist)
-  coln <- length(plist[[1]])
-
-  if(is(plist[[1]][[1]], "patchwork")) {
-    ly <- thing2$patches$layout
-    if (rown != 1) {
-      rown <- ly$nrow * rown
-    } else {
-
-    }
-  }
-
-  allps <- Reduce(c, plist)
-  nms <- names(allps)
-
-  return(
-    Reduce(`+`, allps) +
-      plot_annotation(tag_levels = list(nms)) +
-      plot_layout(ncol = coln, nrow = rown) &
-      theme(
-        plot.tag.position = c(0.5, 1),
-        plot.tag = element_text(vjust = 0)
-      )
-  )
+  return(plist |> lapply(\(rw) {
+    mapply(\(p, nm) {
+      wrap_elements(p + plot_annotation(title = nm))
+    }, rw, names(rw), SIMPLIFY = FALSE) |> Reduce(`|`, x = _)
+  }) |> Reduce(`/`, x = _))
 
 }
