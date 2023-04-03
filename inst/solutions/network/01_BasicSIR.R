@@ -1,166 +1,148 @@
-# INSTRUCTIONS
-#
-# We're going to work towards a having a function that will:
-# - Receive a few relevant arguments (number of individuals, probability of infection, ...)
-# - generate a network corresponding to the Reed-Frost SIR assumptions
-# - simulate an SIR epidemic on that network, starting with a single initially infectious individual
-#   and ending when there are no more infectious individuals
-#
-# Then you can use that function with some provided code (from `reference.R`) to
-# generate a plot comparing a non-network based implementation to your implementation.
-# 
-# You should work from top-to-bottom, replacing the `#### <YOUR CODE HERE> ####` with relevant code. Each step
-# will have comments providing hints about where to look for more information, and
-# you can always ask the instructors, but: the first thing they'll ask you is what you
-# learned from the hints, and then if you've asked one of your fellow participants!
-# There are suggestions about how to test small parts of your code as you go along, and
-# when you're done, you should be able to source this file and see a comparison between
-# your simulation and the reference one
 
+require(MTM)
+require(igraph)
 
-# This adds several functions into the workspace that we will use for the summary
-# evaluation of your simulator, as well as loading all the necessary packages.
-# Aside: feel free to read this file, particularly the `chainbinom_sim`, which
-# implements the Reed-Frost model use a chain-binomial formalism.
-source("../reference.R")
-
-# For the Reed-Frost network model, we're going to have 
-# vertices represent people, and the edges represent contacts between them
-# First, you'll want a function that builds the network
-# we also want to provide a default state (one of S, I, or R) for the all the individuals
-# recall from the previous practical that there are several options:
-#  - use one of the convenience constructors; hint recall the make_... functions from the warmup
-#  - create an edgelist and build the graph from that; see ?graph.edgelist for hints
-#  - create an adjacency matrix and build the graph from that; see ??graph.adjacency for hints
-# for the Reed-Frost network, remember everyone connects with everyone - there is a make_... function
-# for precisely this case.
-build_network <- function(
-  n, ...
-) {
-  ig <- make_full_graph(n)
-  V(ig)$state <- "S"
-  return(ig)
-} # n.b., included ... args in anticipation of later practicals
-
-# a) Create plots of your network for N=6 and N=30.
-# (hint: this should tell you what arguments build_network(...) needs)
-# Answer:
-plot(build_network(
-  30
-))
-plot(build_network(
-  6
-))
-
-# With `build_network`, we can make the simulation population, but we also need to
-# regularly check it's *state* during the simulation - i.e., how many people are S vs I vs R
-# We can do that by counting the vertices that are S vs I vs R
-# With the right filter in ..., you can use length(V(ig)[...]) to get the pertinent info
-network_state_totals <- function(ig) {
-  return(c(
-    S = length(V(ig)[state=="S"]), # n.b., if you wanted something a bit more flexible (for example, add an E state), you could do:
-    I = length(V(ig)[state=="I"]), # return(sapply(c("S","I","R"), function(st) length(V(ig)[state == st])))
-    R = length(V(ig)[state=="R"])  # or if your states were defined as factors instead:
-  ))                               # table(V(ig)$state)
-}                                  # though factors can be a bit messy
-
-# b) test that your function returns sensible things
-# Answer:
-network_state_totals(build_network(
-  30
-)) == c(30,0,0)
-
-# Like other stochastic simulations, your Reed-Frost SIR simulation will run until
-# there would be no state changes.  What should you check for here?
-still_infectious <- function(ig) { # n.b. for flexibility, could also re-use network_state_totals here and do something like
-  return(length(V(ig)[             # return(sum(network_state_totals(ig)[c("I")]))  
-    state == "I"                   # which would allow you to e.g. easily add an "E" compartment
-  ])) 
-}                                     
-
-# c) test that your function returns sensible things
-# Answer:
-still_infectious(build_network(
-  30
-)) == FALSE
-
-
-# Now you need to fill in this simulation function skeleton. You may 
-# Make sure your function n, p, and i arguments, corresponding to
-#  n - number of individuals
-#  p - transmission probability
-#  i - random number seed
-# and returns a matrix with three columns and at least two rows
-igraph_sim <- function(n, p, i) {
-  set.seed(i)
-  # create the network using your function + the appropriate arguments from n, p, i
-  ig <- build_network(
-    n
-  )
-  
-  # initially, all the vertices but one should be susceptible,
-  # with that one infectious
-  # Aside: does it matter which one is infectious? Answer: NO
-  V(ig)[
-    1
-  ]$state <- "I"
-  
-  # this sets aside a data structure to record simulation steps
-  # inspect result & rf_prealloc from the Rstudio console prompt to understand
-  # that structure better
-  # see reference.R for a bit more explanation
-  result <- rf_prealloc(n)
-  tm <- 1
-  
-  # We're going to be working with the infectious and susceptible individuals
-  # recall from the warmup how to list vertices for an igraph (or ?V)
-  # and how to get only the ones that have a particular attribute (in our case "state")
-  # run the Reed-Frost simulation
-  
-  while(still_infectious(ig)) { # while there are still infectives...
-    result[tm,] <- network_state_totals(ig) # store the current state of the population
-    
-    infective_individuals <- V(ig)[
-      state == "I"
-    ] # get a vertex list of all the Is
-    susceptible_individuals <- V(ig)[
-      state == "S"
-    ] # and similar for getting all the Ss
-    
-    # If you know a set of "source" vertices (infectious individuals) and possible
-    # "target" vertices (susceptible individuals), you can use indexing functions
-    # (see ?E then follow the link on indexing for more info) to get
-    # all the edges between them, which represent the possible transmission paths
-    infection_paths <- E(ig)[
-      infective_individuals %--% susceptible_individuals
-    ]
-    
-    transmitting_paths <- infection_paths[runif(length(infection_paths)) < p] # randomly sample infection_paths to see which edges transmitted infections
-    new_infections <- susceptible_individuals[.inc(transmitting_paths)] # from the transmission paths, identify which individuals will become infectious
-    
-    # now update the simulation state
-    V(ig)[
-      infective_individuals
-    ]$state <- "R"
-    V(ig)[
-      new_infections
-    ]$state <- "I"
-    tm <- tm + 1
-    
-  }
-  result[
-    tm,
-  ] <- network_state_totals(ig) # record final step
-  
-  # return the results, after trimming them with a function from reference.R
-  return(rf_trim(result))
-}
-
-# The `plotter` function is defined in reference
-resultplot <- plotter(
-  simulator_A = igraph_sim, # your simulator...
-  samples = 100, # how many times to run the two sims
-  n = 50, p = .05 # the Reed-Frost model parameters: population size, and transmission probability
+reminder(
+  "This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
 )
 
-print(resultplot)
+#' @section The Reed Frost Model on a Network
+#'
+#' We have used the tools from the Warmup to implement the Reed Frost SIR model
+#' (as covered in the discussion session).  In this practical, we'll apply that
+#' implementation and and examine some results.
+#'
+#' We start with the following function that collects several
+#' [igraph] steps to initialize the kind of networks we'll
+#' use for simulation:
+
+network_build
+
+#' @question What kind of network are we making - deterministic or stochastic?
+#' How can you tell? How does the choice relate to the Reed Frost model?
+#'
+#' @answer Deterministic, and can tell from [igraph::make_full_graph()]
+#' constructor: deterministic methods start with `make_...`. In the Reed Frost
+#' model, "everyone interacts" - same as everyone being connected.
+#'
+#' @question Recalling the definitions from the Introductory and
+#' Networks MTM sessions, what Reed Frost model *variables* &
+#' *parameters* appear in `network_build`? Which aspects of the
+#' Reed-Frost model are represented here?
+#'
+#' @answer
+#'  - variables: S & I (no R yet really, though it is listed in states)
+#'  - parameters: N (N for network size; p isn't used yet)
+#'  Which states are present (S, I, R) and infectious (I), as is the
+#'  fact that edges may be tested for transmission (draw) and either
+#'  lead to transmission or not (active vs inactive)
+#'
+#' @question Given [network_build()] and how we've specified the Reed
+#' Frost model, how might the variables & parameters be used for
+#' for the "delta" meta-modelling step (i.e., calculating system
+#' changes)? What functions and operators from `igraph` do you
+#' expect to use?
+#'
+#' @answer We'll check for any edges between *S* and *I* individuals.
+#' For any we find, we'll test them by comparing `draw` and `parms$p`
+#' to see if transmission occurs, which will turn connected *S*s into
+#' *I*s. We'll also turn current *I*s into *R*s.
+#'
+#' @hint compare your thinking to the implementation in `network_dReedFrost`:
+
+network_dReedFrost
+
+#' @question Recall the "model iteration" concept discussed in
+#' earlier sessions. Which of the loop constructs `for` vs `while`
+#' is appropriate for Reed Frost? Why?
+#'
+#' @answer Use a `while` loop, computing as long as there are
+#' any infectious individuals. The Reed Frost model is a finite,
+#' stochastic model, so it has a defined stopping condition.
+#'
+#' @hint Examine `network_solve` to see what's used here.
+
+network_solve
+
+set.seed(13)
+
+list(N = 30, p = 0.05) |> network_solve(parms = _) -> sim_example
+
+# we can look at the resulting epidemic in summary
+sim_example |> network_flatten() |> network_plot_series()
+# or watch its evolution on the network:
+# n.b. the rendering here may take a moment
+sim_example |> network_animate()
+
+# our Reed-Frost model is stochastic, so we can get very different
+# results, e.g.:
+
+set.seed(42)
+
+list(N = 30, p = 0.05) |> network_solve(parms = _) |>
+  network_flatten() |> network_plot_series()
+
+# ...which means we need to think about typical behavior
+# across many realizations of the simulation
+# n.b.: this may take a minute
+samples.dt <- network_sample_ReedFrost(n=300, parms = list(N=30, p=0.1))
+
+# we can get a holistic sense of the trends in these realizations
+# by overlaying the time series
+samples.dt |> network_plot_series()
+
+# but we generally have some particular features in mind when
+# doing this kind of modelling work, e.g. final size or epidemic
+# duration
+samples.dt |> network_plot_histograms()
+
+#' @question What do you notice about these distributions?
+#'
+#' @answer The results are bi-modal: We see both extinction
+#' (close to zero final size lump) and outbreaks (bigger,
+#' non-zero lump), which are typically (but not always)
+#' attacking almost the entire population.
+#'
+#' @question Using the code from earlier, vary p, while holding N constant, and
+#' examine the results with the histogram plot. What with the distribution? Why?
+#'
+#' @answer Generally, $p$ lower => more in the extinction lump, vs $p$ higher =>
+#' more in the epidemic lump and epidemic lump pushed higher and earlier,
+#' limited by N. With increasing probability of transmission, random extinction
+#' before taking off is less likely (shrinking the lump near 0). The durations
+#' are generally shorter with increasing $p$ because each generation is
+#' typically larger, so the peak (and subsequent decline) can be hit in fewer
+#' generations.
+#'
+#' @question Again using code from earlier, now vary $N$, holding $p$ constant:
+#' What does that do to distribution? Why?
+#'
+#' @answer Larger $N$ allows for larger final sizes. But it also leads to more
+#' epidemics (i.e. smaller lump near 0).
+#' Holding *individual* transmission probability constant & increasing $N$ =>
+#' increasing probability of *some* transmission since everyone is connected.
+#' Also more *reliable* epidemics as there are more events: for  binomial
+#' distribution more samples => smaller variance.
+#'
+#' @aside
+#' @question what constraint on $N$ and $p$ could impose to get some kind of
+#' "consistent" features while varying $N$ or $p$? What kinds of "consistent"
+#' can be achieved?
+#'
+#' @hint how might you have an R0-like concept in this model?
+#'
+#' @answer Consider how similar the following are in *relative* scale; the only
+#' obvious difference is a shift in time - but that's associated with needing
+#' more generations to hit the peak. We could express time in a relative scale
+#' that would also eliminate this quantitative distinction. The real qualitative
+#' distinction between these is the noise around outcomes - smaller populations
+#' give more random results.
+#'
+#' @examples
+#' samples60.dt <- network_sample_ReedFrost(n=100, list(N=60, p=30/60*0.1))
+#' samples120.dt <- network_sample_ReedFrost(n=100, list(N=120, p=30/120*0.1))
+#'
+#' samples60.dt |> network_plot_histograms()
+#' samples120.dt |> network_plot_histograms()
