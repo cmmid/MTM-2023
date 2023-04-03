@@ -4,11 +4,11 @@ require(igraph)     # for the network capabilities
 require(ggplot2)    # for plotting
 
 # you may not even need these, but they could be
-# useful if you want to do some adhoc plotting
+# useful if you want to do some ad hoc plotting
 require(patchwork)  # for combining plots
 
 reminder(
-"This material is written using the `igraph` library. There are other libraries
+"This material is written using the [igraph] library. There are other libraries
 that provide the same basic functionality, but via different approaches,
 e.g. `networkx`."
 )
@@ -20,11 +20,11 @@ e.g. `networkx`."
 #' to accurately reproduce what is going on.
 #'
 #' In this warmup, we're going to show you how to build up two networks, both of
-#' people on a contact grid. In one, people are vaccinated at random; in the other, in
-#' a systematic way.
+#' people on a contact grid. In one, people are randomly vaccinated; the other,
+#' in a systematic way.
 
 # set some vertex and edge colors
-demo.cols <- c(
+demo.colors <- c(
   vaccinated = "blue", unvaccinated = "yellow",
   transmissible = "grey", blocked = "transparent"
 )
@@ -35,32 +35,34 @@ demo.cols <- c(
 list(list(
   # random vaccination in a small, orderly population
   "Random\nVaccination" = network_quickplot(
-    network_warmup_vaccine_random, values = demo.cols
+    network_warmup_vaccine_random, values = demo.colors
   ),
   # targetted vaccination in same
   "Targetted\nVaccination" = network_quickplot(
-    network_warmup_vaccine_ordered, values = demo.cols
+    network_warmup_vaccine_ordered, values = demo.colors
   )
 )) |> patchwork_grid()
 
 #' These plots highlight an important insight from the discussion portion of the
 #' session: that relationships can matter. Now let's work through the functions
-#' of the `igraph` library to build-up networks like these as well as those we
+#' of the [igraph] library to build-up networks like these as well as those we
 #' will use in the later exercises.
 #'
-#' @aside The [network_quickplot()] function is what you will use throughout these
-#' practicals to visualize networks. This function streamlines supplying arguments
-#' to a several [ggplot2] functions and returns the resulting [ggplot2::ggplot]
-#' object. You may recall [patchwork_grid()] from previous sessions where you
-#' were laying out multiple plots for comparison; we use it here in the same way.
-
+#' @aside The [network_quickplot()] function is how you will visualize networks
+#' throughout these practicals. This function streamlines supplying arguments
+#' to a several [ggplot2] functions and returns the resulting plot object. The
+#' function [patchwork_grid()] lays out multiple plots for comparison. You can
+#' see the implementation of these and other functions by entering them at the
+#' `R` prompt without parentheses, or examine their documentation with `?` or
+#' the "Help" tab in Rstudio.
+#'
 #' @section Basic Structures
 #'
-#' the `igraph` library has several functions to create common network
+#' the [igraph] library has several functions to create common network
 #' structures, including both deterministic ones (e.g. connected graphs and
 #' lattices) and probabilistic generators (e.g. Erdos-Renyi random graph).
 #'
-#' In `igraph`, the general convention is that the deterministic functions start
+#' In [igraph], the general convention is that the deterministic functions start
 #' with `make_...`, and the probabilistic generators start with `sample_...`
 
 # make several different kinds of graphs, at two sizesm L(ittle) = 9, B(ig) = 25
@@ -89,26 +91,26 @@ list(list(
 #' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
 #'
 #' @answer
-#'
-#'
-#'
-#'
-#'
-#'
-#'
-#'
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
 #' @question Of the three generators, `make_full_graph()`, `make_lattice()`, and
 #' `sample_gnp()`, which do you think is behind the plots we first looked at?
 #'
 #' @answer
-#'
-#'
-#'
+#' 
+#' 
+#' 
 #' @hint look at `?make_full_graph`, `?make_lattice`, and `?sample_gnp`.
 #'
 #' @aside Note that we are adding layouts to the plots above. We do that to
 #' ensure getting particular plots; without them, each plot of an igraph object
-#' gives different arrangements of vertices and edges. For example:
+#' gives slightly different arrangements of vertices and edges. For example:
 
 list(list(
   "Original" = network_quickplot(igL, simple = TRUE),
@@ -135,7 +137,7 @@ igBlmod <- igBl |> delete_edges(1:(ecount(igBl)/2)*2)
 list(list(
   "N=25 Lattice" = network_quickplot(igBl, simple = TRUE),
   "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE)
-)) |> patchwork_grid() & geom_text(
+)) |> patchwork_grid() & geom_text( # add some labels for convenience
   aes(
     x=(x1+x2)/2, y=(y1+y2)/2, label = eid
   ), data = network_edge_data(igBl)
@@ -145,10 +147,10 @@ list(list(
 #' What collection of edges could we delete to isolate the diagonal set of
 #' vertices?
 #'
-#' @answer There's a clear pattern of adding `11` to `c(1,2,4,10)` until hitting
-#' the top row of vertices, so could do roughly
-#' `del <- c(1,2,4,10) + 11*rep(0:3, each=4); del[15:16] <- c(36, 40)`
-#'
+#' @answer
+#' 
+#' 
+#' 
 #' @aside If you wanted to make this work for any size lattice, you have to
 #' consider how that the addition increment changes & how to deal with the
 #' "last row" switch. For example, consider a slightly larger version of the
@@ -176,15 +178,16 @@ list(list(
   "N=9 Star" = network_quickplot(iglstar, simple = TRUE),
   "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE)
 )) |> patchwork_grid() & geom_text(
-  aes(x=x + .1, y=y, label = vid), data = network_vertex_data(iglstar |> as.data.table())
+  aes(x=x + .1, y=y, label = vid),
+  data = network_vertex_data(iglstar)
 )
 
 #' @question What are some other approaches to add edges in [igraph]?
 #'
-#' @answer You can use `+` with another [igraph]-like entity, either a whole
-#' network or pieces created with [igraph::vertex()], [igraph::vertices()],
-#' [igraph::edge()], or [igraph::edges()].
-#'
+#' @answer
+#' 
+#' 
+#' 
 #' @hint check `?add_edges`
 #'
 #' Now let's combine some whole graphs. There are two basic ways to do this:
@@ -203,9 +206,9 @@ list(list(
 #' @question What is the difference between [igraph::graph.union()] and
 #' using the `+` operator?
 #'
-#' @answer [graph.union()] merges vertices, while the `+` operator does not,
-#' basically just updating graph and edge labels to combine the two networks.
-#'
+#' @answer
+#' 
+#' 
 #' @section Modifying Networks, part 2
 #'
 #' The previous section introduced directly modifying networks: adding and/or
@@ -268,7 +271,6 @@ E(random.pop)[
 # this set of vertices." Look at `?igraph-es-indexing` to see others.
 
 # let's see how these all compare:
-
 demo.colors <- c(
   vaccinated = "blue", unvaccinated = "yellow",
   transmissible = "grey", blocked = "transparent"
@@ -306,9 +308,9 @@ list(list(
 #' "indexing" edge and vertex sets. What is the special function we introduced?
 #' What are some other special functions for indexing operations?
 #'
-#' @answer The special function is [.inc()], and there are others like [.nei()],
-#' [.from()] and [.to()]
-#'
+#' @answer
+#' 
+#' 
 #' @aside Note the code repetition here; we used functions instead when building
 #' the objects for the package. Can you write functions that eliminate the
 #' repetition? Check your work against the MTM package source on github!
@@ -355,13 +357,15 @@ poptransmit <- function(ig, prob = 0.5) {
 #' @question In those two functions, we've introduced a few new capabilities.
 #' What did you notice?
 #'
-#' @answer In both, we created temporary lists of vertices and edges (`infectee`
-#' in `popsetup`, `...routes` in `poptransmit`), then used them to subset with
-#' with [igraph::V()] and [igraph::E()]. We also used the `%--%` (or between)
-#' operator to find edges between vertices in different sets; you might have
-#' seen it earlier if you read `?igraph-es-indexing`. We also used the
-#' `.inc` function in `V()` - it has an parallel meaning to its use in `E()`;
-#' you can see more of the special functions for `V()` in `?igraph-vs-indexing`.
+#' @answer
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' @section Modifying Networks, part 3, cont:
 
 # now setup the populations, run a few steps, and plot
 ordered.pop <- popsetup(network_warmup_vaccine_ordered)
@@ -398,11 +402,11 @@ list(list(
 #' @question Try running those previous simulate + plot lines a few times.
 #' What kind of patterns do you see emerging?
 #'
-#' @answer You might have guessed many replies - but its actually hard to really
-#' investigate patterns for this kind of model without running it many times and
-#' systematically comparing the results. That's what we do (for a different
-#' model) in the next few practicals.
-#'
+#' @answer
+#' 
+#' 
+#' 
+#' 
 #' @section Follow Up Work
 #'
 #' We only touched the surface of the capabilities of the [igraph] library.
