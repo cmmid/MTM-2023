@@ -39,7 +39,7 @@ require(MTM)
 network_unstructured_set <- lapply(
   1:300, \(sample_id) {
     set.seed(sample_id)
-    list(N = 50, p = 0.05) |> network_percolate()
+    list(N = 50, p = 0.04) |> network_percolate()
   }
 )
 
@@ -53,8 +53,10 @@ structure_network <- function(usn) {
   two <- en - 1 - one
   og <- make_full_graph(ceiling(vcount(usn)/2)) |> keep_edges(one)
   tg <- make_full_graph(floor(vcount(usn)/2)) |> keep_edges(two)
-  cg <- og + tg + edge(sample(vcount(og), 1), sample(vcount(tg), 1))
+  cg <- og + tg + edge(sample(vcount(og), 1), vcount(tg) + sample(vcount(tg), 1))
   V(cg)$state <- V(usn)$state
+  E(cg)$draw <- E(usn)$draw
+  E(cg)$state <- E(usn)$state
   cg$states <- usn$states
   cg$inf_states <- usn$inf_states
   cg$layout <- usn$layout
