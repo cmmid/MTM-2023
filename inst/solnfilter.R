@@ -4,7 +4,7 @@
 } else commandArgs(trailingOnly = TRUE)
 
 srcfile <- .args[1]
-tarfile <- gsub("solutions/","",srcfile)
+tarfile <- gsub("solutions/", "scripts/", srcfile)
 
 srclines <- readLines(srcfile)
 tarlines <- srclines
