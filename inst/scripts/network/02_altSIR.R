@@ -3,7 +3,7 @@ require(MTM)
 require(igraph)
 
 reminder(
-"This material is written using the `igraph` library. There are other libraries
+  "This material is written using the `igraph` library. There are other libraries
 that provide the same basic functionality, but via different approaches,
 e.g. `networkx`."
 )
@@ -32,19 +32,19 @@ list(list(
 
 #' @question What differs between [network_build()] and [network_percolate()]?
 #'
-#' @answer The percolated version has removed all the edges where the random
-#' (used to test for transmission), is above a certain threshold, and then set
-#' the draw to 1.
-#'
+#' @answer
+#' 
+#' 
+#' 
 #' @question The percolated network is much less dense, but now transmission is
 #' guaranteed on the remaining edges. How do you think this will effect the
 #' dynamics? What are some features we might check to see those differences?
 #'
-#' @answer For this kind of simulation, we could potentially get the "line list"
-#' of who-infects-whom, though that would be burdensome to generate and compare
-#' for larger networks. It might be enough to assess features like final size,
-#' peak number of infectious individuals, duration of the epidemic, and so on -
-#' aggregate features of the epidemic.
+#' @answer
+#' 
+#' 
+#' 
+#' 
 
 #' @section Comparing the Reference and Percolated Networks
 #'
@@ -68,20 +68,20 @@ list(list(
 
 #' @question The networks are very different; why are those plots identical?
 #'
-#' @answer There are two elements to the answer. First, these two approaches are
-#' actually the same at their core: having everyone connected, but random
-#' transmission via those connections can be replicated by having random
-#' connections and guaranteed transmission. To make the general behavior match,
-#' the transmission probability in the first version only needs to match the
-#' connection probability in the second.
-#'
-#' Second, however: getting stochastic systems to give *identical* results
-#' requires that we think carefully through how the (pseudo)random numbers are
-#' being created and used. In this code, we do all the necessary random
-#' generation when we first create the networks, and when doing percolation on a
-#' particular network we clone it. That means the random number draws can be
-#' precisely matched.
-
+#' @answer
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
+#' 
 #' @section Reed Frost Model on a (different) Network, part II
 #'
 #' Before we jump to the final exercise, let's briefly investigate the
@@ -98,8 +98,8 @@ list(list(
 
 #' @question How do these compare?
 #'
-#' @answer They are virtually identical!
-#'
+#' @answer
+#' 
 #' @aside Feel free to play around with elements like the number of samples,
 #' the size of the networks, probability of transmission - what happens to the
 #' similarity between these plots with respect to these sort of changes? How
