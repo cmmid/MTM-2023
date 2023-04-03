@@ -269,7 +269,7 @@ network_plot_histograms <- function(s.dt) {
   p.heat <- ggplot(heat.dt) + aes(duration, final_size, fill = N/samples) +
     geom_tile(alpha = 0.7) +
     sx + sy + sdenfill + coords() +
-    theme_minimal() + theme(legend.position = c(.95, 0.05), legend.justification = c(1,0))
+    theme_minimal() + theme(legend.position = c(0, 0.95), legend.justification = c(0,1))
 
   # density plot of durations
   p.dur <- ggplot(durahist.dt) + aes(duration, N/samples) +
@@ -282,6 +282,25 @@ network_plot_histograms <- function(s.dt) {
     geom_dens(orientation = "y") +
     sdenx + sy + coords(xmax = max.den) +
     theme_minimal() + theme(axis.title.y = element_blank(), axis.text.y = element_blank())
+
+  # p.txt <- ggplot() + aes(5, y) +
+  #   geom_text(
+  #     aes(label = paste("p[e]==", value)),
+  #     data = sizehist.dt[, .(y = 1, value = sum(N[final_size < max(final_size)/3])/sum(N))],
+  #     parse = TRUE
+  #   ) +
+  #   geom_text(
+  #     aes(label = paste("plain(max~size)==", value)),
+  #     data = sizehist.dt[.N, .(y = 2, value = final_size)],
+  #     parse = TRUE
+  #   ) +
+  #   geom_text(
+  #     aes(label = paste("plain(max~duration)==", value)),
+  #     data = durahist.dt[.N, .(y = 3, value = duration)],
+  #     parse = TRUE
+  #   ) +
+  #   geom_blank(aes(x), data = data.frame(x = c(0, 10), y = c(0, 4))) +
+  #   theme_void(base_size = 8)
 
   # roll them all up
   # TODO replace plot_spacer with some text info?
