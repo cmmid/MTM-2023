@@ -1,126 +1,106 @@
-# For this practical, you have basically the same task
-# You should copy over your code from the first practical below
-source("../reference.R")
 
-# but you're going to re-write this function to remove some edges
-build_network <- function(
-  n, p, ... # the necessary arguments to inform creating network
-) {
-  ig <- igraph::make_full_graph(n)
-  V(ig)$state <- "S"
-  remove_edges <- E(ig)[
-    runif(ecount(ig)) < 1-p # randomly select edges to remove;
-  ] # alt: can use sample(E(ig), ...) with the "right" number of edges to remove
-  return(
-    ig - remove_edges # return the graph with the randomly drawn edges removed
-  )
-}
+require(MTM)
+require(igraph)
 
-# a) Create plots of your network for N=6 and N=30, transmission p = 0.1
-# Answer:
-plot(build_network(
-  30, 0.1
-))
-plot(build_network(
-  6, 0.1
-))
-
-# The rest of this code is pasted in from 1_basicSIR_solution.R; there are
-# a few points to modify, annotated by the usual #### <YOUR CODE HERE> ####
-
-# We need to regularly extract the simulation state from an igraph as results
-# With the right filter in ..., you can use length(V(ig)[...]) to get the pertinent info
-network_state_totals <- function(ig) {
-  return(c(
-    S = length(V(ig)[state=="S"]), # n.b., if you wanted something a bit more flexible (for example, add an E state), you could do:
-    I = length(V(ig)[state=="I"]), # return(sapply(c("S","I","R"), function(st) length(V(ig)[state == st])))
-    R = length(V(ig)[state=="R"])  # or if your states were defined as factors instead:
-  ))                               # table(V(ig)$state)
-}                                  # though factors can be a bit messy
-
-# Like other stochastic simulations, your Reed-Frost SIR simulation will run until
-# there would be no state changes.  What should you check for here?
-still_infectious <- function(ig) { # n.b. for flexibility, could also re-use network_state_totals here and do something like
-  return(length(V(ig)[             # return(sum(network_state_totals(ig)[c("I")]))  
-    state == "I"                   # which would allow you to e.g. easily add an "E" compartment
-  ])) 
-}                                     
-
-# Now you need to fill in this simulation function skeleton. You may 
-# Make sure your function n, p, and i arguments, corresponding to
-#  n - number of individuals
-#  p - transmission probability
-#  i - random number seed
-# and returns a matrix with three columns and at least two rows
-igraph_sim <- function(n, p, i) {
-  set.seed(i)
-  # create the network using your function + the appropriate arguments from n, p, i
-  ig <- build_network(
-    n, p
-  )
-  
-  # initially, all the vertices but one should be susceptible,
-  # with that one infectious
-  # Aside: does it matter which one is infectious? Answer: Still doesn't matter - random is random
-  V(ig)[
-    1
-  ]$state <- "I"
-  
-  # this sets aside a data structure to record simulation steps
-  # inspect result & rf_prealloc from the Rstudio console prompt to understand
-  # that structure better
-  # see reference.R for a bit more explanation
-  result <- rf_prealloc(n)
-  tm <- 1
-  
-  # We're going to be working the infectious and susceptible individuals
-  # recall from the warmup how to list vertices for an igraph (or ?igraph::V)
-  # and how to get only the ones that have a particular attribute (in our case "state")
-  # run the Reed-Frost simulation
-  
-  while(still_infectious(ig)) { # while there are still infectives...
-    result[
-      tm,
-    ] <- network_state_totals(ig) # update results
-    
-    infective_individuals <- V(ig)[
-      state == "I"
-    ] # get a vertix list of all the Is
-    susceptible_individuals <- V(ig)[
-      state == "S"
-    ] # and similar for getting all the Ss
-    
-    # In this approach, the we have pre-removed the edges that won't transmit;
-    # So how should we identify transmission paths now?
-    transmitting_paths <- E(ig)[infective_individuals %--% susceptible_individuals]
-    
-    new_infections <- susceptible_individuals[.inc(transmitting_paths)] # from the transmission paths, identify which individuals will become infectious
-    
-    # now update the simulation state
-    V(ig)[
-      infective_individuals
-    ]$state <- "R"
-    V(ig)[
-      new_infections
-    ]$state <- "I"
-    tm <- tm + 1
-    
-  }
-  result[
-    tm,
-  ] <- network_state_totals(ig) # record final step
-  
-  # return the results, after trimming them with a function from reference.R
-  return(rf_trim(result))
-}
-
-# and then you should be able to source this script and see the results
-# The `plotter` function is defined in reference
-resultplot <- plotter(
-  simulator_A = igraph_sim, # your simulator...
-  simulator_B = chainbinom_sim, # the reference simulation
-  samples = 100, # how many times to run the two sims
-  n = 50, p = .05 # the Reed-Frost model parameters: population size, and transmission probability
+reminder(
+  "This material is written using the `igraph` library. There are other libraries
+that provide the same basic functionality, but via different approaches,
+e.g. `networkx`."
 )
 
-print(resultplot)
+#' @section Reed Frost Model on a (different) Network
+#'
+#' In the previous practical, we used networks, but there wasn't
+#' actually much structure - each individual in the population was
+#' connected to everyone else. That effectively results in the same
+#' outcome as the Reed-Frost model *without* any network structure.
+#'
+#' In this exercise, we will consider randomly percolated networks:
+
+# setting the seed so that our previous network is identical the first one used
+# in the previous practical
+set.seed(13)
+
+pars <- list(N=30, p=0.05)
+pars |> network_build() -> previous_network
+network_percolate(pars, previous_network) -> new_network
+
+list(list(
+  "Reference Reed-Frost\nNetwork" = network_quickplot(previous_network),
+  "Percolated\nNetwork" = network_quickplot(new_network)
+)) |> patchwork_grid()
+
+#' @question What differs between [network_build()] and [network_percolate()]?
+#'
+#' @answer The percolated version has removed all the edges where the random
+#' (used to test for transmission), is above a certain threshold, and then set
+#' the draw to 1.
+#'
+#' @question The percolated network is much less dense, but now transmission is
+#' guaranteed on the remaining edges. How do you think this will effect the
+#' dynamics? What are some features we might check to see those differences?
+#'
+#' @answer For this kind of simulation, we could potentially get the "line list"
+#' of who-infects-whom, though that would be burdensome to generate and compare
+#' for larger networks. It might be enough to assess features like final size,
+#' peak number of infectious individuals, duration of the epidemic, and so on -
+#' aggregate features of the epidemic.
+
+#' @section Comparing the Reference and Percolated Networks
+#'
+#' Using the exact same underlying modelling functions for transmission, we're
+#' going to run both the reference and percolated networks, and compare the
+#' outcomes.
+#'
+#' Make a guess as to what will happen (different, basically the same, ...?) and
+#' then try it out.
+
+previous_network |> network_solve(y = _, parms = pars) -> previous_example
+new_network |> network_solve(y = _, parms = pars) -> new_example
+
+previous_example |> network_flatten() |> network_plot_series() -> previous_plot
+new_example |> network_flatten() |> network_plot_series() -> new_plot
+
+list(list(
+  "Reference Results" = previous_plot,
+  "Percolated Results" = new_plot
+)) |> patchwork_grid()
+
+#' @question The networks are very different; why are those plots identical?
+#'
+#' @answer There are two elements to the answer. First, these two approaches are
+#' actually the same at their core: having everyone connected, but random
+#' transmission via those connections can be replicated by having random
+#' connections and guaranteed transmission. To make the general behavior match,
+#' the transmission probability in the first version only needs to match the
+#' connection probability in the second.
+#'
+#' Second, however: getting stochastic systems to give *identical* results
+#' requires that we think carefully through how the (pseudo)random numbers are
+#' being created and used. In this code, we do all the necessary random
+#' generation when we first create the networks, and when doing percolation on a
+#' particular network we clone it. That means the random number draws can be
+#' precisely matched.
+#'
+#' @section Reed Frost Model on a (different) Network, part II
+#'
+#' Before we jump to the final exercise, let's briefly investigate the
+#' comparison between networks that share the same parameters, but haven't been
+#' made to precisely match.
+
+prev_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, ref.seed = 5)
+new_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, setup_fun = network_percolate)
+
+list(list(
+  "Reference Histograms" = prev_samples.dt |> network_plot_histograms(),
+  "Percolated Histograms" = new_samples.dt |> network_plot_histograms()
+)) |> patchwork_grid()
+
+#' @question How do these compare?
+#'
+#' @answer They are virtually identical!
+#'
+#' @aside Feel free to play around with elements like the number of samples,
+#' the size of the networks, probability of transmission - what happens to the
+#' similarity between these plots with respect to these sort of changes? How
+#' does that comport with your observations in the previous section?
