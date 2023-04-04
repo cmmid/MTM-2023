@@ -13,22 +13,31 @@ require(data.table)
 #'
 #' For this final exercise, we have pre-made some networks with structure, for
 #' comparison with the "structured" networks in the previous exercise.
+#'
+#' Let's start with how these networks are the *same*. Each pair has the same
+#' population, and the same number of edges. These are all size 50 networks,
+#' though they have varying edges counts because they were constructed randomly.
+#' In this case, they all have p = typical edges / all possible edges = 0.04.
 
-# Let's start with how these networks are the *same*: each pair has the same
-# population, and the same number of edges:
+all(
+  network_unstructured_set |> sapply(vcount) ==
+    network_structured_set |> sapply(vcount))
 
-network_unstructured_set
-network_structured_set
+all(
+  network_unstructured_set |> sapply(ecount) ==
+    network_structured_set |> sapply(ecount))
 
-# ... but compare any particular pair; what do you see?
+# However, if you compare any particular pair, you might notice some differences:
 pick <- 42
 list(list(
   "Unstructured" = network_unstructured_set[[pick]] |> network_quickplot(simple = TRUE),
   "Structured" = network_structured_set[[pick]] |> network_quickplot(simple = TRUE)
 )) |> patchwork_grid()
 
-# That picture might be a bit unclear; if we relax the network layout, the
-# difference should be clearer:
+# There are some different edges, but how different? Now we'll use one of the
+# super-powers of [igraph] (and other network libraries): their layout engine.
+#
+# If we remove the default network layout we enforced, the difference becomes clearer:
 list(list(
   "Unstructured" = network_unstructured_set[[pick]] |> add_layout_(with_fr()) |>
     network_quickplot(simple = TRUE),
@@ -36,10 +45,20 @@ list(list(
     network_quickplot(simple = TRUE)
 )) |> patchwork_grid()
 
-#' @question How would you describe the difference between these networks?
+#' @question Repeating the above for a few different `pick`s, describe the
+#' difference between these networks.
 #'
-#' @answer For any given pair ...
+#' @answer
+#' 
+#' 
+#' @question Guess how this distinction will affect the final size and epidemic
+#' duration outcomes (be sure to recall the previous distributions).
 #'
+#' @answer
+#' 
+#' 
+#' 
+#' 
 #' @section Comparing Outcomes
 #'
 #' Now let's have a look at the results of solving SIR on these networks ...
@@ -55,11 +74,18 @@ list(list(
   "Structured" = structured.dt |> network_plot_histograms()
 )) |> patchwork_grid()
 
-#' @question Comparing the two distinct network classes, what do you notice?
+#' @question Comparing the two distinct network classes, what do you notice? Can
+#' you explain the difference?
 #'
 #' @answer
-#'
+#' 
+#' 
+#' 
+#' 
 #' @question How do you imagine these networks were constructed, in terms of
 #' the basic [igraph] primitives we reviewed in the warmup?
 #'
 #' @answer
+#' 
+#' 
+#' 
