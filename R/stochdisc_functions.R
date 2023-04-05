@@ -50,7 +50,7 @@ stochdisc_dReedFrost <- function(
 #'
 #' @param ..., ignored
 #'
-#' @return a [data.table::data.table()] with columns `time` and others
+#' @return a [data.table::data.table()] with columns `t` and others
 #' corresponding to the state variables in `y`.
 #'
 #' @examples
@@ -89,7 +89,7 @@ stochdisc_solve <- function(
     dy <- func(t, y, parms, ...)
   }
 
-  return(yt |> data.table::rbindlist(idcol = "time"))
+  return(yt |> data.table::rbindlist(idcol = "t"))
 }
 
 #' @title Sample a Discrete Stochastic Simulation
@@ -114,7 +114,7 @@ stochdisc_solve <- function(
 #'
 #' @export
 #' @family stochdisc
-stochdist_sample <- function(
+stochdisc_sample <- function(
     n, parms,
     func = stochdisc_dReedFrost,
     setup_fun = \(ps) c(S = ps$N - 1, I = 1, R = 0),
