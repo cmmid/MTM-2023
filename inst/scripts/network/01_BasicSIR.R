@@ -105,8 +105,43 @@ samples.dt |> network_plot_histograms()
 #' 
 #' 
 #' 
+#' @section Comparison to Non-network Reed-Frost:
+#'
+#' We have deliberately constructed this initial application of the network
+#' tools to reproduce a model we could implement using more direct base `R`
+#' functions. Let's have a look at the step function for the "chain binomial"
+#' implementation of Reed-Frost:
+
+# note: this is named with another session, because it is a stochastic, discrete
+# model!
+stochdisc_dReedFrost
+
+#' ... and if we apply use that step function repeatedly, for many samples, we
+#' can build up a distribution of outcomes like we did for the network version,
+#' and then compare those results:
+
+cb_samples.dt <- stochdisc_sample(n=300, parms = list(N=30, p=0.1))
+
+list(list(
+  "Network Histograms" = samples.dt |> network_plot_histograms(),
+  "Chain-Binomial Histograms" = cb_samples.dt |> network_plot_histograms()
+)) |> patchwork_grid()
+
+#' @question How do these outcomes compare?
+#'
+#' @answer
+#' 
+#' @section Closing Considerations
+#'
+#' Time permitting, let's think a little bit about this model, ignoring for a
+#' moment it's network-ness.
+#'
 #' @question Using the code from earlier, vary p, while holding N constant, and
-#' examine the results with the histogram plot. What with the distribution? Why?
+#' examine the results with the histogram plot. What happens with the
+#' distribution? Why?
+#'
+#' @hint You may want to use the chain binomial version, since it runs faster
+#' and produces the same results.
 #'
 #' @answer
 #' 
@@ -127,6 +162,7 @@ samples.dt |> network_plot_histograms()
 #' 
 #' 
 #' @aside
+#'
 #' @question what constraint on $N$ and $p$ could impose to get some kind of
 #' "consistent" features while varying $N$ or $p$? What kinds of "consistent"
 #' can be achieved?
