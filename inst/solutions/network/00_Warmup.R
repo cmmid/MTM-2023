@@ -21,7 +21,7 @@ e.g. `networkx`."
 #'
 #' In this warmup, we're going to show you how to build up two networks, both of
 #' people on a contact grid. In one, people are randomly vaccinated; the other,
-#' in a systematic way.
+#' in a targeted way.
 
 # set some vertex and edge colors
 demo.colors <- c(
@@ -33,7 +33,7 @@ demo.colors <- c(
 # included in `MTM`, as are the `network_quickplot` and `patchwork_grid`
 # functions)
 list(list(
-  # random vaccination in a small, orderly population
+  # random vaccination in a small population on a lattice
   "Random\nVaccination" = network_quickplot(
     network_warmup_vaccine_random, values = demo.colors
   ),
@@ -49,7 +49,7 @@ list(list(
 #' will use in the later exercises.
 #'
 #' @aside The [network_quickplot()] function is how you will visualize networks
-#' throughout these practicals. This function streamlines supplying arguments
+#' throughout this practical. This function streamlines supplying arguments
 #' to a several [ggplot2] functions and returns the resulting plot object. The
 #' function [patchwork_grid()] lays out multiple plots for comparison. You can
 #' see the implementation of these and other functions by entering them at the
@@ -65,16 +65,16 @@ list(list(
 #' In [igraph], the general convention is that the deterministic functions start
 #' with `make_...`, and the probabilistic generators start with `sample_...`
 
-# make several different kinds of graphs, at two sizesm L(ittle) = 9, B(ig) = 25
+# make a few different kinds of graphs, at two sizes L(ittle) = 9, B(ig) = 25
 igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
 igB <- make_full_graph(n = 25) |> add_layout_(with_graphopt())
 igLgnp <- sample_gnp(n = 9, p = 0.2) |> set_graph_attr("layout", igL$layout)
 igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
 igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
 igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
-# we use `add_layout()` for visualization purposes - it has no other effects
+# we use [igraph::add_layout()] for visualization - it has no other effects
 
-# feel free to inspect those objects if you like, but you can get the overall
+# feel free to inspect those objects manually, but you can get the overall
 # point by plotting them alongside each other:
 list(list(
   "N=9 Clique"  = network_quickplot(igL, simple = TRUE),
@@ -122,7 +122,7 @@ list(list(
 #'
 #' In the previous section, we built some foundational networks using the tools
 #' in [igraph]. But those had none of the attributes that we discussed as part
-#' of the module or that can be seen as part of the initial networks we looked
+#' of the course or that can be seen as part of the initial networks we looked
 #' at in this practical.
 #'
 #' To make those networks, we need to use some of the other [igraph] tools for
@@ -135,13 +135,11 @@ igBlmod <- igBl |> delete_edges(1:(ecount(igBl)/2)*2)
 # repeated definition of igBl, in case it got deleted/changed/etc
 
 list(list(
-  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE),
-  "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE)
-)) |> patchwork_grid() & geom_text( # add some labels for convenience
-  aes(
-    x=(x1+x2)/2, y=(y1+y2)/2, label = eid
-  ), data = network_edge_data(igBl)
-)
+  "N=25 Lattice" = network_quickplot(igBl, simple = TRUE) + geom_edge_labels(),
+  "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE) +
+    geom_edge_labels(data = network_edge_data(igBl))
+  # show the labels for igBl instead of igBlmod
+)) |> patchwork_grid()
 
 #' @question This is starting to look like the initial networks we plotted.
 #' What collection of edges could we delete to isolate the diagonal set of
@@ -159,11 +157,10 @@ list(list(
 igBBl <- make_lattice(length = 7, dim = 2) |> add_layout_(on_grid())
 igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl)/2)*2)
 list(list(
-  "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE),
-  "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE)
-)) |> patchwork_grid() & geom_text(
-  aes(x=(x1+x2)/2, y=(y1+y2)/2, label = eid), data = network_edge_data(igBBl)
-)
+  "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE) + geom_edge_labels(),
+  "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE) +
+    geom_edge_labels(data = network_edge_data(igBBl))
+)) |> patchwork_grid()
 
 #' In a later section, we'll use some of the other [igraph] capabilities to
 #' do this more cleverly. For now, let's consider the tools to add vertices
@@ -175,12 +172,10 @@ iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
 iglstarmod <- iglstar |> add_edges(c(c(2,4), c(3,5), c(6,8), c(7,9)))
 
 list(list(
-  "N=9 Star" = network_quickplot(iglstar, simple = TRUE),
-  "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE)
-)) |> patchwork_grid() & geom_text(
-  aes(x=x + .1, y=y, label = vid),
-  data = network_vertex_data(iglstar)
-)
+  "N=9 Star" = network_quickplot(iglstar, simple = TRUE) + geom_vertex_labels(),
+  "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE) +
+    geom_vertex_labels()
+)) |> patchwork_grid()
 
 #' @question What are some other approaches to add edges in [igraph]?
 #'
@@ -354,8 +349,8 @@ poptransmit <- function(ig, prob = 0.5) {
   ig
 }
 
-#' @question In those two functions, we've introduced a few new capabilities.
-#' What did you notice?
+#' @question In `poptransmit()`, we've introduced a few new [igraph]
+#' capabilities. What functions or operators had you not seen before?
 #'
 #' @answer In both, we created temporary lists of vertices and edges (`infectee`
 #' in `popsetup`, `...routes` in `poptransmit`), then used them to subset with

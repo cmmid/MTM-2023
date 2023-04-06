@@ -25,7 +25,8 @@ network_build
 #'
 #' @answer Deterministic, and can tell from [igraph::make_full_graph()]
 #' constructor: deterministic methods start with `make_...`. In the Reed Frost
-#' model, "everyone interacts" - same as everyone being connected.
+#' model, "everyone interacts" - same as everyone being connected. But: though
+#' the *network* is deterministic, the simulation can still be *stochastic*.
 #'
 #' @question Recalling the definitions from the Introductory and
 #' Networks MTM sessions, what Reed Frost model *variables* &
