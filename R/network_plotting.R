@@ -398,3 +398,23 @@ network_animate <- function(networks) {
   )
 
 }
+
+#' @title Network Edge Labeling
+#'
+#' @inheritParams ggplot2::geom_text
+#'
+#' @description a [ggplot2::geom_text()] specialization
+#' @export
+geom_edge_labels <- rejig(geom_text, mapping = aes(
+  x = (x1+x2)/2, y = (y1+y2)/2, label = eid
+))
+
+#' @title Network Vertex Labeling
+#'
+#' @inheritParams ggplot2::geom_text
+#'
+#' @description a [ggplot2::geom_text()] specialization
+#' @export
+geom_vertex_labels <- rejig(geom_text, mapping = aes(
+  x = x + .1, y = y, label = vid
+), data = network_vertex_data)
