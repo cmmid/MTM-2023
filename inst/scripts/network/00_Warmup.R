@@ -239,8 +239,9 @@ random.pop <- ordered.pop
 # then select the vaccinees: first, those individuals on the diagonal of
 # the `ordered` lattice ...
 orderedvaccinees <- seq(1, 100, by = 11)
-# and the same number of random individuals. note that we set the seed - this
-# is the one we used to generate the network provided with the MTM package
+# and then in the second network, the same number of random individuals.
+# note that we set the seed - this is the one we used to generate the example
+# network provided with the MTM package
 set.seed(8675309)
 randomvaccinees <- sample(100, length(orderedvaccinees), replace = FALSE)
 
