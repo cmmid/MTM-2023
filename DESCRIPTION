@@ -23,7 +23,10 @@ Imports:
     deSolve,
     Rcpp,
     adaptivetau,
-    lhs
+    lhs,
+    rootSolve,
+    purrr,
+    tictoc
 Suggests:
     gifski,
     learnr,
