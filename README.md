@@ -1,6 +1,6 @@
 # Modern Techniques in Modelling (MTM)
 
-This package contains materials to support the Modern Techniques in Modelling (MTM) course offered by LSHTM.
+This package contains materials to support the Modern Techniques in Modelling (MTM) course offered by the LSHTM. The content presented in this repository is intended for the short course participants only and may not be redistributed beyond the capacity of this short course. 
 
 ## Installation & Local Use
 
