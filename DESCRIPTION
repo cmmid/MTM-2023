@@ -22,7 +22,8 @@ Imports:
     patchwork,
     deSolve,
     Rcpp,
-    adaptivetau
+    adaptivetau,
+    lhs
 Suggests:
     gifski,
     learnr,
