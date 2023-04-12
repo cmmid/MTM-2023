@@ -3,7 +3,7 @@
 ######################################################
 
 # A. Read in the same data as before
-myTBdata <- read.table("TB_stats.txt", header=TRUE)
+myTBdata <- read.table("precourse/introR/TB_stats.txt", header=TRUE)
 
 # B. Plot the mortality in HIV negative against HIV positive.
 # check the plot function help file
@@ -39,7 +39,7 @@ plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
      xlab="Mortality in HIV negative people",
      ylab="Mortality in HIV positive people",
      main="Comparison of mortality in HIV negative and positive",
-     col="red", 
+     col="red",
      log="xy")
 
 # G. Now let's make a different kind of plot
@@ -60,11 +60,11 @@ hist(myTBdata$Total_TB_mortality,
 
 # Change the color to "blue"
 hist(myTBdata$Total_TB_mortality,
-     xlab="Number", 
-     main="Total TB mortality", 
+     xlab="Number",
+     main="Total TB mortality",
      col="blue")
 
-# I. Now let's plot a histogram of mortality per 1000 
+# I. Now let's plot a histogram of mortality per 1000
 # hint: calculate it as in the previous practical
 ##### Add your code here
 
@@ -78,14 +78,14 @@ hist(myTBdata$Total_TB_mortality,
 
 
 # J. Now let's show both histograms at the same time.
-# you need to make a call to "par", short for parameters, 
+# you need to make a call to "par", short for parameters,
 # setting the plot parameter "mfrow" (Multi-Figure ROW-wise)
 # gives 1 row, and 2 columns of plot
-par(mfrow=c(1,2)) 
+par(mfrow=c(1,2))
 
 hist(myTBdata$Total_TB_mortality,
-     xlab="Number", 
-     main="Total TB mortality", 
+     xlab="Number",
+     main="Total TB mortality",
      col="blue")
 
 ##### cut and paste your plot code from I. here and run it:
@@ -123,7 +123,7 @@ hist(myTBdata$Total_TB_mortality,
 ##### Add your code here
 
 
-# do you need to change the y axis label? 
+# do you need to change the y axis label?
 # i.e. does it still make sense now that it shows negative and positive mortality?
 # Answer:
 
