@@ -2,19 +2,20 @@
 
 This package contains materials to support the Modern Techniques in Modelling (MTM) course offered by the LSHTM. The content presented in this repository is intended for the short course participants only and may not be redistributed beyond the capacity of this short course. 
 
-## Installation & Local Use
+## Installation 
 
-The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`.
+The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`. Running this initial command to install `MTM` will also install all package dependencies that you would need for this short course.
 
-To create a local copy of the course exercises, you can then use `MTM::scripts()` - the default options copy the scripts to `~/Downloads/MTM`, organized into sub folders by session topic.
+At times, organisations may prevent users from freely installing `R` packages as they wish. In those cases, we recommend that you use personal computer for this short course, to which you have admin rights. When this is not possible, we recommend that you use [web-based R-Studio](https://posit.cloud/). You would need to create an account with them. We recommend that you create/ use only one project throughout this short course with this site.
 
-## Content
+## Local Use
 
-Those materials are provided in three ways:
- - *as typical package functions:* The package functions provide support code for use by course participants, covering capabilities needed to do the various learning activities. These are documented and written with an emphasis on learning the material, so are not necessarily the most efficient approaches. We intend participants using the functions to read the documentation (e.g. via `?somefunction` at the prompt) and to inspect their internals (e.g. via `somefunction` at the the prompt - note lack of parens and that internal comments are included in output) particularly in the script-based activities outlined below. 
- - *as interactive tutorial applications:* We provide an interactive application for some of the learning activities in the `learnr` framework. Participants can access this by having the `learnr` package installed, and using the `MTM::launch()` function. Aside from the application framework code, we use the function code of this package to implement the various simulations, analyses, and plots. There are several compartmentalized coding exercises where participants can use these functions as well.
- - *as editable scripts:* We provide a series of scripts for participants to edit directly; they can export a copy of these scripts using the `MTM::scripts()` function. In general, these scripts reflect the same concepts as covered in the interactive tutorials, but instead participants are running the code at an R prompt rather than via the tutorial application.
+The first function that you are likely to run from the package `MTM` is likely `scripts()`. This function helps you download local copy of MTM content using three arguments:  
+  
+*  `path`: accepts a string that point to the location where you would like to save MTM contents. By default, this path is set to `~/Downloads/MTM`.    
+*  `overwrite`: default set to `FALSE` but can be set to `TRUE` as needed. When set to TRUE, the function will try and re-download the script files to overwrite what already exists.   
+*  `what`: default set to `"scripts"`, which allows you to create a local copy of the course Practicals. This argument may be set to `"solutions"` as needed.
 
-## Development
+If contents have already been downloaded to the target path, and `overwrite` is set to `FALSE`, running this function would not make any changes - it will only remind you where the target contents have been saved. 
 
-See the `.github/CONTRIBUTING.md` file for coding guidelines.
+
