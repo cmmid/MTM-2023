@@ -6,7 +6,7 @@ This package contains materials to support the Modern Techniques in Modelling (M
 
 The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`. Running this initial command to install `MTM` will also install all package dependencies that you would need for this short course.
 
-At times, organisations may prevent users from freely installing `R` packages as they wish. In those cases, we recommend that you use personal computer for this short course, to which you have admin rights. When this is not possible, we recommend that you use [web-based R-Studio](https://posit.cloud/). You would need to create an account with them. We recommend that you create/ use only one project throughout this short course with this site.
+If you have a company- or organization-managed computer, you might not be able to install packages or update `R`. We generally recommend that you use a personal computer for this short course. If you cannot, we recommend that you use the [web-based R-Studio](https://posit.cloud/). You will need to create an account, but the free level is sufficient for this course. Once you have an account, create a new project, and consistently use that project throughout the short course.
 
 ## Local Use
 
