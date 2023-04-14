@@ -1,5 +1,5 @@
 
-### Practical 10 - Sensitivity and Sampling ###
+### Practical: Sensitivity and Sampling ###
 
 ###################### (1) ONE-WAY UNCERTAINTY ANALYSIS ########################
 # First let's clear our workspace, remove plots and load the libraries we need
@@ -49,7 +49,6 @@ plot(1 / gamma.vec, max.prevalence, type = "b",
      xlab = "Infectiousness Duration (days)",
      ylab = "Maximum Prevalence",
      main = "One-way uncertainty analysis")
-
 
 ## Now try to increase the resolution of gamma to get a better idea of the
 # relationship, but remember to clear max.prevalence first!
@@ -120,7 +119,6 @@ sampling_MC_plot(max.prevalence)
 # infectious duration. In fact, until the infectiousness duration decreases
 # below 1/0.3 (3d), this parameter doesn't affect prevalence
 
-
 ###################### (3) LHS vs MONTE CARLO SAMPLING #########################
 
 ## First let's load in the library we'll need for later
@@ -145,9 +143,8 @@ plot(n, varn,
 )
 abline(h = 1)
 
-
 ### Let's now use 100 samples to see the difference between a Monte Carlo
-# sampling and a LHS sampling approach. Pick some small number of samples
+# sampling and a LHS sampling approach. Pick some small number of samples:
 n <- 100
 
 # First we're going to sample 100 times from a random sample
