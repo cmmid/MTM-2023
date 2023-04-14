@@ -12,7 +12,7 @@
 #' @family sampling
 sampling_MC_plot <- function(data) {
   return(ggplot(data = data) +
-    geom_violin(aes(x = factor(1/gamma), y = max.prev)) +
+    geom_violin(aes(x = factor(1 / gamma), y = max.prev)) +
     xlab("Infectious duration (days)") +
     ylab("Maximum prevalence") +
     title("Monte Carlo Sampling over R0")

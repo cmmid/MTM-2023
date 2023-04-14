@@ -23,15 +23,17 @@
 #' @family stochdisc
 stochdisc_dReedFrost <- function(
     t, y, parms, ...
-) with(c(as.list(y), parms), {
-  # copy y to become dy
-  dy <- y
-  # probability of any infection == 1 - probability of avoiding all infections
-  foi <- 1 - (1 - parms$p)^I
-  dI <- rbinom(1, S, foi)
-  dy <- c(-dI, dI - I, I)
-  return(list(dy))
-})
+) {
+  with(c(as.list(y), parms), {
+    # copy y to become dy
+    dy <- y
+    # probability of any infection == 1 - probability of avoiding all infections
+    foi <- 1 - (1 - parms$p)^I
+    dI <- rbinom(1, S, foi)
+    dy <- c(-dI, dI - I, I)
+    return(list(dy))
+  })
+}
 
 #' @title Solve Stochastic, Discrete Time Models
 #'
@@ -78,14 +80,14 @@ stochdisc_solve <- function(
   )
 
   dy <- func(t, y, parms, ...)
-  # While we have not reached the maximum time step, and there is at least one
-  # infected case, we compute the distribution at the next time step and store it in yt
-  while(
-    sum(abs(dy[[1]])) > 0 && (t < tmax)
+  # While time remains, and there is at least one state change, compute
+  # the distribution at the next time step and store it in yt
+  while (
+    (t < tmax) && (sum(abs(dy[[1]])) > 0)
   ) {
     t <- t + 1L
     y <- y + dy[[1]]
-    yt[[length(yt)+1]] <- as.list(y)
+    yt[[length(yt) + 1]] <- as.list(y)
     dy <- func(t, y, parms, ...)
   }
 
@@ -100,7 +102,8 @@ stochdisc_solve <- function(
 #'
 #' @param setup_func a function to create new populations
 #'
-#' @param ref.seed a random seed reference value; each sample run seed is offset from this value
+#' @param ref_seed a random seed reference value; each sample run seed is offset
+#' from this value
 #'
 #' @return a [data.table::data.table()], with a `sample` column
 #' (`integer`, 1:`n`) & columns from [stochdisc_solve()]
@@ -118,14 +121,14 @@ stochdisc_sample <- function(
     n, parms,
     func = stochdisc_dReedFrost,
     setup_fun = \(ps) c(S = ps$N - 1, I = 1, R = 0),
-    ref.seed = 0
+    ref_seed = 0
 ) {
   n |> check_scalar() |> check_natural()
 
   # for each sample ...
   1L:n |> lapply(function(i) {
     # reset random number seed
-    set.seed(i + ref.seed)
+    set.seed(i + ref_seed)
     # simulate desired func
     setup_fun(parms) |> stochdisc_solve(func = func, parms = parms)
   }) |> rbindlist(idcol = "sample")

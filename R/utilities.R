@@ -26,14 +26,15 @@ tutorial_help <- function(h) {
 #' response, which isn't explicitly checked, and to receive an example
 #' reply after submitting their answer
 #'
-#' @export
-question_freeresponse <- function(text, reply, ...) question_text(
-  text,
-  answer("", correct = TRUE),
-  incorrect = NULL,
-  message = reply,
-  ...
-)
+question_freeresponse <- function(text, reply, ...) {
+  learnr::question_text(
+    text,
+    learnr::answer("", correct = TRUE),
+    incorrect = NULL,
+    message = reply,
+    ...
+  )
+}
 
 #' @title Reminders for Scripts
 #'

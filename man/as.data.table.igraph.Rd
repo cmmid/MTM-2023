@@ -13,11 +13,11 @@
 preservation of vertex and edge named IDs (if present)}
 }
 \value{
-a \link{data.table}, with columns \code{V2}, \code{V1} (vertex ids), \code{eid} (edge ids),
-layout data (\code{x1}, \code{y1}, \code{x2}, \code{y2}), and then optionally edge attributes (
-various, corresponding to the \code{\link[igraph:edge_attr]{igraph::edge_attr()}} of \code{ig}) and vertex
-attributes (various, corresponding to the \code{\link[igraph:vertex_attr]{igraph::vertex_attr()}} of \code{ig},
-prepended with \code{V1} and \code{V2} to identify associated vertex).
+a \link{data.table}, with columns \code{V2}, \code{V1} (vertex ids),
+\code{eid} (edge ids), layout data (\code{x1}, \code{y1}, \code{x2}, \code{y2}), and then optionally
+edge attributes (various, corresponding to the \code{\link[igraph:edge_attr]{igraph::edge_attr()}} of \code{ig})
+and vertex attributes (various, corresponding to the \code{\link[igraph:vertex_attr]{igraph::vertex_attr()}}
+of \code{ig}, prepended with \code{V1} and \code{V2} to identify associated vertex).
 }
 \description{
 Convert \link{igraph} to \link{data.table}

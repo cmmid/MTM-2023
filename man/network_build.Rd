@@ -7,7 +7,8 @@
 network_build(parms)
 }
 \arguments{
-\item{parms, }{a \code{list(N=integer, p=probability)}; the Reed-Frost model parameters.}
+\item{parms, }{a \code{list(N = integer, p = probability)}; the Reed-Frost model
+parameters.}
 }
 \value{
 an \link{igraph}, fully connected, with undirected edges, and \code{parms$N}
@@ -19,7 +20,7 @@ Base SIR network for networks exercises
 }
 \details{
 Note, this step actually performs all the relevant random number
-draws, therefore to get matching results (e.g. to compare with other students)
+draws, therefore to get matching results (e.g. to compare to other students)
 the random number seed must be set ahead of calling this
 }
 \section{Asides}{

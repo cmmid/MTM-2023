@@ -16,7 +16,8 @@ network_dReedFrost(t, y, parms, ...)
 \item{...}{other arguments passed to \code{func}.}
 }
 \value{
-an \code{igraph} representing the transitions that occur and edges involved
+an \code{igraph} representing the transitions that occur and edges
+involved
 }
 \description{
 Compute 1-step transition for Reed-Frost Network Model

@@ -22,31 +22,41 @@
 #' require(MTM)
 #' require(deSolve)
 #' pars <- list(beta = 0.4, gamma = 0.2, R0 = 2)
-#' bg <- ode(y = c(S=99, I=1, R=0), times = 0:50, func = sampling_dSIR_betagamma, parms = pars, method = "rk4")
-#' gR <- ode(y = c(S=99, I=1, R=0), times = 0:50, func = sampling_dSIR_gammaR0, parms = pars, method = "rk4")
+#' bg <- ode(
+#'   y = c(S=99, I=1, R=0), times = 0:50,
+#'   func = sampling_dSIR_betagamma, parms = pars, method = "rk4"
+#' )
+#' gR <- ode(
+#'   y = c(S=99, I=1, R=0), times = 0:50,
+#'   func = sampling_dSIR_gammaR0, parms = pars, method = "rk4"
+#' )
 #' @rdname sampling_models
 #' @export
 #' @family sampling
-sampling_dSIR_betagamma <- function(t, state, parms) with(parms, {
-  # compute total population size
-  N <- sum(state)
+sampling_dSIR_betagamma <- function(t, state, parms) {
+  with(parms, {
+    # compute total population size
+    N <- sum(state)
 
-  # define processes
-  infection <- (beta * state["S"] * state["I"]) / N
-  recovery <- gamma * state["I"]
+    # define processes
+    infection <- (beta * state["S"] * state["I"]) / N
+    recovery <- gamma * state["I"]
 
-  # return according to deSolve::ode requirements:
-  # list, first element the derivatives, same order as state
-  return(list(
-    c(dS = -infection, dI = infection - recovery, dR = recovery)
-  ))
-})
+    # return according to deSolve::ode requirements:
+    # list, first element the derivatives, same order as state
+    return(list(
+      c(dS = -infection, dI = infection - recovery, dR = recovery)
+    ))
+  })
+}
 
 #' @rdname sampling_models
 #' @export
-sampling_dSIR_gammaR0 <- function(times, state, parms) sampling_dSIR_betagamma(
-  times, state, within(parms, { beta = gamma*R0 })
-)
+sampling_dSIR_gammaR0 <- function(times, state, parms) {
+  return(sampling_dSIR_betagamma(
+    times, state, within(parms, expression(beta <- gamma * R0))
+  ))
+}
 
 #' @title Find Max Prevalence in SIR ODE
 #' @description
@@ -80,7 +90,7 @@ sampling_maxprevalence <- function(
   I_0 <- 1
   S_0 <- N - I_0
   R_0 <- 0
-  state <- c( S = S_0, I = I_0, R = R_0)
+  state <- c(S = S_0, I = I_0, R = R_0)
 
   # solve equations ...
   output <- ode(
@@ -88,8 +98,8 @@ sampling_maxprevalence <- function(
     method = "rk4"
   ) |> as.data.table() # ... then convert for easy extraction of columns
 
-  if(plot_results){
-    par(new=TRUE)
+  if (plot_results) {
+    par(new = TRUE)
     par(mfrow = c(1, 1))
     with(output, {
       plot(time, S, type = "l", col = 4, lwd = 2, ylim = c(0, N),

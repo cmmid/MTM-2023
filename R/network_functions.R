@@ -12,7 +12,9 @@ check_SIRgraph <- function(network) {
       is.character(V(network)$state),
     "'V(network)$state' are not all in 'network$states'." =
       all(V(network)$state %in% network$states),
-    "'E(network)$draw' is not a probability." = all((0 <= E(network)$draw) & (E(network)$draw <= 1))
+    "'E(network)$draw' is not a probability." = all(
+        (0 <= E(network)$draw) & (E(network)$draw <= 1)
+      )
   )
   invisible(network)
 }
@@ -29,10 +31,11 @@ check_RFparms <- function(parms) {
 
 #' @title Base SIR network for networks exercises
 #'
-#' @param parms, a `list(N=integer, p=probability)`; the Reed-Frost model parameters.
+#' @param parms, a `list(N = integer, p = probability)`; the Reed-Frost model
+#' parameters.
 #'
 #' @details Note, this step actually performs all the relevant random number
-#' draws, therefore to get matching results (e.g. to compare with other students)
+#' draws, therefore to get matching results (e.g. to compare to other students)
 #' the random number seed must be set ahead of calling this
 #'
 #' @section Asides:
@@ -84,7 +87,9 @@ network_build <- function(
 
   seedstore <- .Random.seed
   set.seed(parms$N) # fix rng for layout => all size N networks have same layout
-  network <- network |> add_layout_(with_fr(coords = layout_randomly(network)), normalize())
+  network <- network |> add_layout_(with_fr(
+    coords = layout_randomly(network)), normalize()
+  )
   .Random.seed <- seedstore
 
   return(network)
@@ -98,8 +103,8 @@ network_build <- function(
 #' for when you want to repeatedly percolate the same base network with
 #' different probabilities.
 #'
-#' @return a new igraph object, with potentially fewer edges. it's 'E()$draw' attribute
-#' will be == 0 (i.e., always transmit)
+#' @return a new igraph object, with potentially fewer edges. it's `E()$draw`
+#' attribute will be == 0 (i.e., always transmit)
 #'
 #' @examples
 #' require(MTM)
@@ -119,10 +124,11 @@ network_percolate <- function(
   network |> check_SIRgraph()
   # identify all edges where p < draw
   # i.e. going to *keep* all edges draw <= p
-  remove_edges <- E(network)[ parms$p < draw ]
+  remove_edges <- E(network)[parms$p < draw]
   # return a new graph with removed edges & reset draw
   return(
-    network |> delete_edges(remove_edges) |> set_edge_attr(name = "draw", value = 0)
+    network |> delete_edges(remove_edges) |>
+      set_edge_attr(name = "draw", value = 0)
   )
 }
 
@@ -166,7 +172,8 @@ network_update <- function(
 #'
 #' @inheritParams network_solve
 #'
-#' @return an `igraph` representing the transitions that occur and edges involved
+#' @return an `igraph` representing the transitions that occur and edges
+#' involved
 #'
 #' @seealso network_solve
 #'
@@ -199,7 +206,7 @@ network_dReedFrost <- function(
   E(dy)$state <- "inactive"
 
   # if there are infectious & susceptible individuals
-  if (length(susceptible) & length(infectious)) {
+  if (length(susceptible) && length(infectious)) {
     # find all the transmission routes:
     #  1. find potential paths: `%->%` selects all edges from
     #     a left-hand-side vertex set (i.e. infectious)
@@ -242,12 +249,13 @@ network_dReedFrost <- function(
 #'
 #' @param ..., other arguments passed to `func`.
 #'
-#' @return a list of [igraph]s, where the list entries correspond to the population
-#'   state at time t (e.g. `list[[1]]` is the initial network state after introduction)
+#' @return a list of [igraph]s, where the list entries correspond to the
+#'   population state at time t (e.g. `list[[1]]` is the initial network state
+#'   after introduction)
 #'
-#' @details This function takes the Reed Frost model parameters (N, p) and implementation
-#' of the model (set by setupfun, deltafun). Using those, it performs the model
-#' iteration loop, and returns the series networks
+#' @details This function takes the Reed Frost model parameters (N, p) and
+#' implementation of the model (set by `setupfun`, `deltafun`). Using those, it
+#' performs the model iteration loop, and returns the series networks
 #'
 #' @examples
 #' require(MTM)
@@ -279,12 +287,12 @@ network_solve <- function(
     .Machine$integer.max,
     max(as.integer(times))
   )
-  while(
+  while (
     any(V(y)$state %in% y$inf_states) && (t < tmax)
   ) {
     dy <- func(t, y, parms, ...)
     y <- network_update(y, dy)
-    yt[[length(yt)+1]] <- y
+    yt[[length(yt) + 1]] <- y
     t <- t + 1L
   }
   return(yt)
@@ -312,9 +320,11 @@ network_flatten <- function(y, one = is.igraph(y)) {
 #'
 #' @inheritParams network_solve
 #'
-#' @param setup_func a function to create new networks; must have the same signature as [network_build]()
+#' @param setup_func a function to create new networks; must have the same
+#' signature as [network_build]()
 #'
-#' @param ref.seed a random seed reference value; each sample run seed is offset from this value
+#' @param ref_seed a random seed reference value; each sample run seed is offset
+#' from this value
 #'
 #' @return a [data.table::data.table], a sample column (integer, 1:`n`) &
 #' columns from [network_flatten]
@@ -325,14 +335,14 @@ network_sample_ReedFrost <- function(
   parms,
   func = network_dReedFrost,
   setup_fun = network_build,
-  ref.seed = 0
+  ref_seed = 0
 ) {
   n |> check_scalar() |> check_natural()
   parms |> check_RFparms()
   # for each sample ...
   1L:n |> lapply(function(i) {
     # reset random number seed
-    set.seed(i + ref.seed)
+    set.seed(i + ref_seed)
     # make a new population
     setup_fun(parms) |>
     # solve it according to desired func
@@ -356,7 +366,7 @@ network_summarize <- function(
   dt
 ) {
   as.data.table(dt)[,
-    .SD[.N][, .(duration = t-1, finalsize = R) ],
+    .SD[.N, .(duration = t - 1, finalsize = R)],
     keyby = sample
   ]
 }

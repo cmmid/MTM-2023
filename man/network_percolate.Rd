@@ -7,15 +7,16 @@
 network_percolate(parms, network = network_build(parms))
 }
 \arguments{
-\item{parms}{a \code{list(N=integer, p=probability)}; the Reed-Frost model parameters.}
+\item{parms}{a \code{list(N = integer, p = probability)}; the Reed-Frost model
+parameters.}
 
 \item{network, }{an igraph object, such as produced by \link{network_build};
 for when you want to repeatedly percolate the same base network with
 different probabilities.}
 }
 \value{
-a new igraph object, with potentially fewer edges. it's 'E()$draw' attribute
-will be == 0 (i.e., always transmit)
+a new igraph object, with potentially fewer edges. it's \code{E()$draw}
+attribute will be == 0 (i.e., always transmit)
 }
 \description{
 Transform a network by percolation

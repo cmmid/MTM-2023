@@ -2,30 +2,30 @@
 
 require(igraph)
 
-ref.ig <- make_lattice(length=10, dim=2) |>
+ref <- make_lattice(length = 10, dim = 2) |>
   add_layout_(on_grid())
 
-modgraph <- function(src.ig, vaccinees) {
-  V(src.ig)$state <- "unvaccinated"
-  V(src.ig)$state[vaccinees] <- "vaccinated"
+modgraph <- function(ig, vaccinees) {
+  V(ig)$state <- "unvaccinated"
+  V(ig)$state[vaccinees] <- "vaccinated"
 
   # use vaccine state to split
-  E(src.ig)$state <- "transmissible"
-  E(src.ig)[
-    .inc(V(src.ig)[state == "vaccinated"])
+  E(ig)$state <- "transmissible"
+  E(ig)[
+    .inc(V(ig)[state == "vaccinated"])
   ]$state <- "blocked"
-  src.ig
+  ig
 }
 
 set.seed(8675309)
 
-orderedvaccinees <- seq(1,100,by=11)
+orderedvaccinees <- seq(1, 100, by = 11)
 randomvaccinees <- sample(100, length(orderedvaccinees), replace = FALSE)
 
 # set up vaccinees such that they split the graph
 
-network_warmup_vaccine_ordered <- modgraph(ref.ig, orderedvaccinees)
-network_warmup_vaccine_random <- modgraph(ref.ig, randomvaccinees)
+network_warmup_vaccine_ordered <- modgraph(ref, orderedvaccinees)
+network_warmup_vaccine_random <- modgraph(ref, randomvaccinees)
 
 usethis::use_data(
   network_warmup_vaccine_ordered,
@@ -51,9 +51,12 @@ structure_network <- function(usn) {
   en <- ecount(usn)
   one <- rbinom(1, en - 1, 0.5)
   two <- en - 1 - one
-  og <- make_full_graph(ceiling(vcount(usn)/2)) |> keep_edges(one)
-  tg <- make_full_graph(floor(vcount(usn)/2)) |> keep_edges(two)
-  cg <- og + tg + edge(sample(vcount(og), 1), vcount(tg) + sample(vcount(tg), 1))
+  og <- make_full_graph(ceiling(vcount(usn) / 2)) |> keep_edges(one)
+  tg <- make_full_graph(floor(vcount(usn) / 2)) |> keep_edges(two)
+  cg <- og + tg + edge(
+    sample(vcount(og), 1),
+    vcount(og) + sample(vcount(tg), 1)
+  )
   V(cg)$state <- V(usn)$state
   E(cg)$draw <- E(usn)$draw
   E(cg)$state <- E(usn)$state
