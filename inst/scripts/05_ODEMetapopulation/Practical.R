@@ -1,14 +1,14 @@
 ######################################################
-#              Metapopultions with ODEs             #
+#              Metapopultions with ODEs              #
 ######################################################
 
 library(deSolve) # Load in the deSolve package
 
 ## The code below has been written to solve a Susceptible-Infected-Recovered
 # model with two populations. Familiarise yourself with the expanded model
-# before moving onto the activities that follow. Note: the compartments C1 and
-# C2 reflect the cumulative numbers of people infected. This will be used later
-# on.
+# before moving onto the activities that follow.
+# Note: the compartments C1 and C2 reflect the cumulative numbers of people
+# infected. This will be used later on.
 
 # # Define model function
 SIR_metapop_model <- function(times, state, parms) {
@@ -80,35 +80,41 @@ legend("topright",
 
 ## A.
 # When you simulate the above model, you'll notice that currently the epidemics
-# are nearly identical in the two populations. Update the model parameters so
-# the transmission rate between the two populations is equal to 5% of the
-# transmission rate within each population. What happens to the size and timing
-# of the epidemics?
+# are nearly identical in the two populations.
+# Update the model parameters so the transmission rate between the two
+# populations is equal to 5% of the transmission rate within each population.
+# What happens to the size and timing of the epidemics?
 
 # Answer:
+#
 
+parameters <- ???
 
 ## B. What happens if the epidemic starts with 10 people infected in both
 # populations? Why does this happen?
 
 # Answer:
-
+#
+#
 
 ## C.
 # The model is currently set up to record the number of cumulative cases in each
-# population (i.e. C1 and C2) The below code will plot these cumulative numbers
-# of cases. Update the code so you are plotting incidence, i.e. new cases
-# appearing over time, rather than cumulative cases
+# population (i.e. C1 and C2)
+# The below code will plot these cumulative numbers of cases
+# Update the code so you are plotting incidence, i.e. new cases appearing over
+# time, rather than cumulative cases
 
 par(mfrow = c(1, 1))
-plot(output$time, output$C1, type = "l", col = 4, lwd = 2, ylim = c(0, N1+100),
-      xlab = "Time", ylab = "Number", main = "")
+plot(
+  output$time, output$C1, type = "l", col = 4, lwd = 2, ylim = c(0, N1 + 100),
+  xlab = "Time", ylab = "Number", main = ""
+)
 lines(output$time, output$C2, lwd = 2, col = 2, type = "l")
-legend("topright",
-  legend = c(
+legend(
+  "topright", legend = c(
     "Cumulative cases in population 1", "Cumulative cases in population 2"
-  ),
-  lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
+  ), lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n"
+)
 
 # Hint: Create a new variable that calculates the difference between adjacent
 # timesteps, i.e. C1[2:t] - C1[1:(t-1)]
@@ -116,16 +122,29 @@ legend("topright",
 ##### YOUR CODE GOES HERE #####
 
 
+
+
+
+
+
+
+
+
 # D. What does the incidence look like if only 50% of the cases in population 2
 # are reported?
 
 ##### YOUR CODE GOES HERE #####
 
-#Hint: There are several ways to do this - some are easier than others.
 
 
-# E. If you have time, expand the model to include three populations
-# (denoted 1, 2, 3).
+
+
+
+
+
+# Hint: There are several ways to do this - some are easier than others.
+
+# E. If you have time, expand the model to three populations (denoted 1, 2, 3).
 # How would you model an epidemic where:
 #  - mixing between population 1 and population 2 is 5% of the rate of mixing
 #    within these populations
@@ -134,11 +153,3 @@ legend("topright",
 #  - there is no mixing between population 2 and population 3
 
 ##### YOUR CODE GOES HERE #####
-
-
-
-
-
-
-
-
