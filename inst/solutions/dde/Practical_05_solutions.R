@@ -3,9 +3,10 @@
 ##########################################################
 
 #############################
-#Import packages
-install.packages("tidyverse")
-library(tidyverse)
+#Load packages
+library(ggplot2)
+library(forcats)
+library(tidyr)
 #############################
 
 
@@ -65,6 +66,8 @@ y_sir_long <- pivot_longer(y_sir_df,
                            names_to = "state",
                            values_to = "proportion",
                            names_transform = list(state = fct_inorder))
+
+head(y_sir)
 
 ggplot(data  = y_sir_long,
        aes(x = time,
@@ -218,21 +221,23 @@ for (i in 2:nrow(y_sir)){
                 new_parms)
 }
 
-# make plot of proportion of population in each state over time
-
+# convert matrix to data.frame
 y_sir_df <- as.data.frame(y_sir)
 
+# name each column
 names(y_sir_df) <- c("Susceptible", "Infected", "Recovered")
 
+# bind to the time_sir vector
 y_sir_df <- cbind(time = time_sir, y_sir_df)
 
-#convert to "long" format for plotting using ggplot2
+# convert to "long" format for plotting using ggplot2
 y_sir_long <- pivot_longer(y_sir_df,
                            cols = c(Susceptible, Infected, Recovered),
                            names_to = "state",
                            values_to = "proportion",
                            names_transform = list(state = fct_inorder))
 
+# produce plot
 ggplot(data  = y_sir_long,
        aes(x = time,
            y = proportion)) +

@@ -3,9 +3,10 @@
 ##########################################################
 
 #############################
-#Import packages
-install.packages("tidyverse")
-library(tidyverse)
+#Load packages
+library(ggplot2)
+library(forcats)
+library(dplyr)
 #############################
 
 
@@ -45,20 +46,25 @@ for (i in 2:nrow(y_sir)){
     y_sir[i,] <- y[i-1,] + ???
 }
 
-# make plot of proportion of population in each state over time
+# convert matrix to data.frame
 y_sir_df <- as.data.frame(y_sir)
 
+# name each column
 names(y_sir_df) <- c(???, ???, ???)
 
+# bind to the time_sir vector
 y_sir_df <- cbind(time = time_sir, y_sir_df)
 
-#convert to "long" format for plotting using ggplot2
+# convert to "long" format for plotting using ggplot2
 y_sir_long <- pivot_longer(y_sir,
                            cols = c(???, ???, ???),
                            names_to = "state",
                            values_to = "proportion",
                            names_transform = list(state = fct_inorder))
 
+head(y_sir_long)
+
+# produce plot
 ggplot(data  = y_sir_long,
        aes(x = time,
            y = proportion)) +
@@ -93,12 +99,14 @@ for (i in 2:nrow(y_sir)){
     y_sir[i,] <- ???
 }
 
-# make plot of proportion of population in each state over time
+# convert matrix to data.frame
 y_sir <- as.data.frame(y_sir)
 
+# name each column
 names(y_sir) <- c(???, ???, ???)
 
-y_sir$time <- time_sir
+# bind to the time_sir vector
+y_sir_df <- cbind(time = time_sir, y_sir_df)
 
 #convert to "long" format for plotting using ggplot2
 y_sir_long <- pivot_longer(y_sir_df,
@@ -107,6 +115,7 @@ y_sir_long <- pivot_longer(y_sir_df,
                            values_to = "proportion",
                            names_transform = list(state = fct_inorder))
 
+# produce plot
 ggplot(data  = y_sir_long,
        aes(x = time,
            y = proportion)) +
@@ -132,12 +141,16 @@ for (i in 2:nrow(y_sir)){
     y_sir[i,] <- ???
 }
 
-y_sir_df <-  c(???, ???, ???)
+# convert matrix to data.frame
+y_sir_df <-  ???
 
+# name each column
 names(y_sir) <- c(???, ???, ???)
 
+# convert to "long" format for plotting using ggplot2
 y_sir_long <- ???
 
+# produce plot
 ggplot(???)
 
 #############################
@@ -167,21 +180,21 @@ new_sir <- function(t, y, parms){
 
 new_parms <- ???
 
-
 # B.2 Calculate N(t) = S(t) + I(t) + R(t) the total number of alive individuals. Make
 # a plot of S(t), I(t), R(t) and N(t). Your function N(t) should be constant at
 # 1 for all values of t. If this is not the case, ensure the model contains
 # births of new S proportional to N, and deaths of each of S I and R
 
-# make plot of proportion of population in each state over time
+# convert matrix to data.frame
 y_sir_df <- ???
 
-#Calculate the total number of alive individuals
+# calculate the total number of alive individuals over time
 y_sir$Alive <- ???
 
-#convert to "long" format for plotting using ggplot2
+# convert to "long" format for plotting using ggplot2
 y_sir_long <- ???
 
+# produce plot
 ggplot(???)
 
 # B.2
