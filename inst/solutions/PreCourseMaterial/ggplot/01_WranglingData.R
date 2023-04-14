@@ -20,9 +20,9 @@ f_siir <- function(time, state, parameters) {
 
     with(as.list(c(state, parameters)), {
 
-        infections1 <- beta*S*I1
-        infections2 <- gamma*I1
-        deaths      <- delta*I2
+        infections1 <- beta * S * I1
+        infections2 <- gamma * I1
+        deaths      <- delta * I2
 
         dS  <- -infections1
         dI1 <-  infections1 - infections2
@@ -75,7 +75,7 @@ all_dat <- bind_rows(S, I1, I2, R) # pull together into one data frame
 all_dat %>%
     dplyr::select(time, key, value = `76`) %>%
     dplyr::mutate(key = fct_inorder(key)) %>%
-    ggplot(data =., aes(x=time, y=value)) +
+    ggplot(data = ., aes(x = time, y = value)) +
     geom_area(aes(fill = key)) + theme_bw() +
     xlab("Time (days)") + ylab("Population density") +
     theme(legend.position = "bottom") +
@@ -85,7 +85,7 @@ all_dat %>%
 all_dat %>%
     dplyr::select(time, key, value = `76`) %>%
     dplyr::mutate(key = fct_inorder(key)) %>%
-    ggplot(data =., aes(x=time, y=value)) +
+    ggplot(data = ., aes(x = time, y = value)) +
     geom_line() + facet_wrap(~key) +
     geom_area(aes(fill = key)) + theme_bw() +
     xlab("Time (days)") + ylab("Population density")  +
@@ -96,7 +96,7 @@ all_dat %>%
 all_dat %>%
     dplyr::select(time, key, value = `76`) %>%
     dplyr::mutate(key = fct_inorder(key)) %>%
-    ggplot(data =., aes(x=time, y=value)) +
+    ggplot(data = ., aes(x = time, y = value)) +
     geom_line() + facet_wrap(~key) + theme_bw() +
     xlab("Time (days)") + ylab("Population density")
 # small multiples of line plots
@@ -104,7 +104,7 @@ all_dat %>%
 all_dat %>%
     dplyr::select(time, key, value = `76`) %>%
     dplyr::mutate(key = fct_inorder(key)) %>%
-    ggplot(data =., aes(x=time, y=value)) +
+    ggplot(data = ., aes(x = time, y = value)) +
     geom_line(aes(color = key)) + theme_bw() +
     xlab("Time (days)") + ylab("Population density") +
     theme(legend.position = "bottom") +
@@ -152,11 +152,11 @@ all_dat_parameters <- all_dat_long %>%
 #   Inc2  - the rate at which new stage 2 infections are occurring
 
 all_dat_parameters <- all_dat_parameters %>%
-    mutate(N     = S + I1 + I2, # all non-deceased
-           prev1 = I1/N,        # prevalence is infected/total
-           prev2 = I2/N,        # prevalence is infected/total
-           Inc1  = beta*S*I1,   # raw rate of new stage 1 infections
-           Inc2  = gamma*I1)    # raw rate of new stage 2 infections
+    mutate(N     = S + I1 + I2,   # all non-deceased
+           prev1 = I1 / N,        # prevalence is infected/total
+           prev2 = I2 / N,        # prevalence is infected/total
+           Inc1  = beta * S * I1, # raw rate of new stage 1 infections
+           Inc2  = gamma * I1)    # raw rate of new stage 2 infections
 
 # C.5 Using the `select()` function, make a data frame that contains the time,
 # simulation index & our two new incidence variables, the initial S population,
@@ -178,7 +178,7 @@ all_cumulative_incidences <-
            Stage1, Stage2) %>%  # ...can be found in the Stage1 and Stage2 cols
 
     group_by(simulation, Stage) %>%
-    mutate(inc_Rate = Incidence/S0,             # per capita rate of infection
+    mutate(inc_Rate = Incidence / S0,           # per capita rate of infection
            cum_Inc  = cumtrapz(time, inc_Rate)) # prop. of S(0) been in I1/I2
 
 # C.6 Group the simulated cumulative incidences by disease stage and time,
@@ -194,10 +194,10 @@ summarised_cumulative_incidences <-
 
 # plotting the summarised cumulative incidence
 ggplot(data = summarised_cumulative_incidences,
-       aes(x=time)) +
+       aes(x = time)) +
     geom_line(aes(y = median)) +
-    geom_line(aes(y = lower), lty=2) +
-    geom_line(aes(y = upper), lty=2) +
+    geom_line(aes(y = lower), lty = 2) +
+    geom_line(aes(y = upper), lty = 2) +
     facet_wrap(~Stage, ncol = 1) + theme_bw() +
     xlab("Time (years)") +
     ylab("Cumulative incidence")

@@ -22,7 +22,7 @@ y_sir    <- matrix(data = NA,
                    nrow = length(time_sir),
                    ncol = 3)
 
-update_sir <- function(t, y, parms){
+update_sir <- function(t, y, parms) {
     S <- y[1]
     I <- y[2]
     R <- y[3]
@@ -180,10 +180,10 @@ new_sir <- function(t, y, parms){
 
 new_parms <- ???
 
-# B.2 Calculate N(t) = S(t) + I(t) + R(t) the total number of alive individuals. Make
-# a plot of S(t), I(t), R(t) and N(t). Your function N(t) should be constant at
-# 1 for all values of t. If this is not the case, ensure the model contains
-# births of new S proportional to N, and deaths of each of S I and R
+# B.2 Calculate N(t) = S(t) + I(t) + R(t) the total number of alive individuals.
+# Make a plot of S(t), I(t), R(t) and N(t). Your function N(t) should be
+# constant at 1 for all values of t. If this is not the case, ensure the model
+# contains births of new S proportional to N, and deaths of each of S I and R
 
 # convert matrix to data.frame
 y_sir_df <- ???

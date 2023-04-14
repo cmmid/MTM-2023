@@ -2,17 +2,16 @@
 #              Metapopultions with ODEs             #
 ######################################################
 
-# Load in the deSolve package
-library(deSolve)
-# If the package is not installed, install using the install.packages() function
+library(deSolve) # Load in the deSolve package
 
-## The code below has been written to solve a Susceptible-Infected-Recovered model with two populations.
-# Familiarise yourself with the expanded model before moving onto the activities that follow.
-# Note: the compartments C1 and C2 reflect the cumulative numbers of people infected. This will be used later on.
+## The code below has been written to solve a Susceptible-Infected-Recovered
+# model with two populations. Familiarise yourself with the expanded model
+# before moving onto the activities that follow. Note: the compartments C1 and
+# C2 reflect the cumulative numbers of people infected. This will be used later
+# on.
 
-
-# # Define model function 
-SIR_metapop_model <- function(times, state, parms){
+# # Define model function
+SIR_metapop_model <- function(times, state, parms) {
   ## Define variables
   S1 <- state["S1"]
   I1 <- state["I1"]
@@ -43,8 +42,8 @@ SIR_metapop_model <- function(times, state, parms){
   return(res)
 }
 
-# Define parameters  
-parameters <- c( beta = 0.4, gamma = 0.1, alpha = 1)
+# Define parameters
+parameters <- c(beta = 0.4, gamma = 0.1, alpha = 1)
 
 # Define time to run model
 times <- seq(from = 0, to = 50, by = 1)
@@ -56,65 +55,82 @@ R1_0 <- 0; R2_0 <- 0
 C1_0 <- 0; C2_0 <- 0
 S1_0  <- N1 - I1_0
 S2_0  <- N2 - I2_0
-state <- c(S1 = S1_0, I1 = I1_0, R1 = R1_0, C1 = C1_0, S2 = S2_0, I2 = I2_0, R2 = R2_0, C2 = C2_0)
+state <- c(
+  S1 = S1_0, I1 = I1_0, R1 = R1_0, C1 = C1_0,
+  S2 = S2_0, I2 = I2_0, R2 = R2_0, C2 = C2_0
+)
 
 # Solve equations
-output_raw <- ode(y = state, times = times, func = SIR_metapop_model, parms = parameters,
-                  method = rk4)
+output_raw <- ode(
+  y = state, times = times, func = SIR_metapop_model, parms = parameters,
+  method = rk4
+)
 
 # Convert to data frame for easy extraction of columns
 output <- as.data.frame(output_raw)
 
 # Plot output
-par( mfrow = c(1, 1))
-plot( output$time, output$I1, type = "l", col = 4, lwd = 2, ylim = c(0, N1),
+par(mfrow = c(1, 1))
+plot(output$time, output$I1, type = "l", col = 4, lwd = 2, ylim = c(0, N1),
       xlab = "Time", ylab = "Number", main = "")
-lines( output$time, output$I2, lwd = 2, col = 2, type = "l")
-legend("topright", legend = c("Infected in population 1", "Infected in population 2"),
+lines(output$time, output$I2, lwd = 2, col = 2, type = "l")
+legend("topright",
+       legend = c("Infected in population 1", "Infected in population 2"),
        lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
 
-
-## A. 
-# When you simulate the above model, you'll notice that currently the epidemics are nearly identical in the two populations. 
-# Update the model parameters so the transmission rate between the two populations is equal to 5% of the transmission rate within each population.
-# What happens to the size and timing of the epidemics?
+## A.
+# When you simulate the above model, you'll notice that currently the epidemics
+# are nearly identical in the two populations. Update the model parameters so
+# the transmission rate between the two populations is equal to 5% of the
+# transmission rate within each population. What happens to the size and timing
+# of the epidemics?
 
 # Answer:
 
 
-## B. What happens if the epidemic starts with 10 people infected in both populations? Why does this happen?
+## B. What happens if the epidemic starts with 10 people infected in both
+# populations? Why does this happen?
 
 # Answer:
 
 
-## C. 
-# The model is currently set up to record the number of cumulative cases in each population (i.e. C1 and C2)
-# The below code will plot these cumulative numbers of cases
-# Update the code so you are plotting incidence, i.e. new cases appearing over time, rather than cumulative cases
+## C.
+# The model is currently set up to record the number of cumulative cases in each
+# population (i.e. C1 and C2) The below code will plot these cumulative numbers
+# of cases. Update the code so you are plotting incidence, i.e. new cases
+# appearing over time, rather than cumulative cases
 
-par( mfrow = c(1, 1))
-plot( output$time, output$C1, type = "l", col = 4, lwd = 2, ylim = c(0, N1+100),
+par(mfrow = c(1, 1))
+plot(output$time, output$C1, type = "l", col = 4, lwd = 2, ylim = c(0, N1+100),
       xlab = "Time", ylab = "Number", main = "")
-lines( output$time, output$C2, lwd = 2, col = 2, type = "l")
-legend("topright", legend = c("Cumulative cases in population 1", "Cumulative cases in population 2"),
-       lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
+lines(output$time, output$C2, lwd = 2, col = 2, type = "l")
+legend("topright",
+  legend = c(
+    "Cumulative cases in population 1", "Cumulative cases in population 2"
+  ),
+  lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
 
-# Hint: Create a new variable that calculates the difference between adjacent timesteps, i.e. C1[2:t] - C1[1:(t-1)]
+# Hint: Create a new variable that calculates the difference between adjacent
+# timesteps, i.e. C1[2:t] - C1[1:(t-1)]
 
 ##### YOUR CODE GOES HERE #####
 
 
-# D. What does the incidence look like if only 50% of the cases in population 2 are reported?
+# D. What does the incidence look like if only 50% of the cases in population 2
+# are reported?
 
 ##### YOUR CODE GOES HERE #####
 
 #Hint: There are several ways to do this - some are easier than others.
 
 
-# E. If you have time, expand the model to include three populations (denoted 1, 2, 3).
+# E. If you have time, expand the model to include three populations
+# (denoted 1, 2, 3).
 # How would you model an epidemic where:
-#  - mixing between population 1 and population 2 is 5% of the rate of mixing within these populations
-#  - mixing between population 1 and population 3 is 10% of the rate of mixing within these populations
+#  - mixing between population 1 and population 2 is 5% of the rate of mixing
+#    within these populations
+#  - mixing between population 1 and population 3 is 10% of the rate of mixing
+#    within these populations
 #  - there is no mixing between population 2 and population 3
 
 ##### YOUR CODE GOES HERE #####

@@ -3,47 +3,42 @@ library(ggplot2)
 
 
 ## Model parameters
-beta <- 0.5      # Transmission parameter
-iota <- 1e-5     # Importation rate
-wane <- 0.05     # Rate of antibody waning
+beta <- 0.5        # Transmission parameter
+iota <- 1e-5       # Importation rate
+wane <- 0.05       # Rate of antibody waning
 
-dt <- 1          # Time step of simulation (1 day)
-days <- 365*4    # Duration of simulation (4 years)
-steps <- days/dt # Total number of time steps
-n <- 5000        # Population size
+dt <- 1            # Time step of simulation (1 day)
+days <- 365 * 4    # Duration of simulation (4 years)
+steps <- days / dt # Total number of time steps
+n <- 5000          # Population size
 
 
 ## Some helper functions
-# Calculates infectiousness as a function of state and age: zero if state is 
+# Calculates infectiousness as a function of state and age: zero if state is
 # not "I"; nonzero if state is "I", and slightly decreasing with age
-infectiousness = function(state, age)
-{
+infectiousness <- function(state, age) {
     ifelse(state == "I", 1.25 - age / 160, 0)
 }
 
 # Calculates susceptibility of individuals with antibody level(s) ab
-susceptibility = function(ab)
-{
+susceptibility <- function(ab) {
     pnorm(ab, 5, 1)
 }
 
-# Generates n random delays from the latent-period distribution 
+# Generates n random delays from the latent-period distribution
 # (approximately 2 days, on average)
-latent_delay = function(n)
-{
+latent_delay <- function(n) {
     rlnorm(n, meanlog = 0.5, sdlog = 0.6)
 }
 
-# Generates n random delays from the infectious-period distribution 
+# Generates n random delays from the infectious-period distribution
 # (approximately 5 days, on average)
-infectious_delay = function(n)
-{
+infectious_delay <- function(n) {
     rlnorm(n, meanlog = 1.5, sdlog = 0.5)
 }
 
 # Generates n random increments to antibody levels following recovery
-ab_increment = function(n)
-{
+ab_increment <- function(n) {
     rnorm(n, mean = 12, sd = 2)
 }
 
@@ -73,13 +68,12 @@ state[1:10] <- "E"     # Start 10 individuals in the "exposed" state
 bar <- txtProgressBar(min = 1, max = steps, style = 3)
 
 # Loop over each time step . . .
-for (ts in 1:steps)
-{
+for (ts in 1:steps) {
     # Calculate the force of infection
     lambda <- beta * sum(infectiousness(state, age)) / n + iota
-    
+
     ##### NOTE - There is no inner loop over individuals anymore!
-    
+
     # Update non-state variables (for all individuals simultaneously)
     # Time remaining in latent/infectious periods
     delay <- delay - dt
@@ -90,12 +84,13 @@ for (ts in 1:steps)
         vacc[age >= 40] <- TRUE
         antib[vacc] <- antib[vacc] + 2 * ab_increment(sum(vacc))
     }
-    
+
     # Update state variables (for all individuals simultaneously)
-    trE <- (state == "S") & (runif(n) < 1 - exp(-lambda * dt)) & (runif(n) > susceptibility(antib))
+    trE <- (state == "S") & (runif(n) < 1 - exp(-lambda * dt)) &
+      (runif(n) > susceptibility(antib))
     trI <- (state == "E") & (delay < 0)
     trS <- (state == "I") & (delay < 0)
-    
+
     # transition S -> E
     state[trE] <- "E"
     delay[trE] <- latent_delay(sum(trE))
@@ -107,7 +102,7 @@ for (ts in 1:steps)
     # transition I -> S
     state[trS] <- "S"
     antib[trS] <- antib[trS] + ab_increment(sum(trS))
-    
+
     # Save population state for this time step
     results[ts, "S"] <- sum(state == "S")
     results[ts, "E"] <- sum(state == "E")
@@ -123,12 +118,12 @@ for (ts in 1:steps)
 }
 
 ## Plot simulation results
-ggplot(results) + 
-    geom_line(aes(x = ts, y = S, colour = "S")) + 
-    geom_line(aes(x = ts, y = E, colour = "E")) + 
+ggplot(results) +
+    geom_line(aes(x = ts, y = S, colour = "S")) +
+    geom_line(aes(x = ts, y = E, colour = "E")) +
     geom_line(aes(x = ts, y = I, colour = "I"))
 
-ggplot(results) + 
+ggplot(results) +
     geom_line(aes(x = ts, y = AMeanU, colour = "Unvaccinated")) +
     geom_line(aes(x = ts, y = AMeanV, colour = "Vaccinated")) +
     labs(x = "Time step", y = "Mean antibody level")

@@ -88,7 +88,7 @@ list(list(
 #' comparison between networks that share the same parameters, but haven't been
 #' made to precisely match.
 
-prev_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, ref.seed = 5)
+prev_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, ref_seed = 5)
 new_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, setup_fun = network_percolate)
 
 list(list(

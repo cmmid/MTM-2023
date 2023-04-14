@@ -23,7 +23,7 @@ y_sir    <- matrix(data = NA,
                    ncol = 3)
 
 
-update_sir <- function(t, y, parms){
+update_sir <- function(t, y, parms) {
     S <- y[1]
     I <- y[2]
     R <- y[3]
