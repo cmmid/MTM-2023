@@ -1,148 +1,126 @@
-# Embedding the within-host competition mode in a person-to-person transmission model
-library(ggplot2) # For plotting
+# Individual-based SARS-CoV-2 transmission model, practical 2
+library(ggplot2)
 
-# A. Model parameters: events
-g <- 0.02     # "Germ size" of a transmitted strain [0.02]
-m <- 20.0     # Growth constant of S. pneumoniae within host [20.0]
-b <- 0.05     # Within-host growth "benefit" of sensitive strain [0.05]
 
-##### New event parameters
-beta <- 4.0   # Person-to-person transmission rate [4.0]
-u <- 0.43     # Natural clearance rate [0.43]
-tau <- 0.2    # Antibiotic treatment rate [0.2]
+## Model parameters
+beta <- 0.5      # Transmission parameter
+iota <- 1e-5     # Importation rate
+delta <- 1/2.5   # Rate of transitioning out of latent state
+gamma <- 1/5     # Rate of transitioning out of infectious state
+omega <- 1/180   # Rate of waning immunity
 
-# B. Model parameters: granularity of simulation
-dt <- 1/30   # Length of each time step in months [1/30]
-years <- 1   # Number of years to simulate [1]
-steps <- (12 * years)/dt  # Time steps to run simulation
+dt <- 1          # Time step of simulation (1 day)
+days <- 365*2    # Duration of simulation (2 years)
+steps <- days/dt # Total number of time steps
+n <- 1000        # Population size
 
-##### New granularity parameters
-n <- 500     # Number of individuals to simulate [500]
 
-# C. Events
-# Here, we define, in functional form, all the events that can happen to a host.
-# Each function takes a vector (s, r) of the host's sensitive and resistant strain carriage
-# and evaluates to a vector of the same format.
-
-# Exposure to sensitive strain
-ExposeToS <- function(h) {
-    list(s = h$s + g, r = h$r)
+## Some helper functions
+# Calculates infectiousness as a function of state and age: zero if state is 
+# not "I"; nonzero if state is "I", and slightly decreasing with age
+infectiousness = function(state, age)
+{
+    ifelse(state == "I", 1.25 - age / 160, 0)
 }
 
-# Exposure to resistant strain
-ExposeToR <- function(h) {
-    list(s = h$s, r = h$r + g)
+# Calculates susceptibility of individuals with antibody level(s) ab
+susceptibility = function(ab)
+{
+    pnorm(ab, 5, 1)
 }
 
-# Natural clearance by the immune system
-Clearance <- function(h) {
-    list(s = 0, r = 0)
+# Generates n random delays from the latent-period distribution 
+# (approximately 2 days, on average)
+latent_delay = function(n)
+{
+    rlnorm(n, meanlog = 0.5, sdlog = 0.6)
 }
 
-# Antibiotic treatment 
-Treatment <- function(h) {
-    list(s = 0, r = h$r)
+# Generates n random delays from the infectious-period distribution 
+# (approximately 5 days, on average)
+infectious_delay = function(n)
+{
+    rlnorm(n, meanlog = 1.5, sdlog = 0.5)
 }
 
-# Within-host growth and competition for one time step
-Growth <- function(h) {
-    ds_dt <- h$s * m * (1 + b - h$s - h$r)
-    dr_dt <- h$r * m * (1 - h$s - h$r)
-    list(s = h$s + ds_dt * dt, r = h$r + dr_dt * dt)
+# Generates n random increments to antibody levels following recovery
+ab_increment = function(n)
+{
+    rnorm(n, mean = 12, sd = 2)
 }
 
-##### D. Event function -- for an event with rate x and time step dt, evaluates
-##### to TRUE with the same probability that the event happens in a given time step.
-Event <- function(x, dt) {
-    return (runif(1) < ...)
-}
 
-##### E. Storage for all hosts -- this time we want a data frame rather than a list,
-##### to track sensitive and resistant carriage for n individuals rather than just one
-hosts <- data.frame(s = rep(0, n), ...)
-
-# Seed the simulation with some carriers of each strain
-hosts$s[1:10] <- 0.5
-hosts$r[1:10] <- 0.5
-
-##### Storage of simulation results
-##### Note: in carriageS and carriageR, we will store the total amount of sensitive
-##### and resistant strains in the population. In host1S and host1R, we will store
-##### a time series of carriage for a single host -- just to verify that this is
-##### all working the way we think it should.
-results <- data.frame(time = (0:steps) * dt,
-                      carriageS = 0, carriageR = 0,
-                      host1s = 0, host1r = 0)
-
-# Store the initial conditions
-results$carriageS[1] <- sum(hosts$s)
-results$carriageR[1] <- sum(hosts$r)
-results$host1s[1] <- hosts$s[1]
-results$host1r[1] <- hosts$r[1]
+## Data frame to store simulation results
+results <- data.frame(ts = 1:steps, S = 0, E = 0, I = 0, R = 0)
 
 
-# E. The simulation itself.
+## Initialize simulation
 
-# We'll use the built-in function txtProgressBar to track the simulation's progress.
-# Really helps for planning coffee breaks! It needs to know the minimum and maximum
-# values to expect, and style = 3 tells it to report the percentage complete.
+# Set the seed for the pseudorandom number generator, for reproducibility
+set.seed(12345)
+
+# Initialize state variables
+state <- rep("S", n)   # Each individual's state: start with all susceptible
+state[1:10] <- "E"     # Start 10 individuals in the "exposed" state
+
+
+## Run simulation
+
+# Initialize progress bar
 bar <- txtProgressBar(min = 1, max = steps, style = 3)
 
 # Loop over each time step . . .
 for (ts in 1:steps)
 {
-    ##### Calculate the total population carriage of each strain
-    ##### Hint: we can use the sum function for this
-    carriageS <- ... 
-    carriageR <- ...
-
-    ##### Calculate force of infection of each strain
-    ##### Hint: this is the population carriage of each strain, times the transmission rate
-    lambdaS <- ...
-    lambdaR <- ...
-
-    ##### Save population state for this time step
-    results$carriageS[ts + 1] <- ...
-    ...
+    # Calculate the force of infection
+    lambda <- beta * sum(state == "I") / n + iota
 
     # Loop through each host . . .
     for (i in 1:n)
     {
-        # Transmission of S. pneumoniae sensitive strain: hosts become sensitive-strain 
-        # carriers at rate lambdaS. We'll use our Event() function from above to run the
-        # code with the correct probability.
-        if (Event(lambdaS, dt)) {
-            hosts[i,] <- ExposeToS(hosts[i,])
-        }
+        # Update individual i's non-state variables
+        # . . .
         
-        #### Fill in code for ExposeToR, Clearance, Treatment, and Growth
-        ...
+        # Update individual i's state
+        if (state[i] == "S") {
+            # Transition S -> E (infection) at rate lambda
+            if (runif(1) < 1 - exp(-lambda * dt)) {
+                state[i] <- "E"
+            }
+        } else if (state[i] == "E") {
+            # Transition E -> I (latent to infectious) at rate delta
+            if (runif(1) < 1 - exp(-delta * dt)) {
+                state[i] <- "I"
+            }
+        } else if (state[i] == "I") {
+            # Transition I -> R (infectious to recovered) at rate gamma
+            if (runif(1) < 1 - exp(-gamma * dt)) {
+                state[i] <- "R"
+            }
+        } else if (state[i] == "R") {
+            # Transition R -> S (waning of immunity) at rate omega
+            if (runif(1) < 1 - exp(-omega * dt)) {
+                state[i] <- "S"
+            }
+        }
     }
     
-    # Update progress bar with the current time step; close progress bar if we are finished
+    # Save population state for this time step
+    results[ts, "S"] <- sum(state == "S")
+    results[ts, "E"] <- sum(state == "E")
+    results[ts, "I"] <- sum(state == "I")
+    results[ts, "R"] <- sum(state == "R")
+    
+    # Update progress bar; close progress bar if we are finished
     setTxtProgressBar(bar, ts)
     if (ts == steps) {
         close(bar)
     }
 }
 
-# F. Plot simulation results
-# 1. Whole population
+## Plot simulation results
 ggplot(results) + 
-    geom_line(aes(x = time, y = carriageS / n), colour = "blue") + 
-    geom_line(aes(x = time, y = carriageR / n), colour = "red", linetype = "dashed") +
-    labs(x = "Time (months)", y = "Mean carriage density")
-
-# 2. Individual host
-ggplot(results) +
-    geom_ribbon(aes(x = time, ymin = 0, ymax = host1r), fill = "red") + 
-    geom_ribbon(aes(x = time, ymin = host1r, ymax = host1r + host1s), fill = "blue") +
-    labs(x = "Time (months)", y = "Carriage density")
-
-
-##### QUESTIONS FOR DISCUSSION
-##### 1. How does the prevalence of the resistant strain change depending on the treatment rate
-##### and the sensitive strain's within-host growth benefit?
-##### 2. Non-susceptibility to penicillin among circulating strains of S. pneumoniae was measured
-##### at 81.4% among children under 5 in eastern Kenya in 2009-2010 (Kobayashi et al. 2017, BMC
-##### Inf Dis 17:25). Can you approximate this resistance prevalence by adjusting model parameters?
+    geom_line(aes(x = ts, y = S, colour = "S")) + 
+    geom_line(aes(x = ts, y = E, colour = "E")) + 
+    geom_line(aes(x = ts, y = I, colour = "I")) + 
+    geom_line(aes(x = ts, y = R, colour = "R"))

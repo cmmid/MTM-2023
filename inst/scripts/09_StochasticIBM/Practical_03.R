@@ -1,167 +1,136 @@
-# Optimizing the model to run faster
-library(ggplot2) # For plotting
+# Individual-based SARS-CoV-2 transmission model, practical 3
+library(ggplot2)
 
-##### All parameters are as before.
-# A. Model parameters: events
-g <- 0.02     # "Germ size" of a transmitted strain [0.02]
-m <- 20.0     # Growth constant of S. pneumoniae within host [20.0]
-b <- 0.05     # Within-host growth "benefit" of sensitive strain [0.05]
-beta <- 4.0   # Person-to-person transmission rate [4.0]
-u <- 0.43     # Natural clearance rate [0.43]
-tau <- 0.2    # Antibiotic treatment rate [0.2]
 
-# B. Model parameters: granularity of simulation
-dt <- 1/30   # Length of each time step in months [1/30]
-years <- 1   # Number of years to simulate [1]
-n <- 500     # Number of individuals to simulate [500]
+## Model parameters
+beta <- 0.5      # Transmission parameter
+iota <- 1e-5     # Importation rate
+wane <- 0.05     # Rate of antibody waning
 
-##### C. We are no longer defining events in terms of functions operating upon a single
-##### host, but handling this directly in the main simulation loop below. However, this
-##### time, we are going to wrap all the code needed to run the simulation in its own
-##### function. This will make it easier to run multiple simulations.
-RunSimulation <- function()
+dt <- 1          # Time step of simulation (1 day)
+days <- 365*4    # Duration of simulation (4 years)
+steps <- days/dt # Total number of time steps
+n <- 5000        # Population size
+
+
+## Some helper functions
+# Calculates infectiousness as a function of state and age: zero if state is 
+# not "I"; nonzero if state is "I", and slightly decreasing with age
+infectiousness = function(state, age)
 {
-    ##### Time steps to run simulation
-    steps <- (12 * years)/dt
+    ifelse(state == "I", 1.25 - age / 160, 0)
+}
 
-    ##### Create storage for all hosts -- as before.
-    hosts <- data.frame(s = rep(0, n), r = rep(0, n))
+# Calculates susceptibility of individuals with antibody level(s) ab
+susceptibility = function(ab)
+{
+    pnorm(ab, 5, 1)
+}
 
-    # Seed the simulation with some carriers of each strain
-    hosts$s[1:10] <- 0.5
-    hosts$r[1:10] <- 0.5
+# Generates n random delays from the latent-period distribution 
+# (approximately 2 days, on average)
+latent_delay = function(n)
+{
+    rlnorm(n, meanlog = 0.5, sdlog = 0.6)
+}
 
-    ##### Create storage for simulation results -- as before.
-    ##### This will be returned from the function at the end.
-    results <- data.frame(time = (0:steps) * dt,
-                     carriageS = 0, carriageR = 0,
-                     host1s = 0, host1r = 0)
+# Generates n random delays from the infectious-period distribution 
+# (approximately 5 days, on average)
+infectious_delay = function(n)
+{
+    rlnorm(n, meanlog = 1.5, sdlog = 0.5)
+}
 
-    # Store the initial conditions
-    results$carriageS[1] <- sum(hosts$s)
-    results$carriageR[1] <- sum(hosts$r)
-    results$host1s[1] <- hosts$s[1]
-    results$host1r[1] <- hosts$r[1]
+# Generates n random increments to antibody levels following recovery
+ab_increment = function(n)
+{
+    rnorm(n, mean = 12, sd = 2)
+}
 
-    # Run the simulation
-    bar <- txtProgressBar(min = 1, max = steps, style = 3)
 
-    # Loop over each time step . . .
-    for (ts in 1:steps)
-    {
-        # Calculate the total population carriage of each strain
-        carriageS <- sum(hosts$s)
-        carriageR <- sum(hosts$r)
+## Data frame to store simulation results
+results <- data.frame(ts = 1:steps, S = 0, E = 0, I = 0, AMeanU = 0, AMeanV = 0)
+
+
+## Initialize simulation
+
+# Set the seed for the pseudorandom number generator, for reproducibility
+set.seed(12345)
+
+# Initialize state variables
+state <- rep("S", n)   # Each individual's state: start with all susceptible
+age <- runif(n, 0, 80) # Each individual's age: random distribution from 0 to 80
+delay <- rep(0, n)     # Delay for latent and infectious periods
+antib <- rep(0, n)     # Antibody concentration for each individual
+vacc <- rep(FALSE, n)  # Vaccinated status
+
+state[1:10] <- "E"     # Start 10 individuals in the "exposed" state
+
+
+## Run simulation
+
+# Initialize progress bar
+bar <- txtProgressBar(min = 1, max = steps, style = 3)
+
+# Loop over each time step . . .
+for (ts in 1:steps)
+{
+    # Calculate the force of infection
+    lambda <- beta * sum(infectiousness(state, age)) / n + iota
     
-        # Calculate force of infection of each strain
-        lambdaS <- beta * carriageS / n
-        lambdaR <- beta * carriageR / n
-        
-        # Save population state for this time step
-        results$carriageS[ts + 1] <- sum(hosts$s)
-        results$carriageR[ts + 1] <- sum(hosts$r)
-        results$host1s[ts + 1] <- hosts$s[1]
-        results$host1r[ts + 1] <- hosts$r[1]
+    ##### NOTE - There is no inner loop over individuals anymore!
     
-        ##### This is where the changes come in.
-        ##### Now, rather than looping through each host -- which is inefficient --
-        ##### we will "vectorize" the dynamics so that each type of event is executed
-        ##### with a few statements. This allows the code to run much more quickly.
-        
-        ##### This can be broken down into three steps for each event:
-        ##### 1. Decide how many hosts experience the event this time step.
-        ##### 2. Select which specific hosts will experience the event.
-        ##### 3. Execute the event.
-        ##### Then, after each event has been done:
-        ##### 4. Run any additional logic that needs to be done for all hosts.
-        
-        ##### 1. To select which hosts experience a particular event, we first draw
-        ##### from a binomial distribution to get the number N of hosts experiencing the
-        ##### event (with n trials and success probability 1 - exp(-x * dt), where x is the
-        ##### rate of the event happening). Then, we sample N integers from 1 to n, where
-        ##### n is the total number of hosts, to select which hosts will experience the event.
-        
-        ##### To sample from a binomial distribution, use the rbinom function. We need to do
-        ##### this for sensitive-strain transmission, resistant-strain transmission, clearance,
-        ##### and treatment events.
-        NExposeToS <- ...
-        NExposeToR <- ...
-        NClearance <- ...
-        NTreatment <- ...
-
-        ##### 2. To select which hosts, we can use the sample function, with 1:n as the first 
-        ##### parameter and the number of hosts affected by the event as the second parameter.
-        iExposeToS <- ...
-        ...
-
-        ##### 3. To execute events, we use the same logic as the previous part of the practical,
-        ##### but vectorise the events.
-        hosts$s[iExposeToS] <- ...
-        ...
-
-        ##### 4. Finally, for the logic that needs to happen to all hosts (i.e. within-host
-        ##### growth and competition), we can operate on columns of the data frame all at once.
-        ds_dt <- hosts$s * ...
-        ...
-
-        # Update progress bar
-        setTxtProgressBar(bar, ts)
-        if (ts == steps) {
-            close(bar)
-        }
+    # Update non-state variables (for all individuals simultaneously)
+    # Time remaining in latent/infectious periods
+    delay <- delay - dt
+    ##### Fill in: Antibody waning
+    antib <- ...
+    ##### Fill in: Vaccination at time step 300 for over-40s
+    if (ts == 300) {
+        vacc[...] <- ...
+        antib[...] <- ...
     }
     
-    # Finally, return the results.
-    return (results)
-}
-
-# Run the simulation
-results <- RunSimulation()
-
-# F. Plot simulation results
-# 1. Whole population
-ggplot(results) + 
-    geom_line(aes(x = time, y = carriageS / n), colour = "blue") + 
-    geom_line(aes(x = time, y = carriageR / n), colour = "red", linetype = "dashed") +
-    labs(x = "Time (months)", y = "Carriage proportion")
-
-# 2. Individual host
-ggplot(results) +
-    geom_ribbon(aes(x = time, ymin = 0, ymax = host1r), fill = "red") + 
-    geom_ribbon(aes(x = time, ymin = host1r, ymax = host1r + host1s), fill = "blue") +
-    labs(x = "Time (months)", y = "Carriage proportion")
-
-##### G. Now that we have a faster-running version of the simulation, let's do
-##### a little exploration of the impact of varying parameters on simulation
-##### dynamics. One possibility is to increase n and years here to get less
-##### noisy results, but feel free to adjust these as desired.
-n <- 1000
-years <- 10
-
-##### We're going to do 20 runs, varying the treatment rate from tau_min to tau_max.
-n_runs <- 20
-tau_min <- 0
-tau_max <- 0.4
-
-##### Storage for results of this parameter sweep.
-sweep <- data.frame(tau = rep(0, n_runs), carriageS = 0, carriageR = 0)
-
-##### Do the parameter sweep
-for (run in 1:n_runs)
-{
-    ##### Set tau and run the simulation.
-    tau <- tau_min + (run - 1) * (tau_max - tau_min) / (n_runs - 1)
-    results <- RunSimulation()
+    # Update state variables (for all individuals simultaneously)
+    ##### trE selects all individuals who will transition states from S to E.
+    ##### Fill in similar conditions for trI (E->I) and trS (I->S).
+    trE <- (state == "S") & (runif(n) < 1 - exp(-lambda * dt)) & (runif(n) > susceptibility(antib))
+    trI <- ...
+    trS <- ...
     
-    #### Store results, with carriage averaged over the last 500 rows.
-    rows <- nrow(results)
-    sweep$tau[run] <- tau
-    sweep$carriageS[run] <- mean(results$carriageS[(rows - 499):rows])
-    sweep$carriageR[run] <- mean(results$carriageR[(rows - 499):rows])
+    # Do state transitions
+    # transition S -> E
+    state[trE] <- "E"
+    delay[trE] <- latent_delay(sum(trE))
+
+    ##### Fill in:
+    # transition E -> I
+    ...
+
+    # transition I -> S
+    ...
+    
+    # Save population state for this time step
+    results[ts, "S"] <- sum(state == "S")
+    results[ts, "E"] <- sum(state == "E")
+    results[ts, "I"] <- sum(state == "I")
+    results[ts, "AMeanU"] <- mean(antib[!vacc])
+    results[ts, "AMeanV"] <- mean(antib[vacc])
+
+    # Update progress bar; close progress bar if we are finished
+    setTxtProgressBar(bar, ts)
+    if (ts == steps) {
+        close(bar)
+    }
 }
 
-##### Show results
-ggplot(sweep) + 
-    geom_line(aes(x = tau, y = carriageS), colour = "blue") + 
-    geom_line(aes(x = tau, y = carriageR), colour = "red", linetype = "dashed") +
-    labs(x = "Treatment rate (months^-1)", y = "Mean carriage density\nat end of simulation")
+## Plot simulation results
+ggplot(results) + 
+    geom_line(aes(x = ts, y = S, colour = "S")) + 
+    geom_line(aes(x = ts, y = E, colour = "E")) + 
+    geom_line(aes(x = ts, y = I, colour = "I"))
+
+ggplot(results) + 
+    geom_line(aes(x = ts, y = AMeanU, colour = "Unvaccinated")) +
+    geom_line(aes(x = ts, y = AMeanV, colour = "Vaccinated")) +
+    labs(x = "Time step", y = "Mean antibody level")
