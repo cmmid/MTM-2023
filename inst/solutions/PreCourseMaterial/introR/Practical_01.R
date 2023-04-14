@@ -44,21 +44,21 @@ class(object4)
 
 # E. You can manipulate objects and make operations on them
 object2 + 1
-object3*object3
-object2/object3
+object3 * object3
+object2 / object3
 object1 + object2
 
 # what happened at each of these commands? is it what you expected?
-# Answer: there was an error for the last one, because characters cannot be added
+# Answer: there was an error for the last one: characters cannot be added
 
 # F. You can view the history of commands that were run.
 # check the history of commands in the history tab (upper right)
 
 # G. Make some other objects
-df1 <- data.frame(ID=1:5, 
-                  animal=c("bear", "cat", "horse", "cat", "pig"),
-                  weight=c(200, 5, 600, 8, 100))
-mat1 <- matrix(data=1:50, nrow=10, ncol=5)
+df1 <- data.frame(ID = 1:5,
+                  animal = c("bear", "cat", "horse", "cat", "pig"),
+                  weight = c(200, 5, 600, 8, 100))
+mat1 <- matrix(data = 1:50, nrow = 10, ncol = 5)
 
 # view these objects
 df1
@@ -69,9 +69,10 @@ View(mat1)
 # in R, what is the difference between a data.frame and a matrix?
 # hint: google it.
 # Answer: Matrices can be only of 1 class, e.g. numeric, integer, etc
-# data frames can be a mixture of classes by column, e.g. col1=numeric, col2=character
+# data frames can be a mixture of classes by column, e.g.
+# col1 = numeric, col2 = character
 
-# H. Calculate the mean weight of the animals in df1. (i.e. mean of column 3 of df1)
+# H. Calculate the mean weight of the animals in df1 (mean of column 3 of df1)
 # you can either refer to a column by name or by index
 # check what the names are
 colnames(df1)
@@ -94,24 +95,22 @@ colnames(mat1) <- c("A", "B", "C", "D", "E")
 mat1
 
 # J. What is the value of the element row 5, column C in mat1?
-# inspect the element by referencing the row, then column, either by name or number
+# check by referencing the row, then column, either by name or number
 mat1[5, "C"]
-mat1[5,  3]
+mat1[5, 3]
 
 # Answer: 25
 
 # what is the value of row 8, column E?
-mat1[8,  "E"]
+mat1[8, "E"]
 # Answer: 48
 
 # K. Discard all of mat1 except the 1st and 4th column.
 # subset mat1 to keep only the 1st and 4th column by number or name
-mat1[ , c(1, 4)]
-mat1[ , c("A", "D")]
+mat1[, c(1, 4)]
+mat1[, c("A", "D")]
 
 # Create a new object of the smaller matrix.
 # assign the subsetted version as a new object, mat2
-mat2 <- mat1[ , c("A", "D")]
-mat2 <- mat1[ , c(1, 4)]
-
-
+mat2 <- mat1[, c("A", "D")]
+mat2 <- mat1[, c(1, 4)]

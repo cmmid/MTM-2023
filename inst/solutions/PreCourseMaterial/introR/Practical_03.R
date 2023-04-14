@@ -3,44 +3,45 @@
 ######################################################
 
 # A. Read in the same data as before
-myTBdata <- read.table("PreCourseMaterial/introR/TB_stats.txt", header=TRUE)
+myTBdata <- read.table("PreCourseMaterial/introR/TB_stats.txt", header = TRUE)
 
 # B. Plot the mortality in HIV negative against HIV positive.
 # check the plot function help file
 ?plot
-# plot is a generic function, and depending on what type of data you pass the function
-# R will use different sub-functions (you dont need to worry about how it handles this!)
+# plot is a generic function, and depending on what type of data you pass the
+# function R will use different sub-functions (you dont need to worry about how
+# it handles this!)
 
 # make the plot
-plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality)
+plot(x = myTBdata$HIV_neg_TB_mortality, y = myTBdata$HIV_pos_TB_mortality)
 
 # C. Add meaningful axes labels
-plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Mortality in HIV negative people",
-     ylab="Mortality in HIV positive people")
+plot(x = myTBdata$HIV_neg_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+     xlab = "Mortality in HIV negative people",
+     ylab = "Mortality in HIV positive people")
 
 # D. Add a meaningful title
-plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Mortality in HIV negative people",
-     ylab="Mortality in HIV positive people",
-     main="Comparison of mortality in HIV negative and positive")
+plot(x = myTBdata$HIV_neg_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+     xlab = "Mortality in HIV negative people",
+     ylab = "Mortality in HIV positive people",
+     main = "Comparison of mortality in HIV negative and positive")
 
 # E. Change the colour of the points to red
-plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Mortality in HIV negative people",
-     ylab="Mortality in HIV positive people",
-     main="Comparison of mortality in HIV negative and positive",
-     col="red")
+plot(x = myTBdata$HIV_neg_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+     xlab = "Mortality in HIV negative people",
+     ylab = "Mortality in HIV positive people",
+     main = "Comparison of mortality in HIV negative and positive",
+     col = "red")
 
 # F. It's hard to see the numbers because some are small and some very large
 # Using a log scale is useful for that
 # You can either log the values and re-plot, or use the log option in plot()
-plot(x=myTBdata$HIV_neg_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Mortality in HIV negative people",
-     ylab="Mortality in HIV positive people",
-     main="Comparison of mortality in HIV negative and positive",
-     col="red",
-     log="xy")
+plot(x = myTBdata$HIV_neg_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+     xlab = "Mortality in HIV negative people",
+     ylab = "Mortality in HIV positive people",
+     main = "Comparison of mortality in HIV negative and positive",
+     col = "red",
+     log = "xy")
 
 # G. Now let's make a different kind of plot
 # show the distribution of Total_TB_mortality in a histogram
@@ -49,7 +50,7 @@ hist(myTBdata$Total_TB_mortality)
 # Change the x axis label
 # Note, same options as before
 hist(myTBdata$Total_TB_mortality,
-     xlab="Number")
+     xlab = "Number")
 
 # Now add a meaningful title to the plot
 ##### Add your code here
@@ -60,9 +61,9 @@ hist(myTBdata$Total_TB_mortality,
 
 # Change the color to "blue"
 hist(myTBdata$Total_TB_mortality,
-     xlab="Number",
-     main="Total TB mortality",
-     col="blue")
+     xlab = "Number",
+     main = "Total TB mortality",
+     col = "blue")
 
 # I. Now let's plot a histogram of mortality per 1000
 # hint: calculate it as in the previous practical
@@ -81,12 +82,12 @@ hist(myTBdata$Total_TB_mortality,
 # you need to make a call to "par", short for parameters,
 # setting the plot parameter "mfrow" (Multi-Figure ROW-wise)
 # gives 1 row, and 2 columns of plot
-par(mfrow=c(1,2))
+par(mfrow = c(1, 2))
 
 hist(myTBdata$Total_TB_mortality,
-     xlab="Number",
-     main="Total TB mortality",
-     col="blue")
+     xlab = "Number",
+     main = "Total TB mortality",
+     col = "blue")
 
 ##### cut and paste your plot code from I. here and run it:
 
@@ -115,12 +116,12 @@ hist(myTBdata$Total_TB_mortality,
 
 ##### Add your code here
 
-plot(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Total TB mortality",
-     ylab="Mortality in HIV positive people",
-     main="Total TB mortality vs in HIV positive people",
-     col="red",
-     log="xy")
+plot(x = myTBdata$Total_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+     xlab = "Total TB mortality",
+     ylab = "Mortality in HIV positive people",
+     main = "Total TB mortality vs in HIV positive people",
+     col = "red",
+     log = "xy")
 
 # add HIV_neg_TB_mortality on the same y axis, in a different colour
 # hint: use points()
@@ -128,11 +129,14 @@ plot(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
 
 ##### Add your code here
 
-points(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_neg_TB_mortality,
-     col="blue")
+points(
+  x = myTBdata$Total_TB_mortality, y = myTBdata$HIV_neg_TB_mortality,
+  col = "blue"
+)
 
 # do you need to change the y axis label?
-# i.e. does it still make sense now that it shows negative and positive mortality?
+# i.e. does it still make sense now that it shows negative and positive
+# mortality?
 # Answer:
 
 # Some of the points no longer fit on the graph.
@@ -143,15 +147,19 @@ points(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_neg_TB_mortality,
 
 ##### Add your code here
 
-plot(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_pos_TB_mortality,
-     xlab="Total TB mortality",
-     ylab="Mortality in HIV positive people",
-     main="Total TB mortality vs in HIV positive people",
-     col="red",
-     log="xy",
-     ylim=c(1, max(myTBdata$HIV_neg_TB_mortality, myTBdata$HIV_pos_TB_mortality)))
-points(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_neg_TB_mortality,
-       col="blue")
+plot(
+  x = myTBdata$Total_TB_mortality, y = myTBdata$HIV_pos_TB_mortality,
+  xlab = "Total TB mortality",
+  ylab = "Mortality in HIV positive people",
+  main = "Total TB mortality vs in HIV positive people",
+  col = "red",
+  log = "xy",
+  ylim = c(1, max(myTBdata$HIV_neg_TB_mortality, myTBdata$HIV_pos_TB_mortality))
+)
+points(
+  x = myTBdata$Total_TB_mortality, y = myTBdata$HIV_neg_TB_mortality,
+  col = "blue"
+)
 
 # the plot now has 2 data sets in different colours, so it needs a legend
 # check the help of legend (there's a lot of options!)
@@ -160,4 +168,6 @@ points(x=myTBdata$Total_TB_mortality, y=myTBdata$HIV_neg_TB_mortality,
 
 ##### Add your code here
 
-legend(x="topright", legend=c("HIV pos", "HIV neg"), fill=c("red", "blue"))
+legend(
+  x = "topright", legend = c("HIV pos", "HIV neg"), fill = c("red", "blue")
+)

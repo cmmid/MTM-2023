@@ -174,30 +174,35 @@ event_I_cull <- function(times, state, parms) {
 parameters <- c(beta = 0.1, K = 100, tau = 0.5, b = 0.1)
 
 # Solve equations, NOTE the use of method = "lsoda"
-output_raw <- ode(y = state, times = times, func = SI_open_model, parms = parameters,
-                  method = "lsoda", events = list(func = event_I_cull, root = TRUE), rootfun = root)
+output_raw <- ode(
+  y = state, times = times, func = SI_open_model, parms = parameters,
+  method = "lsoda", events = list(func = event_I_cull, root = TRUE),
+  rootfun = root
+)
 # Convert to data frame for easy extraction of columns
 output <- as.data.frame(output_raw)
 
 # Plot output
-par( mfrow = c(1, 1))
-plot( output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
+par(mfrow = c(1, 1))
+plot(output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
       xlab = "Time", ylab = "Number")
-lines( output$time, output$I, lwd = 2, col = "red")
+lines(output$time, output$I, lwd = 2, col = "red")
 legend("topright", legend = c("Susceptible", "Infected"),
        lty = 1, col = c("blue", "red"), lwd = 2, bty = "n")
 
 #b) What happens to the infection dynamics when the infected animals are culled?
 
-# Answer: the herd is culled when more than 50% of the target herd size is infected
-# but this is not enough to eradicate infection in the population. The infected herd
-# size goes back up to 50% and is culled again, this cycle continues.
+# Answer: the herd is culled when more than 50% of the target herd size is
+# infected but this is not enough to eradicate infection in the population. The
+# infected herd size goes back up to 50% and is culled again, this cycle
+# continues.
 
 
-#c) Assume now that when an infected herd is culled, the same proportion of animals
-# is ADDED to the susceptible population.
+#c) Assume now that when an infected herd is culled, the same proportion of
+# animals is ADDED to the susceptible population.
 
-# HINT you will need to change the event function to include additions to the S state
+# HINT you will need to change the event function to include additions to the
+# S state
 
 
 ##### YOUR CODE GOES HERE #####
@@ -219,7 +224,7 @@ event_SI_cull <- function(times, state, parms) {
   return(state)
 }
 
-#d) . What happens to the infection dynamics when the infected animals are culled?
+#d) What happens to the infection dynamics when the infected animals are culled?
 # How is this different to when only infected animals are culled?
 
 # Answer: more animals are added to the susceptible state, but the same cycle occurs,
@@ -231,7 +236,8 @@ event_SI_cull <- function(times, state, parms) {
 ## Here we will code our differential equations using Rcpp to compare the speed
 # of solving the model.
 
-## The SIR Rcpp version is an a file called "SIR_model.cpp" and can be sourced as follows
+## The SIR Rcpp version is an a file called "SIR_model.cpp" and can be sourced
+# as follows
 Rcpp::sourceCpp("04_ODEs/SIR_model.cpp")
 
 # Open the file in R and look at the formulation of the SIR model in cpp.
@@ -249,8 +255,10 @@ R_0 <- 0
 state <- c(S = S_0, I = I_0, R = R_0)
 
 # Solve equations
-output_raw <- ode(y = state, times = times, func = SIR_cpp_model, parms = parameters,
-                  method = "rk4")
+output_raw <- ode(
+  y = state, times = times, func = SIR_cpp_model, parms = parameters,
+  method = "rk4"
+)
 # Convert to data frame for easy extraction of columns
 output <- as.data.frame(output_raw)
 
@@ -260,8 +268,6 @@ plot(output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
      xlab = "Time", ylab = "Number")
 lines(output$time, output$I, lwd = 2, col = "red")
 lines(output$time, output$R, lwd = 2, col = "green")
-legend( "topright", legend = c("Susceptible", "Infected", "Recovered"),
-        bg = rgb(1, 1, 1), lty = rep(1, 2), col = c("blue", "red", "green"), lwd = 2, bty = "n")
-
-
-
+legend("topright", legend = c("Susceptible", "Infected", "Recovered"),
+        bg = rgb(1, 1, 1), lty = rep(1, 2), col = c("blue", "red", "green"),
+        lwd = 2, bty = "n")

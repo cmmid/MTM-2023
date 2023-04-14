@@ -1,9 +1,9 @@
 
 ### Practical 10 - Sensitivity and Sampling ###
 
-########################### (1) ONE-WAY UNCERTAINTY ANALYSIS ##############################
+###################### (1) ONE-WAY UNCERTAINTY ANALYSIS ########################
 # First let's clear our workspace, remove plots and load the libraries we need
-rm(list=ls())
+rm(list = ls())
 dev.off()
 library(MTM)
 library(deSolve)
@@ -15,56 +15,62 @@ sampling_maxprevalence
 # (a) What is the first function?
 # Answer: a step function for the SIR model, parametrised by beta and gamma,
 # (b) What are the arguments of the second function?
-# Answer: (1) the parameter values lists, (2) which model to use, (3) whether or not to plot results
+# Answer: (1) the parameter values lists, (2) which model to use, (3) whether or
+# not to plot results
 # (c) What is the output of the second function?
 # Answer: maximum prevalence through the epidemic
 
 # Let's choose a beta value of 0.4 and a gamma value of 0.2
-max.prevalence = sampling_maxprevalence(parameters = list(beta = 0.4, gamma = 0.2), plot_results = TRUE)
+max.prevalence <- sampling_maxprevalence(
+  parameters = list(beta = 0.4, gamma = 0.2), plot_results = TRUE
+)
 print(max.prevalence)
 
-# Now let's look at the effect of the maximum prevalence of the epidemic across gamma = 0.1 -1.0 (increment on 0.1)
-gamma.vec = seq(0.1, 1.0, by = 0.1)
+# Now let's look at the effect of the maximum prevalence of the epidemic across
+# gamma = 0.1 - 1.0 (increment on 0.1)
+gamma.vec <- seq(0.1, 1.0, by = 0.1)
 # initialise max.prevalence container (to the same size as gamma.vec)
-max.prevalence = numeric(length(gamma.vec))
+max.prevalence <- numeric(length(gamma.vec))
 
 # Wrap this in a loop to fill in the max.prevalence vector
 for (i in seq_along(gamma.vec)) {
-  max.prevalence[i] = sampling_maxprevalence(
+  max.prevalence[i] <- sampling_maxprevalence(
     parameters = list(beta = 0.4, gamma = gamma.vec[i])
   )
 }
 
-# Now we have our max.prevalence, we need to plot this against our infectiousness duration
+# Now we have our max.prevalence, we need to plot this against our
+# infectiousness duration:
 
 # plot max.prevalence as a function of the infectiousness duration
-par(new=FALSE)
-par(mfrow=c(1,1))
-plot(1/gamma.vec, max.prevalence, type = "b",
+par(new = FALSE)
+par(mfrow = c(1, 1))
+plot(1 / gamma.vec, max.prevalence, type = "b",
      xlab = "Infectiousness Duration (days)",
      ylab = "Maximum Prevalence",
-     main= "One-way uncertainty analysis")
+     main = "One-way uncertainty analysis")
 
 
-## Now try to increase the resolution of gamma to get a better idea of the relationship
-# but remember to clear max.prevalence first!
+## Now try to increase the resolution of gamma to get a better idea of the
+# relationship, but remember to clear max.prevalence first!
 
 # Replace gamma.vec = seq(0.1, 1.0, by = 0.1) with
-inf.duration = 1:10
-gamma.vec = 1/inf.duration
+inf.duration <- 1:10
+gamma.vec <- 1 / inf.duration
 
 # (d) Describe in words the qualitative relationship
 # Answer: There is no epidemic until the infectiousness duration is >2 (R0>1)
-# after that there is a linear increase in the maximum prevalence until gamma = 6,
-# then there is a diminishing increase in maximum prevalence
+# after that there is a linear increase in the maximum prevalence until
+# gamma = 6, then there is a diminishing increase in maximum prevalence
 
 ###################### (2) MONTE CARLO SAMPLING ######################
 
-# Now suppose that we have a previous epidemiological study that suggested that R0 has a mean value of 5,
-# but uncertainty within the range of -1, +1
-# However, we still don't know whether the infectiousness period is 1 day or 10 days.
-# We will now use the functions in SIRmodel_R0.R to make a similar plot as above, but this time,
-# incorporate the uncertainty of R0 for each discrete value of gamma
+# Now suppose that we have a previous epidemiological study that suggested that
+# R0 has a mean value of 5, but uncertainty within the range of -1, +1.
+# However, we still don't know whether the infectiousness period is 1 day or
+# 10 days. We will now use the functions in SIRmodel_R0.R to make a similar plot
+# as above, but this time, incorporate the uncertainty of R0 for each discrete
+# value of gamma.
 
 # We're going to first use a direct Monte Carlo Sampling method
 # Let's look at the different model step function we'll be using:
@@ -78,11 +84,11 @@ sampling_dSIR_gammaR0
 set.seed(2019)
 
 # Now, draw R0 1,000 times from a suitable distribution (e.g. normal)
-r0.all = rnorm(1000, 5, 0.5)
+r0.all <- rnorm(1000, 5, 0.5)
 
-# initialise max.prevalence again, this time it needs to be a dataframe or a matrix
-# `expand.grid` is convenient function to give you all combinations of some values
-# as a `data.frame`
+# initialise max.prevalence again, this time it needs to be a dataframe or a
+# matrix `expand.grid` is convenient function to give you all combinations of
+# some values as a `data.frame`
 max.prevalence <- expand.grid(r0.value = r0.all, gamma = gamma.vec)
 # now add a column to-be-filled-in
 max.prevalence$max.prev <- NA_real_
@@ -90,7 +96,7 @@ max.prevalence$max.prev <- NA_real_
 # create a loop over all the samples, and evaluate
 # the max prevalence at each
 # n.b. this will take a minute
-for (sample_index in 1:dim(max.prevalence)[1]) {
+for (sample_index in seq_len(dim(max.prevalence)[1])) {
   max.prevalence$max.prev[sample_index] <- sampling_maxprevalence(
     parameters = list(
       R0 = max.prevalence$r0.value[sample_index],
@@ -109,40 +115,39 @@ head(max.prevalence)
 sampling_MC_plot(max.prevalence)
 
 # (f) What conclusions can you draw from the plot?
-# Answer: Increasing the rate of recovery reduces the max prevalence
-# However, the uncertainty in R0 has a larger impact on the maximum prevalence than infectious duration
-# In fact, until the infectiousness duration decreases below 1/0.3 (3d), this parameter doesn't affect prevalence
+# Answer: Increasing the rate of recovery reduces the max prevalence. However,
+# the uncertainty in R0 has a larger impact on the maximum prevalence than
+# infectious duration. In fact, until the infectiousness duration decreases
+# below 1/0.3 (3d), this parameter doesn't affect prevalence
 
 
-########################### (3) LHS vs MONTE CARLO SAMPLING ##############################
+###################### (3) LHS vs MONTE CARLO SAMPLING #########################
 
 ## First let's load in the library we'll need for later
 
 library(lhs)
 
-# We're going to first sample directly from a full distribution uniform distribution from 0 to 1.
-# How many samples will we need to take?
+# We're going to first sample directly from a full distribution uniform
+# distribution from 0 to 1. How many samples will we need to take?
 
 # Let's try a few options and see how well they do
-par(mfrow=c(3,2))
-hist(rnorm(10))
-hist(rnorm(100))
-hist(rnorm(1000))
-hist(rnorm(10000))
-hist(rnorm(20000))
+par(mfrow = c(3, 2))
+n <- c(10, 100, 1000, 10000, 20000)
+rn <- n |> lapply(rnorm)
+tmp <- rn |> mapply(
+  hist, x = _, main = sprintf("Histogram of rnorm(n = %i)", n), xlab = NA
+)
 
-
-# Now let's plot the sample sizes against the variance of the sample distribution
-
-plot(c(10,100,1000,10000,50000,100000),
-     c(var(rnorm(10)), var(rnorm(100)), var(rnorm(1000)), var(rnorm(10000)), var(rnorm(50000)), var(rnorm(100000))),
-     ylab = "variance", main = "Variance of sampled normal")
+# Now let's plot the sample size against the variance of the sample distribution
+varn <- rn |> lapply(var)
+plot(n, varn,
+     ylab = "variance", main = "Variance of sampled normal"
+)
 abline(h = 1)
 
 
-
-### Let's now use 100 samples to see the difference between a Monte Carlo sampling and a LHS sampling approach
-# Pick some small number of samples
+### Let's now use 100 samples to see the difference between a Monte Carlo
+# sampling and a LHS sampling approach. Pick some small number of samples
 n <- 100
 
 # First we're going to sample 100 times from a random sample
@@ -152,49 +157,60 @@ latin_unif <- randomLHS(n, 1)
 
 #plot these two distribution
 dev.off()
-par(mfrow=c(3,2))
+par(mfrow = c(3, 2))
 hist(mc_unif)
 hist(latin_unif)
 
-# You can see how the Latin Hypercube does a great job of sampling evenly across the distribution
+# You can see how the Latin Hypercube does a great job of sampling evenly across
+# the distribution
 
-# Let's now sample from a Normal distribution using a random monte carlo sample across the whole distribution
+# Let's now sample from a Normal distribution using a random Monte Carlo sample
+# across the whole distribution
 mc_norm <- rnorm(n, mean = 0, sd = 1)
 
 # How do we sample using an LHS?
-# We use the previous numbers generated from the uniform LHS to draw samples from the Normal using the Inverse Cumulative Sampling
+# We use the previous numbers generated from the uniform LHS to draw samples
+# from the Normal using the Inverse Cumulative Sampling
 latin_norm <- qnorm(latin_unif, mean = 0, sd = 1)
 
 
 #plot these two normal distributions
-hist(mc_norm, xlim = c(-6,6))
-hist(latin_norm, xlim = c(-6,6))
+hist(mc_norm, xlim = c(-6, 6))
+hist(latin_norm, xlim = c(-6, 6))
 
 # the latin hypercube sample looks much better!
 # Why does this work?
 
 # first let's look at the norm probability distibution
-x <- seq(-6,6, by =0.1) #random variable X
+x <- seq(-6, 6, by = 0.1) #random variable X
 normdens <- dnorm(x, mean = 0, sd = 1) # prob distribution, f(X)
 normcumul <- pnorm(x, mean = 0, sd = 1) # cumulative distribution, F(X)
 plot(x, normdens, "l")
 plot(x, normcumul, "l")
 
 # Most of the density is in the middle range of values (-1 to 1).
-# So we want a method to sample from this more often than the other areas in the distribution.
-# Specifically, we want to sample values from X proportionally to the probability of those values occuring
-# Let's generate some samples between 0-1. These can be values on our Y-axis. Then, if we ask what is the value of the cumulative distribution that corresponds to these uniform values we are taking the inverse
+# So we want a method to sample from this more often than the other areas in the
+# distribution. Specifically, we want to sample values from X proportionally to
+# the probability of those values occuring. Let's generate some samples
+# between 0-1. These can be values on our Y-axis. Then, if we ask what is the
+# value of the cumulative distribution that corresponds to these uniform values
+# we are taking the inverse
 
 # for illustration let's just choose 10 points
 ex_latin <- randomLHS(10, 1)
 # which X values are given by using these as the Y value (denoted by "X"s)?
 abline(h = ex_latin, col = "red")
-points(qnorm(ex_latin, mean = 0, sd = 1), y=rep(0,10), pc = "x")
+points(qnorm(ex_latin, mean = 0, sd = 1), y = rep(0, 10), pc = "x")
 # You can see that the samples are clustered around the middle:
-# in areas of X with higher density, the gradient of the cumluative distribution (F(X)) will be very steep, causing more values between 0 and 1 to map to this range of X with high density
-# That is, F^{-1}(R) = X where R is a uniform random number between 0 and 1.
+# in areas of X with higher density, the gradient of the cumluative distribution
+# (F(X)) will be very steep, causing more values between 0 and 1 to map to this
+# range of X with high density/ That is, F^{-1}(R) = X where R is a uniform
+# random number between 0 and 1.
 
-# So, you can sample from any distribution whose cumluative function is 'invertable' by plugging in uniform random numbers to the inverse cumulative function of your new distribution
-# for more information check out: https://en.wikipedia.org/wiki/Inverse_transform_sampling
+# So, you can sample from any distribution whose cumluative function is
+# 'invertable' by plugging in uniform random numbers to the inverse cumulative
+# function of your new distribution
+# For more details: https://en.wikipedia.org/wiki/Inverse_transform_sampling
 
-# Likewise, to perform LHS on a uni- or mulitvariate non-uniform distribution, we can transform our LHS samples from a uniform distribution as above.
+# Likewise, to perform LHS on a uni- or mulitvariate non-uniform distribution,
+# we can transform our LHS samples from a uniform distribution as above.

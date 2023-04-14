@@ -27,17 +27,19 @@ all(
   network_unstructured_set |> sapply(ecount) ==
     network_structured_set |> sapply(ecount))
 
-# However, if you compare any particular pair, you might notice some differences:
+# However, if you compare any particular pair, you might notice differences:
 pick <- 42
 list(list(
-  "Unstructured" = network_unstructured_set[[pick]] |> network_quickplot(simple = TRUE),
-  "Structured" = network_structured_set[[pick]] |> network_quickplot(simple = TRUE)
+  "Unstructured" = network_unstructured_set[[pick]] |>
+    network_quickplot(simple = TRUE),
+  "Structured" = network_structured_set[[pick]] |>
+    network_quickplot(simple = TRUE)
 )) |> patchwork_grid()
 
 # There are some different edges, but how different? Now we'll use one of the
 # super-powers of [igraph] (and other network libraries): their layout engine.
 #
-# If we remove the default network layout we enforced, the difference becomes clearer:
+# If we remove the default layout we enforced, the difference becomes clearer:
 list(list(
   "Unstructured" = network_unstructured_set[[pick]] |> add_layout_(with_fr()) |>
     network_quickplot(simple = TRUE),
@@ -63,11 +65,13 @@ list(list(
 #'
 #' Now let's have a look at the results of solving SIR on these networks ...
 
-network_unstructured_set |> lapply(network_solve, parms = list(N = 50, p = 0.05)) |>
-  lapply(network_flatten) |> rbindlist(idcol = "sample") -> unstructured.dt
+unstructured.dt <- network_unstructured_set |> lapply(
+  network_solve, parms = list(N = 50, p = 0.05)
+) |> lapply(network_flatten) |> rbindlist(idcol = "sample")
 
-network_structured_set |> lapply(network_solve, parms = list(N = 50, p = 0.05)) |>
-  lapply(network_flatten) |> rbindlist(idcol = "sample") -> structured.dt
+structured.dt <- network_structured_set |> lapply(
+  network_solve, parms = list(N = 50, p = 0.05)
+) |> lapply(network_flatten) |> rbindlist(idcol = "sample")
 
 list(list(
   "Unstructured" = unstructured.dt |> network_plot_histograms(),
@@ -78,9 +82,9 @@ list(list(
 #' you explain the difference?
 #'
 #' @answer As guessed earlier, there is an intermediate case. If we imagine the
-#' two lumps as "households", it's as if sometimes the infection never takes off,
-#' sometimes it takes off in one household, and sometimes its able to jump from
-#' one household to the other.
+#' two lumps as "households", sometimes the infection never takes off, sometimes
+#' it takes off in one household, and sometimes its able to jump from one
+#' household to the other.
 #'
 #' @question How do you imagine these networks were constructed, in terms of
 #' the basic [igraph] primitives we reviewed in the warmup?
