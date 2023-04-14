@@ -22,7 +22,7 @@ SIR_events <- list(
 #' in the minimal SIR model):
 
 SIR_rates <- function(time, state, parms) with(c(parms, as.list(state)), {
-  N <- sum(state)
+  N <- S + I + R
   return(c(infection = beta * S * I/N, recovery = gamma * I))
 })
 
