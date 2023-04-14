@@ -1,17 +1,14 @@
 ######################################################
-#              Metapopultions with ODEs             #
+#              Metapopultions with ODEs              #
 ######################################################
 
-# Load in the deSolve package
-library(deSolve)
-# If the package is not installed, install using the install.packages() function
+library(deSolve) # Load in the deSolve package
 
 ## The code below has been written to solve a Susceptible-Infected-Recovered
 # model with two populations. Familiarise yourself with the expanded model
 # before moving onto the activities that follow.
 # Note: the compartments C1 and C2 reflect the cumulative numbers of people
 # infected. This will be used later on.
-
 
 # # Define model function
 SIR_metapop_model <- function(times, state, parms) {
@@ -77,12 +74,9 @@ par(mfrow = c(1, 1))
 plot(output$time, output$I1, type = "l", col = 4, lwd = 2, ylim = c(0, N1),
       xlab = "Time", ylab = "Number", main = "")
 lines(output$time, output$I2, lwd = 2, col = 2, type = "l")
-legend(
-  "topright",
-  legend = c("Infected in population 1", "Infected in population 2"),
-  lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n"
-)
-
+legend("topright",
+       legend = c("Infected in population 1", "Infected in population 2"),
+       lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
 
 ## A.
 # When you simulate the above model, you'll notice that currently the epidemics
@@ -102,7 +96,6 @@ parameters <- c(beta = 0.4, gamma = 0.1, alpha = 0.05)
 # Answer: Epidemics are identical because initial conditions are the same.
 # Although there is some connectivity between populations, it is symmetrical,
 # so same dynamics in both.
-
 
 ## C.
 # The model is currently set up to record the number of cumulative cases in each
@@ -124,7 +117,7 @@ legend(
 )
 
 # Hint: Create a new variable that calculates the difference between adjacent
-# timesteps, i.e. output$C1[2:t] - output$C1[1:(t-1)]
+# timesteps, i.e. C1[2:t] - C1[1:(t-1)]
 
 cases1 <- diff(output$C1)
 cases2 <- diff(output$C2)
@@ -149,8 +142,7 @@ legend("topright", legend = c("Cases in population 1", "Cases in population 2"),
        lty = rep(1, 2), col = c(4, 2), lwd = 2, bty = "n")
 
 
-#Hint: There are several ways to do this - some are easier than others.
-
+# Hint: There are several ways to do this - some are easier than others.
 
 # E. If you have time, expand the model to three populations (denoted 1, 2, 3).
 # How would you model an epidemic where:
@@ -159,7 +151,6 @@ legend("topright", legend = c("Cases in population 1", "Cases in population 2"),
 #  - mixing between population 1 and population 3 is 10% of the rate of mixing
 #    within these populations
 #  - there is no mixing between population 2 and population 3
-
 
 # # Define model function
 SIR_metapop_model_3 <- function(times, state, parms) {
