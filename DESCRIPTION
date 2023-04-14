@@ -26,7 +26,12 @@ Imports:
     lhs,
     rootSolve,
     purrr,
-    tictoc
+    tictoc,
+    readr,
+    dplyr,
+    forcats,
+    tidyr,
+    pracma
 Suggests:
     gifski,
     learnr,
