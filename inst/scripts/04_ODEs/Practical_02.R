@@ -1,5 +1,5 @@
 ######################################################
-#              ODE's in R: Practical 2                 #
+#              ODE's in R: Practical 2               #
 ######################################################
 
 # Load in the deSolve package
@@ -37,14 +37,21 @@ parameters <- c(beta_max = 0.4, period = 10)
 # Define time to solve equations
 times <- seq(from = 0, to = 50, by = 1)
 
-#a) Plot the equation of beta against a vector of times to understand the time
+# a) Plot the equation of beta against a vector of times to understand the time
 # dependent pattern.
 # How many days does it take to complete a full cycle?
 # How does this relate to the period?
 
-#Answer:
+# Answer:
 
 ##### YOUR CODE GOES HERE #####
+
+
+
+
+
+
+
 
 
 # b) Now solve the model using the function ode and plot the output
@@ -54,13 +61,33 @@ times <- seq(from = 0, to = 50, by = 1)
 ##### YOUR CODE GOES HERE #####
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # c) Change the period to 50 days and plot the output. What does the model
 # output look like? Can you explain why?
 
 # Answer:
+#
+#
 
-
-########## 2 - Using evnts in deSolve
+########## 2 - Using events in deSolve
 
 ## deSolve can also be used to include 'events'. 'events' are triggered by
 # some specified change in the system.
@@ -99,8 +126,8 @@ S_0 <- N - I_0
 state <- c(S = S_0, I = I_0)
 
 # a) Using beta = 0 (no infection risk), K = 100, b = 0.1, and an entirely
-# susceptible population (I_0 = 0) investigate how the population grows,
-# with S_0 = 1, 50 and 100
+# susceptible population (I_0 = 0) investigate how the population grows with
+# S_0 = 1, 50 and 100
 
 # What size does the population grow to? Why is this?
 # Answer:
@@ -109,7 +136,7 @@ state <- c(S = S_0, I = I_0)
 # Answer:
 
 # Define parameter values
-# K is our target herd size,b is the birth rate)
+# K is our target herd size, b is the birth rate)
 parameters <- c(beta = 0, K = 100, b = 0.1)
 
 # To include an event we need to specify two functions 1) the root function and
@@ -162,31 +189,46 @@ legend("topright", legend = c("Susceptible", "Infected"),
 #b) What happens to the infection dynamics when the infected animals are culled?
 
 # Answer:
+#
+#
+#
 
-
-#c) Assume now that when an infected herd is culled, the same proportion of
+# c) Assume now that when an infected herd is culled, the same proportion of
 # animals is ADDED to the susceptible population.
 
-# HINT you will need to change the event function to include additions to
-# the S state
-
+# HINT you will need to change the event function to include additions to the
+# S state
 
 ##### YOUR CODE GOES HERE #####
 
 
-#d) What happens to the infection dynamics when the infected animals are
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# d) What happens to the infection dynamics when the infected animals are
 # culled? How is this different to when only infected animals are culled?
 
 # Answer:
-
+#
 
 ########## 3- Using Rcpp
 
-## Here we will code our differential equations using Rcpp to compare the
-# speed of solving the model.
+## Here we will code our differential equations using Rcpp to compare the speed
+# of solving the model.
 
-## The SIR Rcpp version is an a file called "SIR_model.cpp" and can be
-# sourced as follows
+## The SIR Rcpp version is an a file called "SIR_model.cpp" and can be sourced
+# as follows
 Rcpp::sourceCpp("04_ODEs/SIR_model.cpp")
 
 # Open the file in R and look at the formulation of the SIR model in cpp.
@@ -218,5 +260,5 @@ plot(output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
 lines(output$time, output$I, lwd = 2, col = "red")
 lines(output$time, output$R, lwd = 2, col = "green")
 legend("topright", legend = c("Susceptible", "Infected", "Recovered"),
-        bg = rgb(1, 1, 1), lty = rep(1, 2), col = c("blue", "red", "green"),
-       lwd = 2, bty = "n")
+      bg = rgb(1, 1, 1), lty = rep(1, 2), col = c("blue", "red", "green"),
+      lwd = 2, bty = "n")
