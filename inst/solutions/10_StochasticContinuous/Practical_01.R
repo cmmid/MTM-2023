@@ -13,8 +13,8 @@ library('deSolve')    # for comparison to ODE model results
 #' *rates*. In the SIR model, there are two events:
 
 SIR_events <- list(
-  infection = c(S = -1, I = +1),
-  recovery = c(I = -1, R = +1)
+  infection = c(S = -1, I = +1), # i.e. infection => one S becomes an I
+  recovery = c(I = -1, R = +1)   # i.e. recovery => one I becomes an R
 )
 
 #' and the associated rates, in terms of a `state = c(S=..., I=..., R=...)`
@@ -28,21 +28,24 @@ SIR_rates <- function(time, state, parms) with(c(parms, as.list(state)), {
 
 #' Then in terms of Gillespie's algorithm, a solver is:
 
-stochcont_solve <- function(init_state, transitions, rateFun, params, tf) {
+stochcont_solve <- function(
+  init.state, transitions = SIR_events,
+  rateFun = SIR_rates, params, tf
+) {
   time <- 0 ## initialise time to 0
-  results_df <- list(as.list(c(time=0, init_state)))
-  x <- init_state
+  results_df <- list(as.list(c(time=0, init.state)))
+  x <- init.state
   while (time < tf) {
-    ## update current rates
+    ## update current rates - e.g. c(infection = beta * S * I/N, recovery = gamma * I)
     rates <- rateFun(time, x, parms)
     if (sum(rates) > 0) { ## check if any event can happen
       ## time of next event
       time <- time + rexp(n=1, rate = sum(rates))
       ## check if next event is supposed to happen before end time
       if (time <= tf) {
-        # sample the next event
+        # sample the next event - e.g. picks "infection" or "recovery"
         evt <- transitions[[sample(length(rates), 1, prob = rates)]]
-        # use it to update x
+        # use it to update x - e.g. apply S-1, I+1 or I-1, R+1
         x[names(evt)] <- x[names(evt)] + evt
       } else { ## next event happens after end time
         time <- tf
@@ -75,6 +78,7 @@ r <- stochcont_solve(init.values, SIR_events, SIR_rates, parms, tmax)
 lr <- r |> melt.data.table(
   id.vars = "time", variable.name = "compartment", value.name = "count"
 )
+lr
 
 # plot the result
 ggplot(lr, aes(x=time, y=count, colour=compartment)) +
@@ -102,6 +106,7 @@ traj <- lapply( # for all of ...
 mlr <- traj |> melt.data.table(
   id.vars = c("sample_id", "time"), variable.name = "compartment", value.name = "count"
 )
+mlr
 
 #' @question Now visualise all of the trajectories for the *I*nfectious compartment
 #' on a single plot.
