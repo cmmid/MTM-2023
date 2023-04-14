@@ -53,10 +53,10 @@ library(pracma)
 
 # A.1 Read in the CSV files and convert them to a single wide format data frame
 
-S  <- read_csv("precourse/ggplot/S.csv")
-I1 <- read_csv("precourse/ggplot/I1.csv")
-I2 <- read_csv("precourse/ggplot/I2.csv")
-R  <- read_csv("precourse/ggplot/R.csv")
+S  <- read_csv("PreCourseMaterial/ggplot/S.csv")
+I1 <- read_csv("PreCourseMaterial/ggplot/I1.csv")
+I2 <- read_csv("PreCourseMaterial/ggplot/I2.csv")
+R  <- read_csv("PreCourseMaterial/ggplot/R.csv")
 
 all_dat <- bind_rows(S, I1, I2, R) # pull together into one data frame
 
@@ -132,7 +132,7 @@ all_dat_long <- gather(all_dat,
 # the prevalence and incidence post hoc (remembering best practice is to do
 # this during the model simulation
 
-parameters <- read_csv("precourse/ggplot/100_simulations_parms.csv")
+parameters <- read_csv("PreCourseMaterial/ggplot/100_simulations_parms.csv")
 
 # C.3 Convert the long data frame to wide, so that we have the following
 # headings: time, simulation, S, I1, I2, R
