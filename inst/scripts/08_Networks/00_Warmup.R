@@ -131,7 +131,7 @@ list(list(
 
 # delete every other edge on the lattice
 igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
-igBlmod <- igBl |> delete_edges(1:(ecount(igBl)/2)*2)
+igBlmod <- igBl |> delete_edges(1:(ecount(igBl) / 2) * 2)
 # repeated definition of igBl, in case it got deleted/changed/etc
 
 list(list(
@@ -155,7 +155,7 @@ list(list(
 #' problem:
 
 igBBl <- make_lattice(length = 7, dim = 2) |> add_layout_(on_grid())
-igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl)/2)*2)
+igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl) / 2) * 2)
 list(list(
   "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE) + geom_edge_labels(),
   "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE) +
@@ -169,7 +169,7 @@ list(list(
 # adding edges ...
 iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
 # can be done by naming specific vertices
-iglstarmod <- iglstar |> add_edges(c(c(2,4), c(3,5), c(6,8), c(7,9)))
+iglstarmod <- iglstar |> add_edges(c(c(2, 4), c(3, 5), c(6, 8), c(7, 9)))
 
 list(list(
   "N=9 Star" = network_quickplot(iglstar, simple = TRUE) + geom_vertex_labels(),
@@ -231,7 +231,7 @@ list(list(
 
 # first, we make two initially identical populations - 100 individuals, in
 # 10x10 lattices, everyone initially unvaccinated:
-ordered.pop <- make_lattice(length=10, dim=2) |> add_layout_(on_grid())
+ordered.pop <- make_lattice(length = 10, dim = 2) |> add_layout_(on_grid())
 V(ordered.pop)$state <- "unvaccinated"
 # makes a copy with identical attributes:
 random.pop <- ordered.pop
@@ -275,8 +275,12 @@ demo.colors <- c(
 
 # now plot your two networks alongside the MTM ones ...
 list(list(
-  "MTM Random" = network_quickplot(network_warmup_vaccine_random, values = demo.colors),
-  "MTM Targetted" = network_quickplot(network_warmup_vaccine_ordered, values = demo.colors)
+  "MTM Random" = network_quickplot(
+    network_warmup_vaccine_random, values = demo.colors
+  ),
+  "MTM Targetted" = network_quickplot(
+    network_warmup_vaccine_ordered, values = demo.colors
+  )
 ), list(
   "My Random" = network_quickplot(random.pop, values = demo.colors),
   "My Targetted" = network_quickplot(ordered.pop, values = demo.colors)
@@ -293,8 +297,12 @@ E(random.pop)[
 
 # ... you'll find a different distribution, because the random seed differs
 list(list(
-  "MTM Random" = network_quickplot(network_warmup_vaccine_random, values = demo.colors),
-  "MTM Targetted" = network_quickplot(network_warmup_vaccine_ordered, values = demo.colors)
+  "MTM Random" = network_quickplot(
+    network_warmup_vaccine_random, values = demo.colors
+  ),
+  "MTM Targetted" = network_quickplot(
+    network_warmup_vaccine_ordered, values = demo.colors
+  )
 ), list(
   "My Random" = network_quickplot(random.pop, values = demo.colors),
   "My Targetted" = network_quickplot(ordered.pop, values = demo.colors)

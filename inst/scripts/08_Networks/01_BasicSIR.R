@@ -3,7 +3,7 @@ require(MTM)
 require(igraph)
 
 reminder(
-  "This material is written using the `igraph` library. There are other libraries
+"This material is written using the `igraph` library. There are other libraries
 that provide the same basic functionality, but via different approaches,
 e.g. `networkx`."
 )
@@ -69,7 +69,7 @@ network_solve
 
 set.seed(13)
 
-list(N = 30, p = 0.05) |> network_solve(parms = _) -> sim_example
+sim_example <- list(N = 30, p = 0.05) |> network_solve(parms = _)
 
 # we can look at the resulting epidemic in summary
 sim_example |> network_flatten() |> network_plot_series()
@@ -88,7 +88,7 @@ list(N = 30, p = 0.05) |> network_solve(parms = _) |>
 # ...which means we need to think about typical behavior
 # across many realizations of the simulation
 # n.b.: this may take a minute
-samples.dt <- network_sample_ReedFrost(n=300, parms = list(N=30, p=0.1))
+samples.dt <- network_sample_ReedFrost(n = 300, parms = list(N = 30, p = 0.1))
 
 # we can get a holistic sense of the trends in these realizations
 # by overlaying the time series
@@ -121,7 +121,7 @@ stochdisc_dReedFrost
 #' can build up a distribution of outcomes like we did for the network version,
 #' and then compare those results:
 
-cb_samples.dt <- stochdisc_sample(n=300, parms = list(N=30, p=0.1))
+cb_samples.dt <- stochdisc_sample(n = 300, parms = list(N = 30, p = 0.1))
 
 list(list(
   "Network Histograms" = samples.dt |> network_plot_histograms(),
