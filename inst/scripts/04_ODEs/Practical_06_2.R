@@ -12,7 +12,7 @@ library(deSolve)
 # The transmission rate is a function of the maximum value of beta
 # and the period of the cycle in days
 
-# Define model function 
+# Define model function
 SI_seasonal_model <- function(times, state, parms){
   ## Define variables
   S <- state["S"]
@@ -23,7 +23,7 @@ SI_seasonal_model <- function(times, state, parms){
   period <- parms["period"]
   # Calculate time dependent transmission rate
   beta <- beta_max / 2 * (1 + sin(times * (2 * pi / period) ) )
-  
+
   # Define differential equations
   dS <- - (beta * S * I) / N
   dI <- (beta * S * I) / N
@@ -38,8 +38,8 @@ parameters <- c(beta_max = 0.4, period = 10)
 times <- seq(from = 0, to = 50, by = 1)
 
 #a) Plot the equation of beta against a vector of times to understand the time
-# dependent pattern. 
-# How many days does it take to complete a full cycle? 
+# dependent pattern.
+# How many days does it take to complete a full cycle?
 # How does this relate to the period?
 
 #Answer:
@@ -47,7 +47,7 @@ times <- seq(from = 0, to = 50, by = 1)
 ##### YOUR CODE GOES HERE #####
 
 
-# b) Now solve the model using the function ode and plot the output 
+# b) Now solve the model using the function ode and plot the output
 # HINT: you need to write the state vector and use the ode function
 # using func = SI_seasonal_model
 
@@ -57,22 +57,22 @@ times <- seq(from = 0, to = 50, by = 1)
 # c) Change the period to 50 days and plot the output. What does the model output look like?
 # Can you explain why?
 
-# Answer: 
+# Answer:
 
 
 ########## 2 - Using evnts in deSolve
 
-## deSolve can also be used to include 'events'. 'events' are triggered by 
-# some specified change in the system. 
+## deSolve can also be used to include 'events'. 'events' are triggered by
+# some specified change in the system.
 
 # For example, assume an SI model with births represents infetcion in a livestock popuation.
 # If more than half of the target herd size becomes infected, the infected animals are culled
-# at a daily rate of 0.5. 
+# at a daily rate of 0.5.
 
 # As we are using an open population model, we have two additional parameters.
 # The birth rate, b, and the target herd size (or carrying capacity), K
 
-# Define model function 
+# Define model function
 SI_open_model <- function(times, state, parms){
   ## Define variables
   S <- state["S"]
@@ -84,7 +84,7 @@ SI_open_model <- function(times, state, parms){
   b <- parms["b"]
   # Define differential equations
   dS <- b * N * (K - N) / K - ( beta * S * I) / N
-  dI <- (beta * S * I) / N 
+  dI <- (beta * S * I) / N
   res <- list(c(dS, dI))
   return(res)
 }
@@ -102,7 +102,7 @@ state <- c( S = S_0, I = I_0)
 # (I_0 = 0) investigate how the population grows with S_0 = 1, 50 and 100
 
 # What size does the population grow to? Why is this?
-# Answer: 
+# Answer:
 
 # How do you increase this threshold?
 # Answer:
@@ -111,10 +111,10 @@ state <- c( S = S_0, I = I_0)
 # K is our target herd size,b is the birth rate)
 parameters <- c(beta = 0, K = 100, b = 0.1)
 
-# To include an event we need to specify two functions 1) the root function and 
-# 2) the event function 
+# To include an event we need to specify two functions 1) the root function and
+# 2) the event function
 
-# 1) The root function is used to trigger the event 
+# 1) The root function is used to trigger the event
 root <- function(times, state, parms){
   ## Define variables
   S <- state["S"]
@@ -122,7 +122,7 @@ root <- function(times, state, parms){
   N <- S + I
   # Extract parameters
   K <- parms["K"]
-  
+
   # Our condition : more than half of the target herd size becomes infected
   condition <- I <  K * 0.5 # This is a logical condition (TRUE/FALSE)
   return(as.numeric(condition)) # Make this numeric, event occours if root == 0
@@ -135,15 +135,15 @@ event_I_cull <- function(times, state, parms) {
 
   # Extract parameters
   tau <- parms["tau"]
-  
+
   I <- I * (1 - tau) # Cull the infected population
-  
+
   state["I"] <- I # Record new value of I
-  
+
   return(state)
 }
 
-# We add the culling rate tau to our parameter vector 
+# We add the culling rate tau to our parameter vector
 parameters <- c(beta = 0.1, K = 100, tau = 0.5, b = 0.1)
 
 # Solve equations, NOTE the use of method = "lsoda"
@@ -166,7 +166,7 @@ legend("topright", legend = c("Susceptible", "Infected"),
 
 
 #c) Assume now that when an infected herd is culled, the same proportion of animals
-# is ADDED to the susceptible population. 
+# is ADDED to the susceptible population.
 
 # HINT you will need to change the event function to include additions to the S state
 
@@ -177,16 +177,16 @@ legend("topright", legend = c("Susceptible", "Infected"),
 #d) . What happens to the infection dynamics when the infected animals are culled?
 # How is this different to when only infected animals are culled?
 
-# Answer: 
+# Answer:
 
 
 ########## 3- Using Rcpp
 
 ## Here we will code our differential equations using Rcpp to compare the speed
-# of solving the model. 
+# of solving the model.
 
 ## The SIR Rcpp version is an a file called "SIR_model.cpp" and can be sourced as follows
-Rcpp::sourceCpp("SIR_model.cpp")
+Rcpp::sourceCpp("04_ODEs/SIR_model.cpp")
 
 # Open the file in R and look at the formulation of the SIR model in cpp.
 

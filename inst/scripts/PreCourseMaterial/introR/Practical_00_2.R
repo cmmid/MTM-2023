@@ -4,7 +4,7 @@
 
 # A. read in a data file
 
-myTBdata <- read.table("precourse/introR/TB_stats.txt", header=TRUE)
+myTBdata <- read.table("PreCourseMaterial/introR/TB_stats.txt", header=TRUE)
 
 # What does the "header=TRUE" option mean?
 # Answer:
@@ -90,7 +90,7 @@ paste("The relative mortality rate is", round(Relative_Mortality_Rate, 2), sep="
 
 
 # (a) There is not an equal number of columns in each of the rows
-readFile_a <- read.table("precourse/introR/readfileexample_1.txt", header=TRUE)
+readFile_a <- read.table("PreCourseMaterial/introR/readfileexample_1.txt", header=TRUE)
 
 # How do you fix this error?
 # Hint: set missing values in the data file to be 'Not Assigned' by adding them as NA in the original file
@@ -98,7 +98,7 @@ readFile_a <- read.table("precourse/introR/readfileexample_1.txt", header=TRUE)
 
 # (b) The wrong delimiter is used
 
-readFile_b <- read.table("precourse/introR/readfileexample_2.txt", header=TRUE)
+readFile_b <- read.table("PreCourseMaterial/introR/readfileexample_2.txt", header=TRUE)
 
 # Is an error given? Check out 'readFile_b' - is it correct?
 # Answer:
@@ -112,7 +112,7 @@ readFile_b <- read.table("precourse/introR/readfileexample_2.txt", header=TRUE)
 
 
 # (c) The names are read in as data rows rather than names
-readFile_c <- read.csv("precourse/introR/readfileexample_2.txt", header=FALSE)
+readFile_c <- read.csv("PreCourseMaterial/introR/readfileexample_2.txt", header=FALSE)
 
 # Is an error given? Check out 'readFile_c' - is it correct?
 # Answer:
@@ -122,7 +122,7 @@ readFile_c <- read.csv("precourse/introR/readfileexample_2.txt", header=FALSE)
 
 # (d) One of more of the columns contain different classes
 
-readFile_d <- read.table("precourse/introR/readfileexample_3.txt", header=TRUE)
+readFile_d <- read.table("PreCourseMaterial/introR/readfileexample_3.txt", header=TRUE)
 
 # Is an error given? Check out 'readFile_d' - is it correct?
 # Answer:

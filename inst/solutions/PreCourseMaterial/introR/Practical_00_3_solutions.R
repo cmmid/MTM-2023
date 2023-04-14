@@ -3,7 +3,7 @@
 ######################################################
 
 # A. Read in the same data as before
-myTBdata <- read.table("precourse/introR/TB_stats.txt", header=TRUE)
+myTBdata <- read.table("PreCourseMaterial/introR/TB_stats.txt", header=TRUE)
 
 # B. Plot the mortality in HIV negative against HIV positive.
 # check the plot function help file

@@ -102,7 +102,7 @@ all_dat_long <- gather(all_dat,
 # the prevalence and incidence post hoc (remembering best practice is to do
 # this during the model simulation
 
-parameters <- read_csv("precourse/ggplot/100_simulations_parms.csv")
+parameters <- read_csv("PreCourseMaterial/ggplot/100_simulations_parms.csv")
 
 # C.3 Convert the long data frame to wide, so that we have the following
 # headings: time, simulation, S, I1, I2, R
