@@ -33,8 +33,14 @@ ODE model, using a beta-gamma parameterization, complying with the
 require(MTM)
 require(deSolve)
 pars <- list(beta = 0.4, gamma = 0.2, R0 = 2)
-bg <- ode(y = c(S=99, I=1, R=0), times = 0:50, func = sampling_dSIR_betagamma, parms = pars, method = "rk4")
-gR <- ode(y = c(S=99, I=1, R=0), times = 0:50, func = sampling_dSIR_gammaR0, parms = pars, method = "rk4")
+bg <- ode(
+  y = c(S=99, I=1, R=0), times = 0:50,
+  func = sampling_dSIR_betagamma, parms = pars, method = "rk4"
+)
+gR <- ode(
+  y = c(S=99, I=1, R=0), times = 0:50,
+  func = sampling_dSIR_gammaR0, parms = pars, method = "rk4"
+)
 }
 \seealso{
 Other sampling: 

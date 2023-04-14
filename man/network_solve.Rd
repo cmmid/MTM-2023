@@ -27,17 +27,18 @@ vertices and edges as in \code{y}, but can have different attributes.}
 \item{..., }{other arguments passed to \code{func}.}
 }
 \value{
-a list of \link{igraph}s, where the list entries correspond to the population
-state at time t (e.g. \code{list[[1]]} is the initial network state after introduction)
+a list of \link{igraph}s, where the list entries correspond to the
+population state at time t (e.g. \code{list[[1]]} is the initial network state
+after introduction)
 }
 \description{
 Simulates a discrete-time transition function on a network,
 returning a series of network states
 }
 \details{
-This function takes the Reed Frost model parameters (N, p) and implementation
-of the model (set by setupfun, deltafun). Using those, it performs the model
-iteration loop, and returns the series networks
+This function takes the Reed Frost model parameters (N, p) and
+implementation of the model (set by \code{setupfun}, \code{deltafun}). Using those, it
+performs the model iteration loop, and returns the series networks
 }
 \examples{
 require(MTM)

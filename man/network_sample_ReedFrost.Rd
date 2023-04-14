@@ -9,7 +9,7 @@ network_sample_ReedFrost(
   parms,
   func = network_dReedFrost,
   setup_fun = network_build,
-  ref.seed = 0
+  ref_seed = 0
 )
 }
 \arguments{
@@ -21,9 +21,11 @@ network_sample_ReedFrost(
 returns a graph capturing state changes. The graph must have the same
 vertices and edges as in \code{y}, but can have different attributes.}
 
-\item{ref.seed}{a random seed reference value; each sample run seed is offset from this value}
+\item{ref_seed}{a random seed reference value; each sample run seed is offset
+from this value}
 
-\item{setup_func}{a function to create new networks; must have the same signature as \url{network_build}}
+\item{setup_func}{a function to create new networks; must have the same
+signature as \url{network_build}}
 }
 \value{
 a \link[data.table:data.table]{data.table::data.table}, a sample column (integer, 1:\code{n}) &

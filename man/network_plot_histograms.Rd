@@ -4,10 +4,11 @@
 \alias{network_plot_histograms}
 \title{plot summary of a series of simulations}
 \usage{
-network_plot_histograms(s.dt)
+network_plot_histograms(s_dt)
 }
 \arguments{
-\item{s.dt}{a data.table, of the same structure as returned by \code{\link{network_sample_reed_frost}}}
+\item{s_dt}{a \code{data.table}, of the same structure as returned by
+\code{\link{network_sample_reed_frost}}}
 }
 \value{
 a patchwork'd ggplot object

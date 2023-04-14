@@ -11,15 +11,17 @@ scripts(
 )
 }
 \arguments{
-\item{path, }{string; the path to enclosing directory. If this directory does not exist, will create it}
+\item{path, }{string; the path to enclosing directory. If this directory does
+not exist, will create it}
 
-\item{overwrite, }{boolean; overwrite existing files (corresponding to the course scripts)?}
+\item{overwrite, }{logical; overwrite existing files (corresponding to the
+course scripts)?}
 
 \item{what, }{string; the "scripts" or the "solutions"?}
 }
 \value{
-string or NULL; non-NULL indicates successful creation + copy and is the
-top level root of the course material.
+string or \code{NULL}; non-\code{NULL} indicates successful creation + copy and
+is the top level root of the course material.
 }
 \description{
 Create a local copy of the MTM scripts.
@@ -27,18 +29,16 @@ Create a local copy of the MTM scripts.
 \details{
 This function creates a local copy of the R scripts associated with
 the Modern Techniques in Modelling (MTM) short course, for students to edit
-and run during learning activities. These scripts should only require the \code{MTM}
-package and associated dependencies.
+and run during learning activities. These scripts should only require the
 
 The created directory contains several subdirectories, each corresponding to
-a different session. Within each directory, the exercise files are generally named
-\code{NN_short_description.R} (where NN is 00, 01, etc - corresponding to the expected
-order of completion, with the 00 session being background / preparatory content).
+a different session. Within each directory, the exercise files are generally
+named \code{NN_short_description.R} (where NN is 00, 01, etc - corresponding to
+the expected order of completion, with the 00 session being background /
+preparatory content).
 
 If used with default \code{what} argument, you will get a "scripts" subdirectory,
-and if you ask for \code{what = "solutions"} there will be a "solutions" subdirectory.
-Both will contain sessions by name, scripts by order and shortname, without
-and with solutions filled in, respectively.
+and if you ask for \code{what = "solutions"} there will be a "solutions"
 }
 \examples{
 require(MTM)

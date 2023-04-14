@@ -6,7 +6,7 @@
 \usage{
 scale_color_network(
   ...,
-  values = c(SIRcolors, c(active = "red", inactive = "grey")),
+  values = c(SIR_colors, c(active = "red", inactive = "grey")),
   aesthetics = "colour",
   breaks = waiver(),
   na.value = "grey50",

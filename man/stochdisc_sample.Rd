@@ -9,7 +9,7 @@ stochdisc_sample(
   parms,
   func = stochdisc_dReedFrost,
   setup_fun = function(ps) c(S = ps$N - 1, I = 1, R = 0),
-  ref.seed = 0
+  ref_seed = 0
 )
 }
 \arguments{
@@ -20,7 +20,8 @@ stochdisc_sample(
 \item{func}{a function that computes the change in state; see
 \code{\link[deSolve:ode]{deSolve::ode()}} for details of the function signature.}
 
-\item{ref.seed}{a random seed reference value; each sample run seed is offset from this value}
+\item{ref_seed}{a random seed reference value; each sample run seed is offset
+from this value}
 
 \item{setup_func}{a function to create new populations}
 }
