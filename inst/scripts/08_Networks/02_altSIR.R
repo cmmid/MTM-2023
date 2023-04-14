@@ -3,7 +3,7 @@ require(MTM)
 require(igraph)
 
 reminder(
-  "This material is written using the `igraph` library. There are other libraries
+"This material is written using the `igraph` library. There are other libraries
 that provide the same basic functionality, but via different approaches,
 e.g. `networkx`."
 )
@@ -21,9 +21,9 @@ e.g. `networkx`."
 # in the previous practical
 set.seed(13)
 
-pars <- list(N=30, p=0.05)
-pars |> network_build() -> previous_network
-network_percolate(pars, previous_network) -> new_network
+pars <- list(N = 30, p = 0.05)
+previous_network <- pars |> network_build()
+new_network <- network_percolate(pars, previous_network)
 
 list(list(
   "Reference Reed-Frost\nNetwork" = network_quickplot(previous_network),
@@ -55,11 +55,11 @@ list(list(
 #' Make a guess as to what will happen (different, basically the same, ...?) and
 #' then try it out.
 
-previous_network |> network_solve(y = _, parms = pars) -> previous_example
-new_network |> network_solve(y = _, parms = pars) -> new_example
+previous_example <- previous_network |> network_solve(y = _, parms = pars)
+new_example <- new_network |> network_solve(y = _, parms = pars)
 
-previous_example |> network_flatten() |> network_plot_series() -> previous_plot
-new_example |> network_flatten() |> network_plot_series() -> new_plot
+previous_plot <- previous_example |> network_flatten() |> network_plot_series()
+new_plot <- new_example |> network_flatten() |> network_plot_series()
 
 list(list(
   "Reference Results" = previous_plot,
@@ -88,8 +88,10 @@ list(list(
 #' comparison between networks that share the same parameters, but haven't been
 #' made to precisely match.
 
-prev_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, ref_seed = 5)
-new_samples.dt <- network_sample_ReedFrost(n=100, parms = pars, setup_fun = network_percolate)
+prev_samples.dt <- network_sample_ReedFrost(n = 100, parms = pars, ref_seed = 5)
+new_samples.dt <- network_sample_ReedFrost(
+  n = 100, parms = pars, setup_fun = network_percolate
+)
 
 list(list(
   "Reference Histograms" = prev_samples.dt |> network_plot_histograms(),
