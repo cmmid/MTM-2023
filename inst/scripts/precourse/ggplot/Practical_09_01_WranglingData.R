@@ -17,18 +17,18 @@
 #
 # The model used to simulate the disease is
 f_siir <- function(time, state, parameters) {
-    
+
     with(as.list(c(state, parameters)), {
-        
+
         infections1 <- beta*S*I1
         infections2 <- gamma*I1
         deaths      <- delta*I2
-        
+
         dS  <- -infections1
         dI1 <-  infections1 - infections2
         dI2 <-  infections2 - deaths
         dR  <-                deaths
-        
+
         return(list(c(dS, dI1, dI2, dR)))
     })
 }
@@ -39,13 +39,19 @@ f_siir <- function(time, state, parameters) {
 #  key    - which population is contained within this file
 #  1..100 - a vector of population densities for that population
 
+# Load all the libraries for this practical
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(tidyr)
+library(pracma)
+
 #############################
 # A. Reading in data
 #############################
 
 # A.1 Read in the CSV files and convert them to a single wide format data frame
-library(tidyverse)
-library(pracma)
 
 S  <- read_csv("S.csv")
 I1 <- read_csv("I1.csv")
@@ -65,23 +71,25 @@ all_dat <- bind_rows(S, I1, I2, R) # pull together into one data frame
 #
 # https://ggplot2.tidyverse.org/reference/index.html
 
+# General skeleton:
 all_dat %>%
     dplyr::select(time, key, value = ???) %>%
     dplyr::mutate(key = fct_inorder(key)) %>%
-    ggplot(data =., aes(x=time, y=value)) +
-    geom_??? + theme_bw() + 
-    xlab("Time (days)") + ylab("Population density") + 
+    ggplot(data = ., aes(x = time, y = value)) +
+    geom_??? + theme_bw() +
+    xlab("Time (days)") + ylab("Population density") +
     ??? # additional things for the plot
+
 
 #############################
 # C. Calculating the prevalence and incidences
 #############################
 
 # C.1 Reshape the data frame from wide (100 simulations side by side) to long
-# format (stacked atop each other). This so we can repeatedly apply the 
+# format (stacked atop each other). This so we can repeatedly apply the
 # calculations to all simulations at once.
 #
-# NB: we want to gather only on the columns labelled X1, X2 ... X100, not 
+# NB: we want to gather only on the columns labelled X1, X2 ... X100, not
 # on the time and key.
 
 all_dat_long <- gather(all_dat,
@@ -94,12 +102,12 @@ all_dat_long <- gather(all_dat,
 # the prevalence and incidence post hoc (remembering best practice is to do
 # this during the model simulation
 
-parameters <- read_csv("100_simulations_parms.csv")
+parameters <- read_csv("precourse/ggplot/100_simulations_parms.csv")
 
-# C.3 Convert the long data frame to wide, so that we have the following 
+# C.3 Convert the long data frame to wide, so that we have the following
 # headings: time, simulation, S, I1, I2, R
 
-all_dat_parameters <- all_dat_long %>%  
+all_dat_parameters <- all_dat_long %>%
     spread(key = key, value = value) %>% # S/I1/I2/R become column names
     mutate(simulation = parse_number(simulation)) %>% # so it's not character
     arrange(simulation) %>%              # not necessary, pleasing to the eye
@@ -124,31 +132,35 @@ all_dat_parameters <- all_dat_parameters %>%
 
 # C.5 Using the `select()` function, make a data frame that contains the time,
 # simulation index & our two new incidence variables, the initial S population,
-# S0. Gather this data frame so that the two incidence variable are stacked 
+# S0. Gather this data frame so that the two incidence variable are stacked
 # atop each other so that we can calculate incidence rates as incidence/S0 and
 # cumulative incidence as the cumulative integral of these incidence rates
 
-all_cumulative_incidences <- 
+all_cumulative_incidences <-
     all_dat_parameters %>%
     select(???,           # more than one variable goes here
            Stage1 = Inc1, # keeping the incidence rates for stage 1
-           Stage2 = Inc2) # ...and 2 of the disease
-    
+           Stage2 = Inc2  # ...and 2 of the disease
+    ) %>%
+
     gather(key   = Stage,       # we will make a new column called Stage
            value = Incidence,   # ...and the value of incidence at each stage
            Stage1, Stage2) %>%  # ...can be found in the Stage1 and Stage2 cols
-    
+
     group_by(simulation, Stage) %>%
     mutate(inc_Rate = ???,      # per capita rate of infection
            cum_Inc  = ???)      # prop. of S(0) been in I1/I2
 
-# C.6 Group the simulated cumulative incidences by disease stage and time, 
+# C.6 Group the simulated cumulative incidences by disease stage and time,
 # then calculate the median and 90% interval for the cumulative incidences.
 # Plot these quantities to show the uncertainty in the cumulative incidence
 
-summarised_cumulative_incidences <- 
+summarised_cumulative_incidences <-
     all_cumulative_incidences %>%
     group_by(???) %>%  # for each disease stage at each time
     summarise(median = ???, # ...calculate summary statistics
               lower  = ???,
               upper  = ???)
+
+# plotting the summarised cumulative incidence
+???
