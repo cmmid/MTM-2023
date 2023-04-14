@@ -2,6 +2,15 @@
 
 This package contains materials to support the Modern Techniques in Modelling (MTM) course offered by the LSHTM. The content presented in this repository is intended for the short course participants only and may not be redistributed beyond the capacity of this short course. 
 
+## Quickstart
+
+```r
+# try to load or if necessary install-load "remotes" package
+if (!require(remotes)) { install.packages("remotes"); stopifnot(require("remotes")) } 
+remotes::install_github("cmmid/MTM") # install MTM package
+setwd(MTM::scripts()) # download MTM exercises
+```
+
 ## Installation 
 
 The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`. Running this initial command to install `MTM` will also install all package dependencies that you would need for this short course.
