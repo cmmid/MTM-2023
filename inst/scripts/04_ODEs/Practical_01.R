@@ -1,5 +1,5 @@
 ######################################################
-#              ODE's in R: Practical 1                 #
+#              ODE's in R: Practical 1               #
 ######################################################
 
 # Load in the deSolve package
@@ -97,10 +97,12 @@ SIR_model <- function(times, state, parms) {
 ##### YOUR CODE GOES HERE #####
 
 # Define parameter values
-parameters <-
+parameters <- ???
 
 # Define initial conditions
 N <- 100
+
+
 
 state <- ???
 
@@ -154,17 +156,18 @@ legend("topright", legend = c("Susceptible", "Infected", "Recovered"),
 ########## 3 - Solving the SEIR model using deSolve
 
 # The code below has been written to solve a
-# Susceptible-Exposed-Infected-Recovered model. In the model individuals can
-# be in one of four states. Once infected, susceptible individuals move to
-# the exposed class Exposed individuals become infectious at a rate
-# delta = 0.14
+# Susceptible-Exposed-Infected-Recovered model. In the model individuals can be
+# in one of four states. Once infected, susceptible individuals move to the
+# exposed class. Exposed individuals become infectious at a rate delta = 0.14
 
-# If you attempt to run the code below, you will receive an error when ode()
-# is called.
+# If you attempt to run the code below, you will receive an error when ode() is
+# called.
 
 # a) Fix the SEIR_model function so that the ode() line runs without errors.
 
 # Answer:
+#
+#
 
 # # Define model function
 SEIR_model <- function(times, state, parms) {
@@ -185,6 +188,7 @@ SEIR_model <- function(times, state, parms) {
   res <- list(c(dS, dI, dR))
   return(res)
 }
+
 
 # Define parameters
 parameters <- c(beta = 0.4, gamma = 0.1)
@@ -210,7 +214,7 @@ output <- as.data.frame(output_raw)
 # plot results
 par(mfrow = c(1, 1))
 plot(output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
-      xlab = "Time", ylab = "Number")
+     xlab = "Time", ylab = "Number")
 lines(output$time, output$I, lwd = 2, col = "red")
 lines(output$time, output$R, lwd = 2, col = "green")
 lines(output$time, output$E, lwd = 2, col = "cyan")
