@@ -172,7 +172,8 @@ ggplot() + aes(x = time, color = compartment, fill = compartment) +
     legend.position = c(0.05, 0.95), legend.justification = c(0, 1)
   )
 
-#' @question Does it seem like the mean + envelope represents the sample trajectories lines?
+#' @question Does it seem like the mean +/- sd envelope represents the
+#' sample trajectories lines?
 #' @answer Just considering the outbreaks that actually happen, not really!
 
 #' Now let's look at second summary, where we only consider trajectories that have not gone
