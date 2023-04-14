@@ -10,12 +10,12 @@ If you have a company- or organization-managed computer, you might not be able t
 
 ## Local Use
 
-The first function that you are likely to run from the package `MTM` is likely `scripts()`. This function helps you download local copy of MTM content using three arguments:  
+To create a local copy of the course exercises, you can then use `MTM::scripts()` - the default options copy the scripts to `~/Downloads/MTM/scripts` (see below), organized into sub folders by session topic. This function also creates an Rstudio project, which you can open via Rstudio or your typical operating system interface (_e.g._ double-clicking it, `open ~/Downloads/MTM/scripts/scripts.Rproj` at the command prompt). If you use this project, you'll have the correct working directory for any file paths used in the exercises; otherwise, you may need to manually adjust your working directory or file paths when reading in files in various exercises.
+
+When you run `MTM::scripts()`, this function downloads a local copy of MTM content using three arguments:  
   
 *  `path`: accepts a string that point to the location where you would like to save MTM contents. By default, this path is set to `~/Downloads/MTM`.    
 *  `overwrite`: default set to `FALSE` but can be set to `TRUE` as needed. When set to TRUE, the function will try and re-download the script files to overwrite what already exists.   
 *  `what`: default set to `"scripts"`, which allows you to create a local copy of the course Practicals. This argument may be set to `"solutions"` as needed.
 
 If contents have already been downloaded to the target path, and `overwrite` is set to `FALSE`, running this function would not make any changes - it will only remind you where the target contents have been saved. 
-
-
