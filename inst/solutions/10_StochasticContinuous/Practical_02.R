@@ -1,6 +1,6 @@
 library(ggplot2)     ## for plotting
 library(adaptivetau) ## for stochastic simulations
-library(data.table)
+library(data.table)  ## for manipulation of results
 
 ## In this practical session, we will use the
 ## "adaptivetau" package to run simulations.
@@ -29,12 +29,12 @@ SIRrateF <- function(state, parms, time) {
 }
 
 # Next, we set some initial values
-init.values <- c(S = 249, ## number of susceptibles
-                 I = 10, ## number infectious
-                 R = 0) ## number immune
+init.values <- c(S = 249, ## number susceptible
+                 I = 10,  ## number infectious
+                 R = 0)   ## number immune
 
 # and parameters
-parms <- c(beta = 2, ## infection rate
+parms <- c(beta = 2,  ## infection rate
            gamma = 1) ## recovery rate
 
 # Now, run a trial simulation for 60 time steps
@@ -56,7 +56,7 @@ system.time(traj <- lapply(
 
 # EXERCISE: compare the run time of the command above to running 100
 # simulations using our Gillespie algorithm from Practical 1. How much is the
-# speed gain?
+# speed gain? You can use the "system.time" function for this.
 
 # EXERCISE: re-write the code above to simulate from the SEITL model. Analyse
-# the outputs using the same routines as you did with the SIR model
+# the outputs using the same routines as you did with the SIR model.
