@@ -203,7 +203,7 @@ sumTrajGr0 <- timeTraj[
 ggplot() + aes(x = time, color = compartment, fill = compartment) +
   geom_ribbon(
     aes(ymin = pmax(0, mean - sd), ymax = mean + sd, color = NULL),
-    alpha = 0.2, data = sumTrajGr0
+    data = sumTrajGr0, alpha = 0.2
   ) +
   geom_line(
     aes(y = count, group = sample_id),
@@ -219,7 +219,7 @@ ggplot() + aes(x = time, color = compartment, fill = compartment) +
 
 iTraj <- rbind(sumTraj, sumTrajGr0)
 ggplot(iTraj) +
-  aes(x = time, y = mean, ymin = pmax(0, mean - sd), ymax = mean + sd)
+  aes(x = time, y = mean, ymin = pmax(0, mean - sd), ymax = mean + sd) +
   geom_line(aes(colour = trajectories)) +
   geom_ribbon(aes(fill = trajectories), alpha = 0.3) +
   scale_color_brewer(palette = "Set1") +
