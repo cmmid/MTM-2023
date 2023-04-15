@@ -1,4 +1,4 @@
-# SOLUTIONS: Individual-based SARS-CoV-2 transmission model, practical 2
+# Individual-based SARS-CoV-2 transmission model, practical 2
 library(ggplot2)
 
 

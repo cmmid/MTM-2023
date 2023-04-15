@@ -1,4 +1,4 @@
-# SOLUTIONS: Individual-based SARS-CoV-2 transmission model, practical 3
+# Individual-based SARS-CoV-2 transmission model, practical 3
 library(ggplot2)
 
 
@@ -86,11 +86,13 @@ for (ts in 1:steps) {
     }
 
     # Update state variables (for all individuals simultaneously)
+    ##### trE selects all individuals who will transition states from S to E.
     trE <- (state == "S") & (runif(n) < 1 - exp(-lambda * dt)) &
       (runif(n) > susceptibility(antib))
     trI <- (state == "E") & (delay < 0)
     trS <- (state == "I") & (delay < 0)
 
+    # Do state transitions
     # transition S -> E
     state[trE] <- "E"
     delay[trE] <- latent_delay(sum(trE))
