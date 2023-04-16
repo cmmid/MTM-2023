@@ -54,7 +54,7 @@ sampling_dSIR_betagamma <- function(t, state, parms) {
 #' @export
 sampling_dSIR_gammaR0 <- function(times, state, parms) {
   return(sampling_dSIR_betagamma(
-    times, state, within(parms, expression(beta <- gamma * R0))
+    times, state, within(parms, { beta <- gamma * R0 })
   ))
 }
 
