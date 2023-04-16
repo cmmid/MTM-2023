@@ -24,7 +24,7 @@ infectiousness <- function(state, age) {
 
 # Calculates susceptibility of individuals with antibody level(s) ab
 susceptibility <- function(ab) {
-    pnorm(ab, 5, 1)
+    1 - pnorm(ab, 5, 1)
 }
 
 # Generates n random delays from the latent-period distribution

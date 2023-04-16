@@ -22,7 +22,7 @@ infectiousness <- function(state, age) {
 
 # Calculates susceptibility of individuals with antibody level(s) ab
 susceptibility <- function(ab) {
-    pnorm(ab, 5, 1)
+    1 - pnorm(ab, 5, 1)
 }
 
 # Generates n random delays from the latent-period distribution
@@ -88,7 +88,7 @@ for (ts in 1:steps) {
     # Update state variables (for all individuals simultaneously)
     ##### trE selects all individuals who will transition states from S to E.
     trE <- (state == "S") & (runif(n) < 1 - exp(-lambda * dt)) &
-      (runif(n) > susceptibility(antib))
+      (runif(n) < susceptibility(antib))
     trI <- (state == "E") & (delay < 0)
     trS <- (state == "I") & (delay < 0)
 
