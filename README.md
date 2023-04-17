@@ -15,6 +15,20 @@ setwd(MTM::scripts()) # download MTM exercises
 
 _n.b._: there's a convenient copy-all-this at the top right corner of the code block
 
+### If you are stuck with an older version of R:
+
+We have prepared versions for `R` only 4.1/4.0+ versions; you'll use a slightly modified version of the `remotes::install_github(...)` step. If on 4.1+, you can install as:
+
+```r
+remotes::install_github("cmmid/MTM", ref = "R-4.1")
+```
+
+and if on 4.0+:
+
+```r
+remotes::install_github("cmmid/MTM", ref = "R-4.0-rel")
+```
+
 ## Detailed Installation 
 
 The MTM package is not available on CRAN at this time. You may install manually from this repository, but will likely find using the [remotes](https://cran.r-project.org/package=remotes) package the easier option. With `remotes` installed, from an `R` prompt: `remotes::install_github('cmmid/MTM')`. Running this initial command to install `MTM` will also install all package dependencies that you would need for this short course.
