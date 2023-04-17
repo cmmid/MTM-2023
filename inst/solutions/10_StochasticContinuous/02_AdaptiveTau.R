@@ -46,13 +46,13 @@ traj <- lapply(
 #' @answer roughly an 80% reduction in runtime
 
 adaptivetau_runtime <- system.time(traj <- lapply(
-  1:nsim, \(sample_id) data.table(ssa.adaptivetau(
+  1:nsim, function(sample_id) data.table(ssa.adaptivetau(
     init.values, SIR_events, SIR_rates, parms, tf = tmax
   ))
 ) |> rbindlist(idcol = "sample_id"))
 
 gillespie_runtime <- system.time(traj <- lapply(
-  1:nsim, \(sample_id) stochcont_solve(
+  1:nsim, function(sample_id) stochcont_solve(
     init.values, SIR_events, SIR_rates, parms, tf = tmax
   )
 ) |> rbindlist(idcol = "sample_id"))
