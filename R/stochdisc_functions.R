@@ -91,7 +91,7 @@ stochdisc_solve <- function(
     dy <- func(t, y, parms, ...)
   }
 
-  return(yt |> data.table::rbindlist(idcol = "t"))
+  return(data.table::rbindlist(yt, idcol = "t"))
 }
 
 #' @title Sample a Discrete Stochastic Simulation
@@ -123,13 +123,13 @@ stochdisc_sample <- function(
     setup_fun = function(ps) c(S = ps$N - 1, I = 1, R = 0),
     ref_seed = 0
 ) {
-  n |> check_scalar() |> check_natural()
+  check_natural(check_scalar(n))
 
   # for each sample ...
-  1L:n |> lapply(function(i) {
+  rbindlist(lapply(seq_len(n), function(i) {
     # reset random number seed
     set.seed(i + ref_seed)
     # simulate desired func
-    setup_fun(parms) |> stochdisc_solve(func = func, parms = parms)
-  }) |> rbindlist(idcol = "sample")
+    stochdisc_solve(setup_fun(parms), func = func, parms = parms)
+  }), idcol = "sample")
 }

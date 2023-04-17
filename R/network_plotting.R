@@ -18,10 +18,10 @@ NULL
 #' @exportS3Method
 as.data.table.igraph <- function(ig, keep.rownames, ...) {
   # extract edge properties
-  el <- ig |> as_edgelist() |> as.data.table()
+  el <- as.data.table(as_edgelist(ig))
   el[, eid := seq_len(.N)]
-  if (ig |> edge_attr_names() |> length()) {
-    eprops <- ig |> edge_attr() |> as.data.table()
+  if (length(edge_attr_names(ig))) {
+    eprops <- as.data.table(edge_attr(ig))
     eprops[, eid := seq_len(.N)]
     base <- merge(eprops, el, by = "eid")
   } else {
@@ -30,7 +30,7 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
 
   if (is.null(ig$layout)) ig$layout <- layout_nicely(ig)
 
-  vl <- ig$layout |> as.data.table() |> setnames(c("V1", "V2"), c("x", "y"))
+  vl <- setnames(as.data.table(ig$layout), c("V1", "V2"), c("x", "y"))
   vl[, vid := seq_len(.N)]
   # model of resulting data: edges, edge properties, vertices, vertex properties
   base[vl, on = .(V1 = vid), c("x1", "y1") := .(x, y)]
@@ -45,9 +45,9 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
   }
 
   # extract vertex properties
-  vpropnames <- ig |> vertex_attr_names()
-  if (vpropnames |> length()) {
-    vprops <- ig |> vertex_attr() |> as.data.table()
+  vpropnames <- vertex_attr_names(ig)
+  if (length(vpropnames)) {
+    vprops <- as.data.table(vertex_attr(ig))
     vprops[, vid := seq_len(.N)]
     setnames(vprops, vpropnames, paste0("V1.", vpropnames))
     vpropnames <- paste0("V1.", vpropnames)
@@ -65,7 +65,7 @@ as.data.table.igraph <- function(ig, keep.rownames, ...) {
     gn in setdiff(graph_attr_names(ig), c("layout", "sorted"))
   ) attr(extended, gn) <- graph_attr(ig, gn)
 
-  setkey(extended, eid, V1, V2) |> setcolorder()
+  setcolorder(setkey(extended, eid, V1, V2))
 }
 
 #' @title GGplot for [igraph]
@@ -85,7 +85,7 @@ ggplot.igraph <- function(
   data, mapping = aes(), ..., environment = parent.frame()
 ) {
   return(
-    ggplot2::ggplot(data |> as.data.table.igraph(), mapping, ..., environment)
+    ggplot2::ggplot(as.data.table.igraph(data), mapping, ..., environment)
   )
 }
 
@@ -109,7 +109,7 @@ network_vertex_data <- function(dt) {
   )[!(V2 %in% v1$vid)]
   setnames(v2, c("V2", "x2", "y2"), c("vid", "x", "y"))
   setnames(v2, names(v2), gsub("V2\\.", "", names(v2)))
-  return(rbind(v1, v2) |> subset(!is.na(vid)) |> setkey(vid))
+  return(setkey(subset(rbind(v1, v2), !is.na(vid)), vid))
 }
 
 #' @title Get Edge Data
@@ -124,8 +124,10 @@ network_vertex_data <- function(dt) {
 #' @export
 network_edge_data <- function(dt) {
   if (!is(dt, "data.table")) dt <- as.data.table(dt)
-  return(dt[, .SD, .SDcols = !patterns("^V[12]")] |> unique() |>
-    subset(!is.na(eid)) |> setkey(eid))
+  return(setkey(
+    dt[, unique(.SD), .SDcols = !patterns("^V[12]")][!is.na(eid)],
+    eid
+  ))
 }
 
 #' @title Network Color Scale
@@ -345,12 +347,6 @@ network_plot_series <- function(
   )
 }
 
-# TODO turn this into specialized version of network_edge_data
-# function(dt) {
-#   return(dt[, .SD, .SDcols = !patterns("^V[12]")] |> unique() |>
-#            subset(!is.na(eid)) |> setkey(eid))
-# }
-
 #' @title Extract Active Edges
 #'
 #' @param dt a [data.table] resulting from [as.data.table.igraph()],
@@ -367,12 +363,12 @@ network_active_edges <- function(
   if (activesub[, .N]) {
     inf_states <- attr(activesub, "inf_states")
     # if there are any, return them with V1/V2 flipped where V2 is infectious
-    return(rbind(
+    return(network_edge_data(rbind(
       activesub[V2.state %in% inf_states],
       copy(activesub[V1.state %in% inf_states])[,
         c("x1", "y1", "x2", "y2") := .(x2, y2, x1, y1)
       ]
-    ) |> network_edge_data())
+    )))
   } else {
     return(activesub)
   }
@@ -389,15 +385,16 @@ network_active_edges <- function(
 #' @export
 network_animate <- function(networks) {
   merge_attrs <- setdiff(graph_attr_names(networks[[1]]), c("layout", "sorted"))
-  dts <- c(networks, networks[length(networks)]) |>
-    lapply(as.data.table.igraph) |>
-    rbindlist(idcol = "time")
+  dts <- rbindlist(
+    lapply(c(networks, networks[length(networks)]), as.data.table.igraph),
+    idcol = "time"
+  )
 
   for (gn in merge_attrs) attr(dts, gn) <- graph_attr(networks[[1]], gn)
 
   # TODO add labels for active infections, cumulative infections?
   return(
-    (dts |> network_plot_RF()) +
+    network_plot_RF(dts) +
       transition_time(time) + labs(title = "Time: {frame_time}")
   )
 

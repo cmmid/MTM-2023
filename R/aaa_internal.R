@@ -75,7 +75,7 @@ rejig <- function(FUN, ..., .ENV = environment(FUN)) {
 FUN does not have ... argument, and
 rejig ... arguments do not match FUN arguments:
 %s
-", names(dots)[is.na(replacements)] |> paste(collapse = ", ")
+", paste(names(dots)[is.na(replacements)], collapse = ", ")
     )
     stop(errmsg)
   }

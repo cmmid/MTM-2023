@@ -99,14 +99,14 @@ r <- stochcont_solve(init.values, SIR_events, SIR_rates, parms, tmax)
 
 nsim <- 100 ## number of trial simulations
 
-traj <- lapply( # for all of ...
-  1:nsim,       # samples 1 -> nsim, run the Gillespie solver function
+traj <- rbindlist(lapply( # for all of ...
+  seq_len(nsim),           # samples 1 -> nsim, run the Gillespie solver function
   function(sample_id) stochcont_solve(init.values, SIR_events, SIR_rates, parms, tmax)
-) |> rbindlist(idcol = "sample_id") # ...and the bind the results, id'd by their sample
+), idcol = "sample_id") # ...and the bind the results, id'd by their sample
 
 ## convert to long data frame
-mlr <- traj |> melt.data.table(
-  id.vars = c("sample_id", "time"), variable.name = "compartment",
+mlr <- melt.data.table(
+  traj, id.vars = c("sample_id", "time"), variable.name = "compartment",
   value.name = "count"
 )
 mlr
@@ -239,7 +239,8 @@ ode_output_raw <- ode(
 )
 
 ## Convert to data frame for easy extraction of columns
-ode_output <- (as.data.table(ode_output_raw) |> melt.data.table(
+ode_output <- (melt.data.table(
+  as.data.table(ode_output_raw),
   id.vars = "time", variable.name = "compartment", value.name = "mean"
 ))[compartment == "I", .(
   time, compartment, trajectories = "deterministic", mean, sd = 0

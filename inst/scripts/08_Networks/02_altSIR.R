@@ -22,13 +22,13 @@ e.g. `networkx`."
 set.seed(13)
 
 pars <- list(N = 30, p = 0.05)
-previous_network <- pars |> network_build()
+previous_network <- network_build(pars)
 new_network <- network_percolate(pars, previous_network)
 
-list(list(
+patchwork_grid(list(list(
   "Reference Reed-Frost\nNetwork" = network_quickplot(previous_network),
   "Percolated\nNetwork" = network_quickplot(new_network)
-)) |> patchwork_grid()
+)))
 
 #' @question What differs between [network_build()] and [network_percolate()]?
 #'
@@ -58,13 +58,13 @@ list(list(
 previous_example <- network_solve(y = previous_network, parms = pars)
 new_example <- network_solve(y = new_network, parms = pars)
 
-previous_plot <- previous_example |> network_flatten() |> network_plot_series()
-new_plot <- new_example |> network_flatten() |> network_plot_series()
+previous_plot <- network_plot_series(network_flatten(previous_example))
+new_plot <- network_plot_series(network_flatten(new_example))
 
-list(list(
+patchwork_grid(list(list(
   "Reference Results" = previous_plot,
   "Percolated Results" = new_plot
-)) |> patchwork_grid()
+)))
 
 #' @question The networks are very different; why are those plots identical?
 #'
@@ -93,10 +93,10 @@ new_samples.dt <- network_sample_ReedFrost(
   n = 100, parms = pars, setup_fun = network_percolate
 )
 
-list(list(
-  "Reference Histograms" = prev_samples.dt |> network_plot_histograms(),
-  "Percolated Histograms" = new_samples.dt |> network_plot_histograms()
-)) |> patchwork_grid()
+patchwork_grid(list(list(
+  "Reference Histograms" = network_plot_histograms(prev_samples.dt),
+  "Percolated Histograms" = network_plot_histograms(new_samples.dt)
+)))
 
 #' @question How do these compare?
 #'

@@ -131,13 +131,13 @@ library(lhs)
 # Let's try a few options and see how well they do
 par(mfrow = c(3, 2))
 n <- c(10, 100, 1000, 10000, 20000)
-rn <- n |> lapply(rnorm)
+rn <- lapply(n, rnorm)
 tmp <- mapply(
   hist, x = rn, main = sprintf("Histogram of rnorm(n = %i)", n), xlab = NA
 )
 
 # Now let's plot the sample size against the variance of the sample distribution
-varn <- rn |> lapply(var)
+varn <- lapply(rn, var)
 plot(n, varn,
      ylab = "variance", main = "Variance of sampled normal"
 )

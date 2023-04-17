@@ -24,8 +24,8 @@ check_RFparms <- function(parms) {
     "'parms' is not a list." = is.list(parms),
     "'parms' does not have members 'N' and 'p'." = c("N", "p") %in% names(parms)
   )
-  parms$N |> check_scalar() |> check_natural()
-  parms$p |> check_scalar() |> check_probability()
+  check_natural(check_scalar(parms$N))
+  check_probability(check_scalar(parms$p))
   invisible(parms)
 }
 
@@ -70,7 +70,7 @@ network_build <- function(
   parms
 ) {
   # validate parms
-  parms |> check_RFparms()
+  check_RFparms(parms)
   # make a network where everyone is connected
   network <- make_full_graph(parms$N, directed = FALSE)
   # define model states. as graph attributes. see also: `?graph_attr`
@@ -87,7 +87,7 @@ network_build <- function(
 
   seedstore <- .Random.seed
   set.seed(parms$N) # fix rng for layout => all size N networks have same layout
-  network <- network |> add_layout_(with_fr(
+  network <- add_layout_(network, with_fr(
     coords = layout_randomly(network)), normalize()
   )
   .Random.seed <- seedstore
@@ -120,15 +120,14 @@ network_percolate <- function(
   parms, network = network_build(parms)
 ) {
   # validate parms and network
-  parms |> check_RFparms()
-  network |> check_SIRgraph()
+  check_RFparms(parms)
+  check_SIRgraph(network)
   # identify all edges where p < draw
   # i.e. going to *keep* all edges draw <= p
   remove_edges <- E(network)[parms$p < draw]
   # return a new graph with removed edges & reset draw
   return(
-    network |> delete_edges(remove_edges) |>
-      set_edge_attr(name = "draw", value = 0)
+    set_edge_attr(delete_edges(network, remove_edges), name = "draw", value = 0)
   )
 }
 
@@ -305,12 +304,13 @@ network_solve <- function(
 #' @export
 network_flatten <- function(y, one = is.igraph(y)) {
   if (one) {
-    return(
-      factor(V(y)$state, levels = y$states, ordered = TRUE) |>
-      table() |> as.list() |> as.data.table()
-    )
+    return(as.data.table(as.list(table(
+      factor(V(y)$state, levels = y$states, ordered = TRUE)
+    ))))
   } else { # assume it's a list of igraphs
-    y |> lapply(network_flatten, one = TRUE) |> rbindlist(idcol = "t")
+     return(
+       rbindlist(lapply(y, network_flatten, one = TRUE), idcol = "t")
+     )
   }
 }
 
@@ -337,19 +337,17 @@ network_sample_ReedFrost <- function(
   setup_fun = network_build,
   ref_seed = 0
 ) {
-  n |> check_scalar() |> check_natural()
-  parms |> check_RFparms()
+  check_natural(check_scalar(n))
+  check_RFparms(parms)
   # for each sample ...
-  1L:n |> lapply(function(i) {
+  rbindlist(lapply(seq_len(n), function(i) {
     # reset random number seed
     set.seed(i + ref_seed)
-    # make a new population
-    setup_fun(parms) |>
+    # make a new population: setup_fun(parms)
     # solve it according to desired func
-    network_solve(func = func, parms = parms) |>
-    # reduce it to just states counts by time
-    network_flatten()
-  }) |> rbindlist(idcol = "sample")
+    # reduce it to just states counts by time: network_flatten()
+    network_flatten(network_solve(setup_fun(parms), func = func, parms = parms))
+  }), idcol = "sample")
 }
 
 #' @title Summarize Network Runs

@@ -72,18 +72,17 @@ set.seed(13)
 sim_example <- network_solve(parms = list(N = 30, p = 0.05))
 
 # we can look at the resulting epidemic in summary
-sim_example |> network_flatten() |> network_plot_series()
+network_plot_series(network_flatten(sim_example))
 # or watch its evolution on the network:
 # n.b. the rendering here may take a moment
-sim_example |> network_animate()
+network_animate(sim_example)
 
 # our Reed-Frost model is stochastic, so we can get very different
 # results, e.g.:
 
 set.seed(42)
 
-network_solve(parms = list(N = 30, p = 0.05)) |> network_flatten() |>
-  network_plot_series()
+network_plot_series(network_flatten(network_solve(parms = list(N = 30, p = 0.05))))
 
 # ...which means we need to think about typical behavior
 # across many realizations of the simulation
@@ -92,12 +91,12 @@ samples.dt <- network_sample_ReedFrost(n = 300, parms = list(N = 30, p = 0.1))
 
 # we can get a holistic sense of the trends in these realizations
 # by overlaying the time series
-samples.dt |> network_plot_series()
+network_plot_series(samples.dt)
 
 # but we generally have some particular features in mind when
 # doing this kind of modelling work, e.g. final size or epidemic
 # duration
-samples.dt |> network_plot_histograms()
+network_plot_histograms(samples.dt)
 
 #' @question What do you notice about these distributions?
 #'
@@ -123,10 +122,10 @@ stochdisc_dReedFrost
 
 cb_samples.dt <- stochdisc_sample(n = 300, parms = list(N = 30, p = 0.1))
 
-list(list(
-  "Network Histograms" = samples.dt |> network_plot_histograms(),
-  "Chain-Binomial Histograms" = cb_samples.dt |> network_plot_histograms()
-)) |> patchwork_grid()
+patchwork_grid(list(list(
+  "Network Histograms" = network_plot_histograms(samples.dt),
+  "Chain-Binomial Histograms" = network_plot_histograms(cb_samples.dt)
+)))
 
 #' @question How do these outcomes compare?
 #'
@@ -181,5 +180,5 @@ list(list(
 #' samples60.dt <- network_sample_ReedFrost(n=100, list(N=60, p=30/60*0.1))
 #' samples120.dt <- network_sample_ReedFrost(n=100, list(N=120, p=30/120*0.1))
 #'
-#' samples60.dt |> network_plot_histograms()
-#' samples120.dt |> network_plot_histograms()
+#' network_plot_histograms(samples60.dt)
+#' network_plot_histograms(samples120.dt)

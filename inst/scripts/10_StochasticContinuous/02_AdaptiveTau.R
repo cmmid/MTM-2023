@@ -34,11 +34,11 @@ nsim <- 100 ## number of trial simulations
 # looks the same as the "lr" data frame from the last session, but containing
 # multiple simulation runs and an additional column i that represents the
 # column index
-system.time(traj <- lapply(
-  1:nsim, function(sample_id) data.table(ssa.adaptivetau(
+system.time(traj <- rbindlist(lapply(
+  seq_len(nsim), function(sample_id) ssa.adaptivetau(
     init.values, SIR_events, SIR_rates, parms, tf = tmax
-  ))
-) |> rbindlist(idcol = "sample_id"))
+  )
+), idcol = "sample_id"))
 
 #' @question Compare the run time of the command above to running 100
 #' simulations using our Gillespie algorithm from Practical 1. How much is the

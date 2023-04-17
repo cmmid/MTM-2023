@@ -2,8 +2,7 @@
 
 require(igraph)
 
-ref <- make_lattice(length = 10, dim = 2) |>
-  add_layout_(on_grid())
+ref <- add_layout_(make_lattice(length = 10, dim = 2), on_grid())
 
 modgraph <- function(ig, vaccinees) {
   V(ig)$state <- "unvaccinated"
@@ -39,7 +38,7 @@ require(MTM)
 network_unstructured_set <- lapply(
   1:300, function(sample_id) {
     set.seed(sample_id)
-    list(N = 50, p = 0.04) |> network_percolate()
+    network_percolate(list(N = 50, p = 0.04))
   }
 )
 
@@ -51,8 +50,8 @@ structure_network <- function(usn) {
   en <- ecount(usn)
   one <- rbinom(1, en - 1, 0.5)
   two <- en - 1 - one
-  og <- make_full_graph(ceiling(vcount(usn) / 2)) |> keep_edges(one)
-  tg <- make_full_graph(floor(vcount(usn) / 2)) |> keep_edges(two)
+  og <- keep_edges(make_full_graph(ceiling(vcount(usn) / 2)), one)
+  tg <- keep_edges(make_full_graph(floor(vcount(usn) / 2)), two)
   cg <- og + tg + edge(
     sample(vcount(og), 1),
     vcount(og) + sample(vcount(tg), 1)
@@ -66,7 +65,7 @@ structure_network <- function(usn) {
   return(cg)
 }
 
-network_structured_set <- network_unstructured_set |> lapply(structure_network)
+network_structured_set <- lapply(network_unstructured_set, structure_network)
 
 usethis::use_data(
   network_unstructured_set,

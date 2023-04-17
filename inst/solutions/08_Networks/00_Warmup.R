@@ -32,7 +32,7 @@ demo.colors <- c(
 # plot the two networks side-by-side (`network_warmup_vaccine...` - data
 # included in `MTM`, as are the `network_quickplot` and `patchwork_grid`
 # functions)
-list(list(
+patchwork_grid(list(list(
   # random vaccination in a small population on a lattice
   "Random\nVaccination" = network_quickplot(
     network_warmup_vaccine_random, values = demo.colors
@@ -41,7 +41,7 @@ list(list(
   "Targetted\nVaccination" = network_quickplot(
     network_warmup_vaccine_ordered, values = demo.colors
   )
-)) |> patchwork_grid()
+)))
 
 #' These plots highlight an important insight from the discussion portion of the
 #' session: that relationships can matter. Now let's work through the functions
@@ -66,17 +66,17 @@ list(list(
 #' with `make_...`, and the probabilistic generators start with `sample_...`
 
 # make a few different kinds of graphs, at two sizes L(ittle) = 9, B(ig) = 25
-igL <- make_full_graph(n = 9) |> add_layout_(with_graphopt())
-igB <- make_full_graph(n = 25) |> add_layout_(with_graphopt())
-igLgnp <- sample_gnp(n = 9, p = 0.2) |> set_graph_attr("layout", igL$layout)
-igBgnp <- sample_gnp(n = 25, p = 0.2) |> set_graph_attr("layout", igB$layout)
-igLl <- make_lattice(length = 3, dim = 2) |> add_layout_(on_grid())
-igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
+igL <- add_layout_(make_full_graph(n = 9), with_graphopt())
+igB <- add_layout_(make_full_graph(n = 25), with_graphopt())
+igLgnp <- set_graph_attr(sample_gnp(n = 9, p = 0.2), "layout", igL$layout)
+igBgnp <- set_graph_attr(sample_gnp(n = 25, p = 0.2), "layout", igB$layout)
+igLl <- add_layout_(make_lattice(length = 3, dim = 2), on_grid())
+igBl <- add_layout_(make_lattice(length = 5, dim = 2), on_grid())
 # we use [igraph::add_layout()] for visualization - it has no other effects
 
 # feel free to inspect those objects manually, but you can get the overall
 # point by plotting them alongside each other:
-list(list(
+patchwork_grid(list(list(
   "N=9 Clique"  = network_quickplot(igL, simple = TRUE),
   "N=25 Clique" = network_quickplot(igB, simple = TRUE)
 ), list(
@@ -85,7 +85,7 @@ list(list(
 ), list(
   "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE),
   "N=25 Lattice" = network_quickplot(igBl, simple = TRUE)
-)) |> patchwork_grid()
+)))
 
 #' @question How would you describe the difference between the graphs created by
 #' `make_full_graph()` vs. `sample_gnp()` vs. `make_lattice()`?
@@ -112,11 +112,11 @@ list(list(
 #' ensure getting particular plots; without them, each plot of an igraph object
 #' gives slightly different arrangements of vertices and edges. For example:
 
-list(list(
+patchwork_grid(list(list(
   "Original" = network_quickplot(igL, simple = TRUE),
   "...Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE),
   "& Another" = network_quickplot(make_full_graph(n = 9), simple = TRUE)
-)) |> patchwork_grid()
+)))
 
 #' @section Modifying Networks, part 1
 #'
@@ -130,16 +130,16 @@ list(list(
 #' and vertices.
 
 # delete every other edge on the lattice
-igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
-igBlmod <- igBl |> delete_edges(1:(ecount(igBl) / 2) * 2)
+igBl <- add_layout_(make_lattice(length = 5, dim = 2), on_grid())
+igBlmod <- delete_edges(igBl, 1:(ecount(igBl) / 2) * 2)
 # repeated definition of igBl, in case it got deleted/changed/etc
 
-list(list(
+patchwork_grid(list(list(
   "N=25 Lattice" = network_quickplot(igBl, simple = TRUE) + geom_edge_labels(),
   "N=25 Lattice--" = network_quickplot(igBlmod, simple = TRUE) +
     geom_edge_labels(data = network_edge_data(igBl))
   # show the labels for igBl instead of igBlmod
-)) |> patchwork_grid()
+)))
 
 #' @question This is starting to look like the initial networks we plotted.
 #' What collection of edges could we delete to isolate the diagonal set of
@@ -154,28 +154,28 @@ list(list(
 #' "last row" switch. For example, consider a slightly larger version of the
 #' problem:
 
-igBBl <- make_lattice(length = 7, dim = 2) |> add_layout_(on_grid())
-igBBlmod <- igBBl |> delete_edges(1:(ecount(igBBl) / 2) * 2)
-list(list(
+igBBl <- add_layout_(make_lattice(length = 7, dim = 2), on_grid())
+igBBlmod <- delete_edges(igBBl, 1:(ecount(igBBl) / 2) * 2)
+patchwork_grid(list(list(
   "N=49 Lattice" = network_quickplot(igBBl, simple = TRUE) + geom_edge_labels(),
   "N=49 Lattice--" = network_quickplot(igBBlmod, simple = TRUE) +
     geom_edge_labels(data = network_edge_data(igBBl))
-)) |> patchwork_grid()
+)))
 
 #' In a later section, we'll use some of the other [igraph] capabilities to
 #' do this more cleverly. For now, let's consider the tools to add vertices
 #' and edges to a graph.
 
 # adding edges ...
-iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
+iglstar <- add_layout_(make_star(9, mode = "undirected"), as_star())
 # can be done by naming specific vertices
-iglstarmod <- iglstar |> add_edges(c(c(2, 4), c(3, 5), c(6, 8), c(7, 9)))
+iglstarmod <- add_edges(iglstar, c(c(2, 4), c(3, 5), c(6, 8), c(7, 9)))
 
-list(list(
+patchwork_grid(list(list(
   "N=9 Star" = network_quickplot(iglstar, simple = TRUE) + geom_vertex_labels(),
   "N=9 Star+edges" = network_quickplot(iglstarmod, simple = TRUE) +
     geom_vertex_labels()
-)) |> patchwork_grid()
+)))
 
 #' @question What are some other approaches to add edges in [igraph]?
 #'
@@ -190,13 +190,13 @@ list(list(
 #'
 #' Let's have a look at what those do:
 
-iglstar <- make_star(9, mode = "undirected") |> add_layout_(as_star())
-iglring <- make_ring(9, directed = FALSE) |> add_layout_(in_circle())
+iglstar <- add_layout_(make_star(9, mode = "undirected"), as_star())
+iglring <- add_layout_(make_ring(9, directed = FALSE), in_circle())
 
-list(list(
+patchwork_grid(list(list(
   "Addition" = network_quickplot(iglstar + iglring, simple = TRUE),
   "Union" = network_quickplot(graph.union(iglstar, iglring), simple = TRUE)
-)) |> patchwork_grid()
+)))
 
 #' @question What is the difference between [igraph::graph.union()] and
 #' using the `+` operator?
@@ -231,7 +231,7 @@ list(list(
 
 # first, we make two initially identical populations - 100 individuals, in
 # 10x10 lattices, everyone initially unvaccinated:
-ordered.pop <- make_lattice(length = 10, dim = 2) |> add_layout_(on_grid())
+ordered.pop <- add_layout_(make_lattice(length = 10, dim = 2), on_grid())
 V(ordered.pop)$state <- "unvaccinated"
 # makes a copy with identical attributes:
 random.pop <- ordered.pop
@@ -274,7 +274,7 @@ demo.colors <- c(
 # recreate this just in case it got lost
 
 # now plot your two networks alongside the MTM ones ...
-list(list(
+patchwork_grid(list(list(
   "MTM Random" = network_quickplot(
     network_warmup_vaccine_random, values = demo.colors
   ),
@@ -284,7 +284,7 @@ list(list(
 ), list(
   "My Random" = network_quickplot(random.pop, values = demo.colors),
   "My Targetted" = network_quickplot(ordered.pop, values = demo.colors)
-)) |> patchwork_grid()
+)))
 # they should be identical. If you were to recreate the `random.pop`, however:
 
 randomvaccinees <- sample(100, length(orderedvaccinees), replace = FALSE)
@@ -296,7 +296,7 @@ E(random.pop)[
 ]$state <- "blocked"
 
 # ... you'll find a different distribution, because the random seed differs
-list(list(
+patchwork_grid(list(list(
   "MTM Random" = network_quickplot(
     network_warmup_vaccine_random, values = demo.colors
   ),
@@ -306,7 +306,7 @@ list(list(
 ), list(
   "My Random" = network_quickplot(random.pop, values = demo.colors),
   "My Targetted" = network_quickplot(ordered.pop, values = demo.colors)
-)) |> patchwork_grid()
+)))
 
 #' @question In this section we introduced [igraph::E()] and [igraph::V()] for
 #' "indexing" edge and vertex sets. What is the special function we introduced?
@@ -389,7 +389,7 @@ sir.cols <- c(
   transmissible = "grey", blocked = "transparent", active = "red"
 )
 
-list(list(
+patchwork_grid(list(list(
   "t=0" = network_quickplot(ordered.pop, values = sir.cols),
   "t=1" = network_quickplot(ordered.pop1, values = sir.cols),
   "t=2" = network_quickplot(ordered.pop2, values = sir.cols),
@@ -401,7 +401,7 @@ list(list(
   "t=2" = network_quickplot(random.pop2, values = sir.cols),
   "t=3" = network_quickplot(random.pop3, values = sir.cols),
   "t=4" = network_quickplot(random.pop4, values = sir.cols)
-)) |> patchwork_grid()
+)))
 
 #' @question Try running those previous simulate + plot lines a few times.
 #' What kind of patterns do you see emerging?

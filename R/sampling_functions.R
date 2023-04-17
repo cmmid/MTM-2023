@@ -93,10 +93,10 @@ sampling_maxprevalence <- function(
   state <- c(S = S_0, I = I_0, R = R_0)
 
   # solve equations ...
-  output <- ode(
+  output <- as.data.table(ode(
     y = state, times = times, func = dModel, parms = parameters,
     method = "rk4"
-  ) |> as.data.table() # ... then convert for easy extraction of columns
+  )) # ... then convert for easy extraction of columns
 
   if (plot_results) {
     par(new = TRUE)

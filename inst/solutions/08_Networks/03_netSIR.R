@@ -20,32 +20,38 @@ require(data.table)
 #' In this case, they all have p = typical edges / all possible edges = 0.04.
 
 all(
-  network_unstructured_set |> sapply(vcount) ==
-    network_structured_set |> sapply(vcount))
+  sapply(network_unstructured_set, vcount) ==
+  sapply(network_structured_set, vcount)
+)
 
 all(
-  network_unstructured_set |> sapply(ecount) ==
-    network_structured_set |> sapply(ecount))
+  sapply(network_unstructured_set, ecount) ==
+  sapply(network_structured_set, ecount)
+)
 
 # However, if you compare any particular pair, you might notice differences:
 pick <- 42
-list(list(
-  "Unstructured" = network_unstructured_set[[pick]] |>
-    network_quickplot(simple = TRUE),
-  "Structured" = network_structured_set[[pick]] |>
-    network_quickplot(simple = TRUE)
-)) |> patchwork_grid()
+patchwork_grid(list(list(
+  "Unstructured" = network_quickplot(
+    network_unstructured_set[[pick]], simple = TRUE
+  ),
+  "Structured" = network_quickplot(
+    network_structured_set[[pick]], simple = TRUE
+  )
+)))
 
 # There are some different edges, but how different? Now we'll use one of the
 # super-powers of [igraph] (and other network libraries): their layout engine.
 #
 # If we remove the default layout we enforced, the difference becomes clearer:
-list(list(
-  "Unstructured" = network_unstructured_set[[pick]] |> add_layout_(with_fr()) |>
-    network_quickplot(simple = TRUE),
-  "Structured" = network_structured_set[[pick]] |> add_layout_(with_fr()) |>
-    network_quickplot(simple = TRUE)
-)) |> patchwork_grid()
+patchwork_grid(list(list(
+  "Unstructured" = network_quickplot(
+    add_layout_(network_unstructured_set[[pick]], with_fr()), simple = TRUE
+  ),
+  "Structured" = network_quickplot(
+    add_layout_(network_structured_set[[pick]], with_fr()), simple = TRUE
+  )
+)))
 
 #' @question Repeating the above for a few different `pick`s, describe the
 #' difference between these networks.
@@ -65,18 +71,20 @@ list(list(
 #'
 #' Now let's have a look at the results of solving SIR on these networks ...
 
-unstructured.dt <- network_unstructured_set |> lapply(
+unstructured.dt <- rbindlist(lapply(lapply(
+  network_unstructured_set,
   network_solve, parms = list(N = 50, p = 0.05)
-) |> lapply(network_flatten) |> rbindlist(idcol = "sample")
+), network_flatten), idcol = "sample")
 
-structured.dt <- network_structured_set |> lapply(
+structured.dt <- rbindlist(lapply(lapply(
+  network_structured_set,
   network_solve, parms = list(N = 50, p = 0.05)
-) |> lapply(network_flatten) |> rbindlist(idcol = "sample")
+), network_flatten), idcol = "sample")
 
-list(list(
-  "Unstructured" = unstructured.dt |> network_plot_histograms(),
-  "Structured" = structured.dt |> network_plot_histograms()
-)) |> patchwork_grid()
+patchwork_grid(list(list(
+  "Unstructured" = network_plot_histograms(unstructured.dt),
+  "Structured" = network_plot_histograms(structured.dt)
+)))
 
 #' @question Comparing the two distinct network classes, what do you notice? Can
 #' you explain the difference?
