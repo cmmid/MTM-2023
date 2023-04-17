@@ -265,13 +265,13 @@ network_plot_histograms <- function(s_dt) {
   max_den <- ceiling(max(durahist_dt$N, sizehist_dt$N) / samples * 10) / 10
 
   # setup reference scales
-  sx <- scale_x_continuous("Duration",  breaks = \(ls) seq(0, ls[2], by = 4))
-  sy <- scale_y_continuous("Final Size", breaks = \(ls) seq(0, ls[2], by = 10))
+  sx <- scale_x_continuous("Duration",  breaks = function(ls) seq(0, ls[2], by = 4))
+  sy <- scale_y_continuous("Final Size", breaks = function(ls) seq(0, ls[2], by = 10))
   sdenx <- scale_x_continuous(
-    "Density", breaks = \(ls) seq(0, max_den, by = 0.1)
+    "Density", breaks = function(ls) seq(0, max_den, by = 0.1)
   )
   sdeny <- scale_y_continuous(
-    "Density", breaks = \(ls) seq(0, max_den, by = 0.1)
+    "Density", breaks = function(ls) seq(0, max_den, by = 0.1)
   )
   sdenfill <- scale_fill_distiller("Density", palette = "Reds", direction = 1)
 
@@ -331,8 +331,8 @@ network_plot_series <- function(
   wide_dt <- melt(s_dt, id.vars = c("sample", "t"))
   return(ggplot(wide_dt) +
     aes(t, value, color = variable, group = interaction(variable, sample)) +
-    lapply(layer_order, \(ly) geom_line(
-      data = \(dt) dt[variable == ly], alpha = alph
+    lapply(layer_order, function(ly) geom_line(
+      data = function(dt) dt[variable == ly], alpha = alph
     )) +
     scale_x_simtime() +
     scale_y_continuous(name = NULL) +

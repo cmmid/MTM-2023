@@ -69,7 +69,7 @@ network_solve
 
 set.seed(13)
 
-sim_example <- list(N = 30, p = 0.05) |> network_solve(parms = _)
+sim_example <- network_solve(parms = list(N = 30, p = 0.05))
 
 # we can look at the resulting epidemic in summary
 sim_example |> network_flatten() |> network_plot_series()
@@ -82,8 +82,8 @@ sim_example |> network_animate()
 
 set.seed(42)
 
-list(N = 30, p = 0.05) |> network_solve(parms = _) |>
-  network_flatten() |> network_plot_series()
+network_solve(parms = list(N = 30, p = 0.05)) |> network_flatten() |>
+  network_plot_series()
 
 # ...which means we need to think about typical behavior
 # across many realizations of the simulation

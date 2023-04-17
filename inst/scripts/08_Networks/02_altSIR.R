@@ -33,18 +33,18 @@ list(list(
 #' @question What differs between [network_build()] and [network_percolate()]?
 #'
 #' @answer
-#' 
-#' 
-#' 
+#'
+#'
+#'
 #' @question The percolated network is much less dense, but now transmission is
 #' guaranteed on the remaining edges. How do you think this will effect the
 #' dynamics? What are some features we might check to see those differences?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
 
 #' @section Comparing the Reference and Percolated Networks
 #'
@@ -55,8 +55,8 @@ list(list(
 #' Make a guess as to what will happen (different, basically the same, ...?) and
 #' then try it out.
 
-previous_example <- previous_network |> network_solve(y = _, parms = pars)
-new_example <- new_network |> network_solve(y = _, parms = pars)
+previous_example <- network_solve(y = previous_network, parms = pars)
+new_example <- network_solve(y = new_network, parms = pars)
 
 previous_plot <- previous_example |> network_flatten() |> network_plot_series()
 new_plot <- new_example |> network_flatten() |> network_plot_series()
@@ -69,19 +69,19 @@ list(list(
 #' @question The networks are very different; why are those plots identical?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #' @section Reed Frost Model on a (different) Network, part II
 #'
 #' Before we jump to the final exercise, let's briefly investigate the
@@ -101,7 +101,7 @@ list(list(
 #' @question How do these compare?
 #'
 #' @answer
-#' 
+#'
 #' @aside Feel free to play around with elements like the number of samples,
 #' the size of the networks, probability of transmission - what happens to the
 #' similarity between these plots with respect to these sort of changes? How

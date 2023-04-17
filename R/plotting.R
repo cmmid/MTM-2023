@@ -153,10 +153,10 @@ patchwork_grid <- function(plist) {
     "Empty `plist`." = length(plist) != 0
   )
 
-  return(plist |> lapply(\(rw) {
-    mapply(\(p, nm) {
+  return(Reduce(`/`, x = lapply(plist, function(rw) {
+    Reduce(`|`, x = mapply(function(p, nm) {
       wrap_elements(p + plot_annotation(title = nm))
-    }, rw, names(rw), SIMPLIFY = FALSE) |> Reduce(`|`, x = _)
-  }) |> Reduce(`/`, x = _))
+    }, rw, names(rw), SIMPLIFY = FALSE))
+  })))
 
 }

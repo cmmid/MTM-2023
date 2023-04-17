@@ -37,7 +37,7 @@ require(MTM)
 
 # sample a few hundred networks
 network_unstructured_set <- lapply(
-  1:300, \(sample_id) {
+  1:300, function(sample_id) {
     set.seed(sample_id)
     list(N = 50, p = 0.04) |> network_percolate()
   }

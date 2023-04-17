@@ -55,8 +55,8 @@ list(list(
 #' Make a guess as to what will happen (different, basically the same, ...?) and
 #' then try it out.
 
-previous_example <- previous_network |> network_solve(y = _, parms = pars)
-new_example <- new_network |> network_solve(y = _, parms = pars)
+previous_example <- network_solve(y = previous_network, parms = pars)
+new_example <- network_solve(y = new_network, parms = pars)
 
 previous_plot <- previous_example |> network_flatten() |> network_plot_series()
 new_plot <- new_example |> network_flatten() |> network_plot_series()

@@ -24,22 +24,22 @@ network_build
 #' How can you tell? How does the choice relate to the Reed Frost model?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
 #' @question Recalling the definitions from the Introductory and
 #' Networks MTM sessions, what Reed Frost model *variables* &
 #' *parameters* appear in `network_build`? Which aspects of the
 #' Reed-Frost model are represented here?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
 #' @question Given [network_build()] and how we've specified the Reed
 #' Frost model, how might the variables & parameters be used for
 #' for the "delta" meta-modelling step (i.e., calculating system
@@ -47,10 +47,10 @@ network_build
 #' expect to use?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
 #' @hint compare your thinking to the implementation in `network_dReedFrost`:
 
 network_dReedFrost
@@ -60,16 +60,16 @@ network_dReedFrost
 #' is appropriate for Reed Frost? Why?
 #'
 #' @answer
-#' 
-#' 
-#' 
+#'
+#'
+#'
 #' @hint Examine `network_solve` to see what's used here.
 
 network_solve
 
 set.seed(13)
 
-sim_example <- list(N = 30, p = 0.05) |> network_solve(parms = _)
+sim_example <- network_solve(parms = list(N = 30, p = 0.05))
 
 # we can look at the resulting epidemic in summary
 sim_example |> network_flatten() |> network_plot_series()
@@ -82,8 +82,8 @@ sim_example |> network_animate()
 
 set.seed(42)
 
-list(N = 30, p = 0.05) |> network_solve(parms = _) |>
-  network_flatten() |> network_plot_series()
+network_solve(parms = list(N = 30, p = 0.05)) |> network_flatten() |>
+  network_plot_series()
 
 # ...which means we need to think about typical behavior
 # across many realizations of the simulation
@@ -102,10 +102,10 @@ samples.dt |> network_plot_histograms()
 #' @question What do you notice about these distributions?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
 #' @section Comparison to Non-network Reed-Frost:
 #'
 #' We have deliberately constructed this initial application of the network
@@ -131,7 +131,7 @@ list(list(
 #' @question How do these outcomes compare?
 #'
 #' @answer
-#' 
+#'
 #' @section Closing Considerations
 #'
 #' Time permitting, let's think a little bit about this model, ignoring for a
@@ -145,23 +145,23 @@ list(list(
 #' and produces the same results.
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
+#'
 #' @question Again using code from earlier, now vary $N$, holding $p$ constant:
 #' What does that do to distribution? Why?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
 #' @aside
 #'
 #' @question what constraint on $N$ and $p$ could impose to get some kind of
@@ -171,12 +171,12 @@ list(list(
 #' @hint how might you have an R0-like concept in this model?
 #'
 #' @answer
-#' 
-#' 
-#' 
-#' 
-#' 
-#' 
+#'
+#'
+#'
+#'
+#'
+#'
 #' @examples
 #' samples60.dt <- network_sample_ReedFrost(n=100, list(N=60, p=30/60*0.1))
 #' samples120.dt <- network_sample_ReedFrost(n=100, list(N=120, p=30/120*0.1))

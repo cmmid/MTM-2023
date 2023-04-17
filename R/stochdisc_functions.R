@@ -120,7 +120,7 @@ stochdisc_solve <- function(
 stochdisc_sample <- function(
     n, parms,
     func = stochdisc_dReedFrost,
-    setup_fun = \(ps) c(S = ps$N - 1, I = 1, R = 0),
+    setup_fun = function(ps) c(S = ps$N - 1, I = 1, R = 0),
     ref_seed = 0
 ) {
   n |> check_scalar() |> check_natural()

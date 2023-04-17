@@ -35,7 +35,7 @@ nsim <- 100 ## number of trial simulations
 # multiple simulation runs and an additional column i that represents the
 # column index
 traj <- lapply(
-  1:nsim, \(sample_id) data.table(ssa.adaptivetau(
+  1:nsim, function(sample_id) data.table(ssa.adaptivetau(
     init.values, SIR_events, SIR_rates, parms, tf = tmax
   ))
 ) |> rbindlist(idcol = "sample_id")
