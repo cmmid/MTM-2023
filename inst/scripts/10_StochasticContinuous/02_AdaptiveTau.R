@@ -54,9 +54,9 @@ system.time(traj <- lapply(
   )
 ) |> rbindlist(idcol = "sample_id"))
 
-# EXERCISE: compare the run time of the command above to running 100
-# simulations using our Gillespie algorithm from Practical 1. How much is the
-# speed gain? You can use the "system.time" function for this.
+#' @question Compare the run time of the command above to running 100
+#' simulations using our Gillespie algorithm from Practical 1. How much is the
+#' speed gain? You can use the "system.time" function for this.
 
-# EXERCISE: re-write the code above to simulate from the SEITL model. Analyse
-# the outputs using the same routines as you did with the SIR model.
+#' @question Re-write the code above to simulate from the SEIR model. Analyse
+#' the outputs using the same routines as you did with the SIR model.
