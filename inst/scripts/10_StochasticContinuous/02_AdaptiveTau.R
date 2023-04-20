@@ -6,41 +6,26 @@ library(data.table)  ## for manipulation of results
 ## "adaptivetau" package to run simulations.
 
 # For adaptivetau, we first need to define the "transitions", or events that can
-# happen in the model. In the SIR model, these are:
-transitions <- list(
-  c(S = -1, I = +1),
-  c(I = -1, R = +1))
+# happen in the model. In the SIR model, these are (from the previous practical):
+SIR_events
 
-## We then need to specify a rate function:
-SIRrateF <- function(state, parms, time) {
-  beta <- parms[["beta"]]
-  gamma <- parms[["gamma"]]
+## We also need to specify a rate function. We have this already:
+SIR_rates
 
-  S <- state[["S"]]
-  I <- state[["I"]]
-  R <- state[["R"]]
+# We also have initial values,
+init.values
 
-  N <- S + I + R
+# parameters
+parms
 
-  rates <- c(beta * S * I / N,
-             gamma * I)
+# and number of time steps
+tmax
 
-  return(rates)
-}
-
-# Next, we set some initial values
-init.values <- c(S = 249, ## number susceptible
-                 I = 10,  ## number infectious
-                 R = 0)   ## number immune
-
-# and parameters
-parms <- c(beta = 2,  ## infection rate
-           gamma = 1) ## recovery rate
-
-# Now, run a trial simulation for 60 time steps
-tmax <- 10 ## number of time steps to simulate
-
-r <- ssa.adaptivetau(init.values, transitions, SIRrateF, parms, tf = tmax)
+# These are all the components we need to use adaptive tau using the
+# ssa.adaptivetau function
+r <- ssa.adaptivetau(
+  init.values, SIR_events, SIR_rates, SIR_parms, tf = tmax
+)
 
 nsim <- 100 ## number of trial simulations
 
@@ -48,7 +33,7 @@ nsim <- 100 ## number of trial simulations
 # looks the same as the "lr" data frame from the last session, but containing
 # multiple simulation runs and an additional column i that represents the
 # column index
-system.time(traj <- lapply(
+traj <- lapply(
   1:nsim, \(sample_id) ssa.adaptivetau(
     init.values, transitions, SIRrateF, parms, tf = tmax
   )
