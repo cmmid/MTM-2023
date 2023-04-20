@@ -49,14 +49,21 @@ nsim <- 100 ## number of trial simulations
 # multiple simulation runs and an additional column i that represents the
 # column index
 system.time(traj <- lapply(
-  1:nsim, \(sample_id) ssa.adaptivetau(
+  1:nsim, \(sample_id) data.table(ssa.adaptivetau(
     init.values, transitions, SIRrateF, parms, tf = tmax
+  ))
+) |> rbindlist(idcol = "sample_id"))
+
+#' @question Compare the run time of the command above to running 100
+#' simulations using our Gillespie algorithm from Practical 1. How much is the
+#' speed gain? You can use the "system.time" function for this.
+#' @answer roughtly a 5-10 times speed up
+
+system.time(traj <- lapply(
+  1:nsim, \(sample_id) stochcont_solve(
+    init.values, SIR_events, SIR_rates, parms, tmax
   )
 ) |> rbindlist(idcol = "sample_id"))
 
-# EXERCISE: compare the run time of the command above to running 100
-# simulations using our Gillespie algorithm from Practical 1. How much is the
-# speed gain? You can use the "system.time" function for this.
-
-# EXERCISE: re-write the code above to simulate from the SEITL model. Analyse
-# the outputs using the same routines as you did with the SIR model.
+#' @question Re-write the code above to simulate from the SEIR model. Analyse
+#' the outputs using the same routines as you did with the SIR model.
