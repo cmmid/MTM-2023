@@ -25,7 +25,7 @@ tmax
 # These are all the components we need to use adaptive tau using the
 # ssa.adaptivetau function
 r <- ssa.adaptivetau(
-  init.values, SIR_events, SIR_rates, parms, tmax
+  init.values, SIR_events, SIR_rates, parms, tf = tmax
 )
 
 nsim <- 100 ## number of trial simulations
@@ -36,13 +36,30 @@ nsim <- 100 ## number of trial simulations
 # column index
 traj <- lapply(
   1:nsim, \(sample_id) data.table(ssa.adaptivetau(
-    init.values, SIR_events, SIR_rates, parms, tmax
+    init.values, SIR_events, SIR_rates, parms, tf = tmax
   ))
 ) |> rbindlist(idcol = "sample_id")
 
 #' @question Compare the run time of the command above to running 100
 #' simulations using our Gillespie algorithm from Practical 1. How much is the
 #' speed gain? You can use the "system.time" function for this.
+#' @answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #' @question Re-write the code above to simulate from the SEIR model. Analyse
 #' the outputs using the same routines as you did with the SIR model.
+#' @answer
