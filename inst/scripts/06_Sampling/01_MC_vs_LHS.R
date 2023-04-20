@@ -130,15 +130,23 @@ library(lhs)
 
 # Let's try a few options and see how well they do
 par(mfrow = c(3, 2))
-n <- c(10, 100, 1000, 10000, 20000)
-rn <- n |> lapply(rnorm)
-tmp <- rn |> mapply(
-  hist, x = _, main = sprintf("Histogram of rnorm(n = %i)", n), xlab = NA
-)
+
+set.seed(42)
+hist(rnorm(10))
+hist(rnorm(100))
+hist(rnorm(1000))
+hist(rnorm(10000))
+hist(rnorm(20000))
 
 # Now let's plot the sample size against the variance of the sample distribution
-varn <- rn |> lapply(var)
-plot(n, varn,
+# n.b. we need to reset the seed, to ensure we draw the same deviates from rnorm
+
+set.seed(42)
+var_by_n <- c(
+  var(rnorm(10)), var(rnorm(100)), var(rnorm(1000)),
+  var(rnorm(10000)), var(rnorm(20000))
+)
+plot(c(10, 100, 1000, 10000, 20000), var_by_n,
      ylab = "variance", main = "Variance of sampled normal"
 )
 abline(h = 1)
