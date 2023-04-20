@@ -7,9 +7,10 @@ library(data.table)  ## for manipulation of results
 
 # For adaptivetau, we first need to define the "transitions", or events that can
 # happen in the model. In the SIR model, these are:
-transitions <- list(
-  c(S = -1, I = +1),
-  c(I = -1, R = +1))
+SIR_transitions <- list(
+  c(S = -1, I = +1), ## infection
+  c(I = -1, R = +1)  ## recovery
+)
 
 ## We then need to specify a rate function:
 SIRrateF <- function(state, parms, time) {
@@ -29,18 +30,24 @@ SIRrateF <- function(state, parms, time) {
 }
 
 # Next, we set some initial values
-init.values <- c(S = 249, ## number susceptible
-                 I = 10,  ## number infectious
-                 R = 0)   ## number immune
+SIR_init.values <- c(
+  S = 249, ## number susceptible
+  I = 1,  ## number infectious
+  R = 0   ## number immune
+)
 
 # and parameters
-parms <- c(beta = 2,  ## infection rate
-           gamma = 1) ## recovery rate
+SIR_parms <- c(
+  beta = 2, ## infection rate
+  gamma = 1 ## recovery rate
+)
 
 # Now, run a trial simulation for 60 time steps
 tmax <- 10 ## number of time steps to simulate
 
-r <- ssa.adaptivetau(init.values, transitions, SIRrateF, parms, tf = tmax)
+r <- ssa.adaptivetau(
+  SIR_init.values, SIR_transitions, SIRrateF, SIR_parms, tf = tmax
+)
 
 nsim <- 100 ## number of trial simulations
 
@@ -48,22 +55,71 @@ nsim <- 100 ## number of trial simulations
 # looks the same as the "lr" data frame from the last session, but containing
 # multiple simulation runs and an additional column i that represents the
 # column index
-system.time(traj <- lapply(
+adaptivetau_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) data.table(ssa.adaptivetau(
-    init.values, transitions, SIRrateF, parms, tf = tmax
+    SIR_init.values, SIR_transitions, SIRrateF, SIR_parms, tf = tmax
   ))
 ) |> rbindlist(idcol = "sample_id"))
 
 #' @question Compare the run time of the command above to running 100
 #' simulations using our Gillespie algorithm from Practical 1. How much is the
 #' speed gain? You can use the "system.time" function for this.
-#' @answer roughtly a 5-10 times speed up
+#' @answer roughtly an 80% reduction in runtime
 
-system.time(traj <- lapply(
+gillespie_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) stochcont_solve(
-    init.values, SIR_events, SIR_rates, parms, tmax
+    SIR_init.values, SIR_events, SIR_rates, SIR_parms, tmax
   )
 ) |> rbindlist(idcol = "sample_id"))
 
+(gillespie_runtime - adaptivetau_runtime) /
+  gillespie_runtime
+
 #' @question Re-write the code above to simulate from the SEIR model. Analyse
 #' the outputs using the same routines as you did with the SIR model.
+#' @answer it could be done as in the following
+
+SEIR_transitions <- list(
+  c(S = -1, E = +1), ## infection
+  c(E = -1, I = +1), ## progression to infectiousness
+  c(I = -1, R = +1)  ## recovery
+)
+
+SEIRrateF <- function(state, parms, time) {
+  beta <- parms[["beta"]]
+  gamma <- parms[["gamma"]]
+  delta <- parms[["delta"]]
+
+  S <- state[["S"]]
+  E <- state[["E"]]
+  I <- state[["I"]]
+  R <- state[["R"]]
+
+  N <- S + E + I + R
+
+  rates <- c(
+    beta * S * I / N,
+    delta * E,
+    gamma * I
+  )
+
+  return(rates)
+}
+
+SEIR_init.values <- c(
+  S = 249, ## number susceptible
+  E = 0,   ## number infected but not infectious
+  I = 1,   ## number infectious
+  R = 0    ## number immune
+)
+
+# and parameters
+SEIR_parms <- c(
+  beta = 2,  ## infection rate
+  gamma = 1, ## recovery rate
+  delta = 3  ## incubation period
+)
+
+r <- ssa.adaptivetau(
+  SEIR_init.values, SEIR_transitions, SEIRrateF, SEIR_parms, tf = tmax
+)
