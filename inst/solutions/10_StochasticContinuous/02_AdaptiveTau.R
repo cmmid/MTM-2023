@@ -6,7 +6,8 @@ library(data.table)  ## for manipulation of results
 ## "adaptivetau" package to run simulations.
 
 # For adaptivetau, we first need to define the "transitions", or events that can
-# happen in the model. In the SIR model, these are (from the previous practical):
+# happen in the model.
+# In the SIR model, these are (from the Gillespie practical):
 SIR_events
 
 ## We also need to specify a rate function. We have this already:
@@ -24,7 +25,7 @@ tmax
 # These are all the components we need to use adaptive tau using the
 # ssa.adaptivetau function
 r <- ssa.adaptivetau(
-  init.values, SIR_events, SIR_rates, SIR_parms, tf = tmax
+  init.values, SIR_events, SIR_rates, parms, tf = tmax
 )
 
 nsim <- 100 ## number of trial simulations
@@ -34,10 +35,10 @@ nsim <- 100 ## number of trial simulations
 # multiple simulation runs and an additional column i that represents the
 # column index
 traj <- lapply(
-  1:nsim, \(sample_id) ssa.adaptivetau(
-    init.values, transitions, SIRrateF, parms, tf = tmax
-  )
-) |> rbindlist(idcol = "sample_id"))
+  1:nsim, \(sample_id) data.table(ssa.adaptivetau(
+    init.values, SIR_events, SIR_rates, parms, tf = tmax
+  ))
+) |> rbindlist(idcol = "sample_id")
 
 #' @question Compare the run time of the command above to running 100
 #' simulations using our Gillespie algorithm from Practical 1. How much is the
@@ -46,12 +47,12 @@ traj <- lapply(
 
 adaptivetau_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) data.table(ssa.adaptivetau(
-    init.values, SIR_events, SIR_rates, SIR_parms, tf = tmax
+    init.values, SIR_events, SIR_rates, parms, tf = tmax
   ))
 ) |> rbindlist(idcol = "sample_id"))
 gillespie_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) stochcont_solve(
-    init.values, SIR_events, SIR_rates, SIR_parms, tf = tmax
+    init.values, SIR_events, SIR_rates, parms, tf = tmax
   )
 ) |> rbindlist(idcol = "sample_id"))
 
