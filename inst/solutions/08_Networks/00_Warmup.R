@@ -78,12 +78,11 @@ igBl <- make_lattice(length = 5, dim = 2) |> add_layout_(on_grid())
 # point by plotting them alongside each other:
 list(list(
   "N=9 Clique"  = network_quickplot(igL, simple = TRUE),
-  "N=25 Clique" = network_quickplot(igB, simple = TRUE)
-), list(
   "N=9 Random"  = network_quickplot(igLgnp, simple = TRUE),
-  "N=25 Random" = network_quickplot(igBgnp, simple = TRUE)
+  "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE)
 ), list(
-  "N=9 Lattice"  = network_quickplot(igLl, simple = TRUE),
+  "N=25 Clique" = network_quickplot(igB, simple = TRUE),
+  "N=25 Random" = network_quickplot(igBgnp, simple = TRUE),
   "N=25 Lattice" = network_quickplot(igBl, simple = TRUE)
 )) |> patchwork_grid()
 
