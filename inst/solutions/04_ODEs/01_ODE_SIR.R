@@ -215,12 +215,12 @@ output <- as.data.frame(output_raw)
 par(mfrow = c(1, 1))
 plot(output$time, output$S, type = "l", col = "blue", lwd = 2, ylim = c(0, N),
      xlab = "Time", ylab = "Number")
+lines(output$time, output$E, lwd = 2, col = "cyan")
 lines(output$time, output$I, lwd = 2, col = "red")
 lines(output$time, output$R, lwd = 2, col = "green")
-lines(output$time, output$E, lwd = 2, col = "cyan")
 legend("topright",
        legend =  c("Susceptible", "Exposed", "Infected", "Recovered"),
-       lty = 1, col = c("blue", "red", "green", "cyan"), lwd = 2, bty = "n")
+       lty = 1, col = c("blue", "cyan", "red", "green"), lwd = 2, bty = "n")
 
 
 ########## Optional questions
