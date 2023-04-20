@@ -21,9 +21,7 @@ SIR_events <- list(
 #' and `parms = list(beta = ..., gamma = ...)` (and `time`, which is ignored
 #' in the minimal SIR model):
 
-SIR_rates <- function(
-  time, state, parms
-) {
+SIR_rates <- function(state, parms, time) {
   with(c(parms, as.list(state)), {
     N <- S + I + R
     return(c(infection = beta * S * I / N, recovery = gamma * I))
@@ -41,7 +39,7 @@ stochcont_solve <- function(
   x <- init.state
   while (time < tf) {
     ## update current rates e.g. c(infection = beta*S*I/N, recovery = gamma*I)
-    rates <- rateFun(time, x, parms)
+    rates <- rateFun(x, parms, time)
     if (sum(rates) > 0) { ## check if any event can happen
       ## time of next event
       time <- time + rexp(n = 1, rate = sum(rates))

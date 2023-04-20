@@ -25,7 +25,7 @@ tmax
 # These are all the components we need to use adaptive tau using the
 # ssa.adaptivetau function
 r <- ssa.adaptivetau(
-  init.values, SIR_events, SIR_rates, parms, tf = tmax
+  init.values, SIR_events, SIR_rates, parms, tmax
 )
 
 nsim <- 100 ## number of trial simulations
@@ -36,7 +36,7 @@ nsim <- 100 ## number of trial simulations
 # column index
 traj <- lapply(
   1:nsim, \(sample_id) data.table(ssa.adaptivetau(
-    init.values, SIR_events, SIR_rates, parms, tf = tmax
+    init.values, SIR_events, SIR_rates, parms, tmax
   ))
 ) |> rbindlist(idcol = "sample_id")
 
@@ -47,12 +47,12 @@ traj <- lapply(
 
 adaptivetau_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) data.table(ssa.adaptivetau(
-    init.values, SIR_events, SIR_rates, parms, tf = tmax
+    init.values, SIR_events, SIR_rates, parms, tmax
   ))
 ) |> rbindlist(idcol = "sample_id"))
 gillespie_runtime <- system.time(traj <- lapply(
   1:nsim, \(sample_id) stochcont_solve(
-    init.values, SIR_events, SIR_rates, parms, tf = tmax
+    init.values, SIR_events, SIR_rates, parms, tmax
   )
 ) |> rbindlist(idcol = "sample_id"))
 
@@ -105,5 +105,5 @@ SEIR_parms <- c(
 )
 
 r <- ssa.adaptivetau(
-  SEIR_init.values, SEIR_events, SEIR_rates, SEIR_parms, tf = tmax
+  SEIR_init.values, SEIR_events, SEIR_rates, SEIR_parms, tmax
 )
