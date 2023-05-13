@@ -76,7 +76,12 @@ check_overwrite <- function(path) {
 #'
 #' @export
 scripts <- function(
-  path = file.path("~", "Downloads", "MTM"),
+  path = file.path(
+    if (.Platform$OS.type == "windows") {
+      Sys.getenv("USERPROFILE")
+    } else { "~" },
+    "Downloads", "MTM"
+  ),
   overwrite = FALSE,
   what = c("scripts", "solutions")
 ) {
