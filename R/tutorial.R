@@ -126,3 +126,54 @@ scripts <- function(
     return(path)
   }
 }
+
+updateto <- function(target, what, paths) {
+  stopifnot(is.character(paths)) # TODO other checks on path?
+  rt <- "https://raw.githubusercontent.com/cmmid/MTM/master/inst/"
+  updates <- paths |>
+    lapply(\(item) paste0(rt, what, item) |> url() |> readLines())
+  ps <- paste0(target, what, paths)
+  for (i in seq_along(ps)) {
+    writeLines(updates[[i]], ps[i])
+  }
+}
+
+#' @title Update MTM Package
+#'
+#' @description
+#' Updates the `MTM` package in place, or optionally just specific scripts or
+#' solutions
+#'
+#' @param scripts Optional, particular scripts to update
+#'
+#' @param solutions Optional, particular solutions to update; defaults to
+#' `scripts` - i.e., if requesting updated script, will also update
+#' corresponding solution
+#'
+#' @param path Optional, but required if either `scripts` and/or `solutions` is
+#' non-`NULL`; the (root) path to the scripts or solutions to update. Should
+#' match whatever [scripts()] `path` used initially (and does so by default).
+#'
+#' @export
+pkg_update <- function(
+  path = file.path(
+    if (.Platform$OS.type == "windows") {
+      Sys.getenv("USERPROFILE")
+    } else { "~" },
+    "Downloads", "MTM"
+  ), scripts = NULL, solutions = scripts
+) {
+  # the default case is to attempt to update the package
+  if (is.null(scripts) & is.null(solutions)) {
+    data.table::update_dev_pkg(
+      object = "MTM", repo = "https://cmmid.github.io/MTM"
+    )
+  } else { # we're going to just fetch particular scripts
+    if (!is.null(scripts)) {
+      updateto(path, "scripts", scripts)
+    }
+    if (!is.null(solutions)) {
+      updateto(path, "solutions", scripts)
+    }
+  }
+}
